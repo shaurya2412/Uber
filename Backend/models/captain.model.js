@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const generateAuthToken = require("../app")
 const captainSchema = new mongoose.schema({
 
     fullname:{
@@ -26,6 +26,57 @@ const captainSchema = new mongoose.schema({
     },
     socketId:{
         type: String,
+    },
+    status: {
+        type: String,
+        enum: ['active', 'inactive'],
+        default: 'active',
+    },
+
+    vehicle: {
+        color:{
+             type: String,
+             required: true,
+             minlength: [3, 'Color must be three characters long'],
+        },
+        plate:{
+            type:String,
+            required: true,
+            minlength: [10, "Goverment registered unique number is required"]
+        },
+        Modelname: {
+            type: String,
+            required: true,
+            minlength: [3, "The model name should be atleast 3 characters long"]
+        },
+        capacity:{
+            type: String,
+            required: true,
+            minlength: [1, "The capacity of the vehicle should be more than 1"]
+        },
+
+        location: {
+            lat:{
+                type: Number,
+            },
+            lng:{
+                type: Number
+            }
+        }
     }
-    
 })
+
+captainSchema.methods.generateAuthToken() = function(){
+    return jwt.sign({ _id: this._id }, process.env.JWT_SECRET);
+    }
+
+captainSchema.methods.comparePassword = async function(password){
+       return await bcrypt.compare(password, this.password);
+    }
+
+    captainSchema.methods.hashPassword = async function(password){
+        return await bcrypt.hash(password,10);
+    }
+
+export default mongoose.model('Captain', captainSchema);
+
