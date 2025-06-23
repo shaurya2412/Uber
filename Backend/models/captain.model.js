@@ -44,7 +44,7 @@ const captainSchema = new mongoose.schema({
             required: true,
             minlength: [10, "Goverment registered unique number is required"]
         },
-        Modelname: {
+        vehiclemodel: {
             type: String,
             required: true,
             minlength: [3, "The model name should be atleast 3 characters long"]
