@@ -4,10 +4,10 @@ import uberLogo from '../assets/uber.png';
 const Welcome = () => {
   return (
     <div className="min-h-screen bg-white font-sans">
-      {/* Navigation */}
       <nav className="flex items-center justify-between px-6 py-4 lg:px-12 shadow-sm sticky top-0 z-10 bg-white">
         <div className="flex items-center space-x-3">
-          <img src={uberLogo} alt="Uber Logo" className="h-8 w-8 object-contain" />
+<img src={uberLogo} alt="Uber Logo" className="h-3 w-auto object-contain" />
+
           <span className="text-2xl font-bold text-black tracking-tight">Uber</span>
         </div>
         <div className="hidden md:flex items-center space-x-10">

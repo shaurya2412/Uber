@@ -3,7 +3,7 @@ dotenv.config();
 const express = require("express");
 const cors = require("cors");
 const userRoutes = require("./routes/user.routes")
-const captainRoutes = require("./router/captain.routes")
+const captainRoutes = require("./routes/captain.routes")
 const connectTodb = require('./db/db');
 connectTodb();
 const app = express();
