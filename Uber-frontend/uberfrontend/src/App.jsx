@@ -1,14 +1,14 @@
-import Profile from './components/profile'
-import './App.css'
-import Welcome from './components/Welcome'
-import Login from './components/Login'
-function App() {
+// App.jsx
+import React from "react";
+import { BrowserRouter } from "react-router-dom";
+import AllRoutes from "./Routes";
 
+const App = () => {
   return (
-    <>
-<Login/>    
-    </>
-  )
-}
+    <BrowserRouter>
+      <AllRoutes />
+    </BrowserRouter>
+  );
+};
 
-export default App
+export default App;

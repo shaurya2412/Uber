@@ -1,7 +1,9 @@
 import React from "react";
 import { FaGoogle} from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const Welcome = () => {
+  const navigate = useNavigate();
   return (
 <div className="min-h-screen w-screen flex">
       {/* Left Side - Banner / Info */}
@@ -77,7 +79,7 @@ Login          </button>
          
 
           <p className="text-center text-sm text-gray-500 mt-6">
-            New to Uber? <span className="text-black font-medium cursor-pointer hover:underline">Sign Up</span>
+            New to Uber? <span onClick={()=> navigate('/')} className="text-black font-medium cursor-pointer hover:underline">Sign Up</span>
           </p>
 
           <p className="text-center text-xs text-gray-400 mt-2">

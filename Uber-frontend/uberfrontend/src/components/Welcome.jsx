@@ -1,7 +1,12 @@
 import React from "react";
 import { FaGoogle, FaFacebookF } from "react-icons/fa";
+import { useNavigate } from 'react-router-dom';
+
+
 
 const Welcome = () => {
+    const navigate = useNavigate(); // ✅ You missed this before!
+
   return (
 <div className="min-h-screen w-screen flex">
       {/* Left Side - Banner / Info */}
@@ -77,8 +82,15 @@ const Welcome = () => {
          
 
           <p className="text-center text-sm text-gray-500 mt-6">
-            Already have an account? <span className="text-black font-medium cursor-pointer hover:underline">Sign in</span>
-          </p>
+  Already have an account? 
+  <span 
+    onClick={() => navigate('/login')} 
+    className="text-black font-medium cursor-pointer hover:underline"
+  >
+    Sign in
+  </span>
+</p>
+
 
           <p className="text-center text-xs text-gray-400 mt-2">
             By creating an account, you agree to our <span className="underline cursor-pointer">Terms of Service</span> and <span className="underline cursor-pointer">Privacy Policy</span>.
