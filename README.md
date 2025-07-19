@@ -1,4 +1,4 @@
-# Uber Backend API Documentation
+# Uber  API Documentation and required information about the application 
 
 ## Overview
 This is the backend for the Uber-like application. It provides RESTful APIs for user and captain (driver) registration, authentication, and profile management. The backend is built with Node.js, Express, and MongoDB (via Mongoose).
