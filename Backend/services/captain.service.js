@@ -1,5 +1,4 @@
-const { model } = require("mongoose");
-const captainModal = require("../models/captain.model")
+const captainModel = require("../models/captain.model");
 
 module.exports.createCaptain = async ({
  firstname, lastname, email, password, color, plate, vehicleType, capacity, Modelname
@@ -7,7 +6,7 @@ module.exports.createCaptain = async ({
     if( !firstname || !email || !lastname || !password || !color || !capacity || !vehicleType || !plate || !Modelname){
         throw new Error('All fields are required')
     }
-    const captain = await captainModal.create({
+    const captain = await captainModel.create({
         fullname: {
             firstname,
             lastname,
@@ -17,9 +16,8 @@ module.exports.createCaptain = async ({
         vehicle:{
             color,
             plate,
-            vehicleType,
-            capacity,
-            vehiclemodel
+            vehiclemodel: Modelname,
+            capacity
         }
 
     })

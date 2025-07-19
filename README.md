@@ -32,20 +32,22 @@ This is the backend for the Uber-like application. It provides RESTful APIs for 
    ```
 3. **Create a `.env` file** in the `Backend` directory with the following variables:
    ```env
-   PORT=3000
+   PORT=5000
    DB_CONNECT=<your-mongodb-connection-string>
    JWT_SECRET=<your-jwt-secret>
    ```
 4. **Start the server:**
    ```bash
    npm start
+   # or
+   npm run dev
    ```
-   The server will run on `http://localhost:3000` by default.
+   The server will run on `http://localhost:5000` by default.
 
 ---
 
 ## Environment Variables
-- `PORT`: Port number for the server (default: 3000)
+- `PORT`: Port number for the server (default: 5000)
 - `DB_CONNECT`: MongoDB connection string
 - `JWT_SECRET`: Secret key for JWT authentication
 
@@ -119,6 +121,8 @@ Base URL: `/captains`
 | Method | Endpoint      | Description                | Auth Required | Body Params |
 |--------|--------------|----------------------------|---------------|-------------|
 | POST   | /register    | Register a new captain     | No            | `{ name: { firstname, lastname }, email, password, vehicle: { color, plate, vehiclemodel, capacity } }` |
+| POST   | /login       | Login as a captain         | No            | `{ email, password }` |
+| GET    | /profile     | Get logged-in captain profile | Yes (JWT)  | -           |
 
 #### Example: Register Captain
 ```json
@@ -136,6 +140,42 @@ POST /captains/register
 }
 ```
 
+#### Example: Login Captain
+```json
+POST /captains/login
+{
+  "email": "jane@example.com",
+  "password": "yourpassword"
+}
+```
+
+#### Example: Get Captain Profile
+- Send JWT in `Authorization: Bearer <token>` header or as a `token` cookie.
+
+---
+
+## Validation Rules
+
+### User Registration/Login
+- `fullname.firstname`: Minimum 3 characters
+- `fullname.lastname`: Minimum 3 characters  
+- `email`: Valid email format
+- `password`: Minimum 6 characters
+
+### Captain Registration
+- `name.firstname`: Minimum 3 characters
+- `name.lastname`: Minimum 2 characters
+- `email`: Valid email format
+- `password`: Minimum 3 characters
+- `vehicle.color`: String, minimum 3 characters
+- `vehicle.plate`: String, minimum 10 characters
+- `vehicle.vehiclemodel`: String, minimum 3 characters
+- `vehicle.capacity`: String, minimum 1 character
+
+### Captain Login
+- `email`: Valid email format
+- `password`: Minimum 3 characters
+
 ---
 
 ## Authentication
@@ -144,30 +184,76 @@ POST /captains/register
 - For protected routes, send the JWT in the `Authorization: Bearer <token>` header or as a `token` cookie.
 - Tokens can be blacklisted (see `blacklistToken.model.js.js`).
 
+### Response Format
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": { /* user data */ }
+  // or
+  "captain": { /* captain data */ }
+}
+```
+
 ---
 
 ## Models
 
 ### User Model (`models/usermodel.js`)
 - `fullname`: `{ firstname: String, lastname: String }`
-- `email`: String (unique)
+- `email`: String (unique, lowercase)
 - `password`: String (hashed, not returned by default)
 - `sockerId`: String (optional)
 
 ### Captain Model (`models/captain.model.js`)
 - `fullname`: `{ firstname: String, lastname: String }`
-- `email`: String (unique)
+- `email`: String (unique, lowercase)
 - `password`: String (hashed, not returned by default)
 - `socketId`: String (optional)
-- `status`: 'active' | 'inactive'
+- `status`: 'active' | 'inactive' (default: 'active')
 - `vehicle`: `{ color, plate, vehiclemodel, capacity, location: { lat, lng } }`
 
 ---
 
+## Dependencies
+- **express**: ^5.1.0 - Web framework
+- **mongoose**: ^8.15.2 - MongoDB ODM
+- **bcrypt**: ^6.0.0 - Password hashing
+- **jsonwebtoken**: ^9.0.2 - JWT authentication
+- **express-validator**: ^7.2.1 - Input validation
+- **cors**: ^2.8.5 - Cross-origin resource sharing
+- **cookie-parser**: ^1.4.7 - Cookie parsing
+- **dotenv**: ^16.5.0 - Environment variables
+- **nodemon**: ^3.1.10 - Development server
+
+---
+
 ## Error Handling
-- Validation errors return HTTP 400 with details.
-- Auth errors return HTTP 401.
-- All errors are returned as JSON.
+- Validation errors return HTTP 400 with detailed error array
+- Authentication errors return HTTP 401
+- All errors are returned as JSON with descriptive messages
+
+### Error Response Format
+```json
+{
+  "error": [
+    {
+      "type": "field",
+      "value": "invalid-value",
+      "msg": "Error message",
+      "path": "field.path",
+      "location": "body"
+    }
+  ]
+}
+```
+
+---
+
+## Development
+- Server runs on port 5000 by default
+- MongoDB connection is established on startup
+- CORS is enabled for cross-origin requests
+- Cookie parsing is enabled for token storage
 
 ---
 

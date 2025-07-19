@@ -3,7 +3,7 @@ import { FaGoogle, FaFacebookF } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const Welcome = () => {
+const CaptainRegister = () => {
   const navigate = useNavigate();
 
   // States for form fields
@@ -12,24 +12,40 @@ const Welcome = () => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [vehicleColor, setVehicleColor] = useState("");
+  const [vehiclePlate, setVehiclePlate] = useState("");
+  const [vehicleModel, setVehicleModel] = useState("");
+  const [vehicleCapacity, setVehicleCapacity] = useState("");
 
   const handleRegister = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await axios.post("http://localhost:5000/users/register", {
-        fullname: {
+      const res = await axios.post("http://localhost:5000/captains/register", {
+        name: {
           firstname,
           lastname,
         },
         email,
         password,
+        vehicle: {
+          color: vehicleColor,
+          plate: vehiclePlate,
+          vehiclemodel: vehicleModel,
+          capacity: vehicleCapacity
+        }
       });
 
       console.log("Registered:", res.data);
+      // Navigate to login or dashboard after successful registration
+      navigate('/captainlogin');
     } catch (error) {
       console.error("Registration failed:", error);
-      alert("Something went wrong while registering.");
+      if (error.response?.data?.error) {
+        alert("Validation errors: " + error.response.data.error.map(err => err.msg).join(", "));
+      } else {
+        alert("Something went wrong while registering.");
+      }
     }
   };
 
@@ -39,14 +55,14 @@ const Welcome = () => {
       <div className="w-1/2 bg-gradient-to-b from-[#0f0f0f] to-[#1a1a1a] text-white p-12 flex flex-col justify-center">
         <div className="max-w-md mx-auto">
           <h1 className="text-4xl font-bold mb-4">Uber</h1>
-          <h2 className="text-2xl font-semibold mb-6">Go anywhere with Uber</h2>
+          <h2 className="text-2xl font-semibold mb-6">Drive with Uber</h2>
           <p className="mb-6 text-gray-300">
-            Request a ride, hop in, and go. Choose from a variety of ride types and get where you need to be.
+            Set your own schedule, be your own boss, and start earning money by driving with Uber.
           </p>
           <ul className="space-y-3 text-sm text-gray-400">
-            <li className="flex items-center gap-2">🚗 Reliable rides in minutes</li>
-            <li className="flex items-center gap-2">📍 Available in 10,000+ cities</li>
-            <li className="flex items-center gap-2">⭐ Trusted by millions worldwide</li>
+            <li className="flex items-center gap-2">🚗 Flexible hours and earnings</li>
+            <li className="flex items-center gap-2">📍 Drive in your own city</li>
+            <li className="flex items-center gap-2">⭐ Join millions of drivers worldwide</li>
           </ul>
           <div className="mt-10 border-t border-gray-700 pt-6 text-sm text-gray-400 grid grid-cols-3 gap-4">
             <div><strong className="block text-white text-xl">1B+</strong>Trips</div>
@@ -60,8 +76,8 @@ const Welcome = () => {
       <div className="w-1/2 flex justify-center items-center bg-gray-50 p-6">
         <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
           <div className="max-w-md mx-auto p-6 bg-white shadow-md rounded-md">
-            <h2 className="text-2xl text-center font-bold text-gray-500 mb-2">Get started</h2>
-            <p className="text-center text-gray-600 mb-6">Create your account to start riding</p>
+            <h2 className="text-2xl text-center font-bold text-gray-500 mb-2">Become a Driver</h2>
+            <p className="text-center text-gray-600 mb-6">Create your driver account to start earning</p>
 
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -110,11 +126,54 @@ const Welcome = () => {
                 required
               />
 
+              {/* Vehicle Information */}
+              <div className="border-t pt-4">
+                <h3 className="text-lg font-semibold text-gray-700 mb-3">Vehicle Information</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    type="text"
+                    placeholder="Vehicle Color"
+                    value={vehicleColor}
+                    onChange={(e) => setVehicleColor(e.target.value)}
+                    className="border border-gray-300 px-3 py-2 rounded text-black w-full"
+                    required
+                  />
+                  <input
+                    type="text"
+                    placeholder="License Plate"
+                    value={vehiclePlate}
+                    onChange={(e) => setVehiclePlate(e.target.value)}
+                    className="border border-gray-300 px-3 py-2 rounded text-black w-full"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <input
+                    type="text"
+                    placeholder="Vehicle Model"
+                    value={vehicleModel}
+                    onChange={(e) => setVehicleModel(e.target.value)}
+                    className="border border-gray-300 px-3 py-2 rounded text-black w-full"
+                    required
+                  />
+                  <input
+                    type="text"
+                    placeholder="Capacity (seats)"
+                    value={vehicleCapacity}
+                    onChange={(e) => setVehicleCapacity(e.target.value)}
+                    className="border border-gray-300 px-3 py-2 rounded text-black w-full"
+                    required
+                  />
+                </div>
+              </div>
+
               <button
                 type="submit"
                 className="bg-black text-white w-full py-2 rounded-lg font-semibold hover:bg-gray-800 transition"
               >
-                Create account →
+                Create Driver Account →
               </button>
             </form>
           </div>
@@ -150,4 +209,4 @@ const Welcome = () => {
   );
 };
 
-export default Welcome;
+export default CaptainRegister;
