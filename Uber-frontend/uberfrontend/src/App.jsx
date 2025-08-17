@@ -2,7 +2,7 @@
 import React from "react";
 import { BrowserRouter } from "react-router-dom";
 import AllRoutes from "./Routes";
-import Dashboard from "./components/dashboard";
+import Dashboard from "./components/Dashboard";
 import Captaindashboard from "./components/Captaindashboard";
 import CaptainRegister from "./captainroutes/captainregister";
 import CaptainLogin from "./captainroutes/CaptainLogin";

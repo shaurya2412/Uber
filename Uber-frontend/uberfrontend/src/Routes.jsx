@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Welcome from "./components/Welcome";
 import Login from "./components/Login"
-import Dashboard from "./components/dashboard";
+import Dashboard from "./components/Dashboard";
 import CaptainLogin from "./captainroutes/CaptainLogin";
 import Captaindashboard from "./components/Captaindashboard";
 import CaptainRegister from "./captainroutes/captainregister";
