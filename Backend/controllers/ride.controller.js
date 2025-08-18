@@ -2,7 +2,6 @@ const rideModel = require("../models/ride.model");
 const captainModel = require("../models/captain.model");
 const { validationResult } = require('express-validator');
 
-// Get available rides for captain (pending rides)
 module.exports.getAvailableRides = async (req, res, next) => {
     try {
         const rides = await rideModel.find({ 

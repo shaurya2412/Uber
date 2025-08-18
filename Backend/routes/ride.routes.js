@@ -19,7 +19,6 @@ router.put('/:rideId/location',
     rideController.updateRideLocation
 );
 
-// User Routes (require user authentication)
 router.post('/book', 
     authMiddleware.authUser,
     [

@@ -54,7 +54,6 @@ async function testRideFlow() {
     console.log('✅ Ride booked successfully');
     console.log('📋 Ride ID:', rideId, '\n');
 
-    // Step 4: Get Available Rides (Captain)
     console.log('4️⃣ Getting available rides...');
     const availableRides = await axios.get(`${BASE_URL}/rides/available`, {
       headers: { Authorization: `Bearer ${captainToken}` }
@@ -62,28 +61,24 @@ async function testRideFlow() {
     console.log('✅ Available rides fetched');
     console.log('📋 Found', availableRides.data.data.length, 'available rides\n');
 
-    // Step 5: Accept the Ride
     console.log('5️⃣ Accepting the ride...');
     const acceptRide = await axios.post(`${BASE_URL}/rides/${rideId}/accept`, {}, {
       headers: { Authorization: `Bearer ${captainToken}` }
     });
     console.log('✅ Ride accepted successfully\n');
 
-    // Step 6: Start the Ride
     console.log('6️⃣ Starting the ride...');
     const startRide = await axios.post(`${BASE_URL}/rides/${rideId}/start`, {}, {
       headers: { Authorization: `Bearer ${captainToken}` }
     });
     console.log('✅ Ride started successfully\n');
 
-    // Step 7: Complete the Ride
     console.log('7️⃣ Completing the ride...');
     const completeRide = await axios.post(`${BASE_URL}/rides/${rideId}/complete`, {}, {
       headers: { Authorization: `Bearer ${captainToken}` }
     });
     console.log('✅ Ride completed successfully\n');
 
-    // Step 8: Get Ride History
     console.log('8️⃣ Getting ride history...');
     const userHistory = await axios.get(`${BASE_URL}/rides/user-history`, {
       headers: { Authorization: `Bearer ${userToken}` }
@@ -97,12 +92,11 @@ async function testRideFlow() {
     console.log('🎉 All tests passed! Your ride system is working perfectly! 🚗');
 
   } catch (error) {
-    console.error('❌ Test failed:', error.response?.data?.message || error.message);
-    console.error('📋 Error details:', error.response?.data || error.message);
+    console.error(' Test failed:', error.response?.data?.message || error.message);
+    console.error(' Error details:', error.response?.data || error.message);
   }
 }
 
-// Run the test
 testRideFlow();
 
 
