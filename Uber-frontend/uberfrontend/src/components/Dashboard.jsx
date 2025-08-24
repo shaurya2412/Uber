@@ -8,13 +8,12 @@ const initialCenter = [28.58, 77.33]; // A central point between Gurgaon and Noi
 const initialZoom = 11;
 
 const Dashboard = () => {
-  // Coordinates for Gurgaon, Haryana
   const userLocation = [28.4595, 77.0266]; 
-  // Coordinates for Noida, Uttar Pradesh
   const driverLocation = [28.5355, 77.3910]; 
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen bg-black">
+      <div className='bg-black m-8 font-black  text-xl'>User Dashboard</div>
       <div className="bg-black min-h-screen flex items-center ">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ">
           <Cardcomponent t1="Time Rides" t2="⏱" t3="This month" t4="127" />
