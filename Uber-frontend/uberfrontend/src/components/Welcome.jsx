@@ -131,7 +131,18 @@ const Welcome = () => {
               onClick={() => navigate('/login')}
               className="text-black font-medium cursor-pointer hover:underline"
             >
+
               Sign in
+            </span>
+           
+          </p>
+           <p className="text-center text-sm text-gray-500 mt-1">
+            Are you willing to join as a uber captain?{" "}
+            <span
+              onClick={() => navigate('/captainRegister')}
+              className="text-black font-medium cursor-pointer hover:underline"
+            >
+              Login
             </span>
           </p>
 
