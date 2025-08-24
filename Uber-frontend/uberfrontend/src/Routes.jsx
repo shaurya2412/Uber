@@ -5,11 +5,13 @@ import Dashboard from "./components/Dashboard";
 import CaptainLogin from "./captainroutes/CaptainLogin";
 import Captaindashboard from "./components/Captaindashboard";
 import CaptainRegister from "./captainroutes/captainregister";
+import LaunchPage from "./components/Launchpage";
 const AllRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/" element={<Welcome />} />
+      <Route path="/LaunchPage" element={<LaunchPage/>}/>
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/capdashboard" element={<Captaindashboard/>}/>
       <Route path="/captainlogin" element={<CaptainLogin/>}/>
