@@ -10,8 +10,8 @@ const AllRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/" element={<Welcome />} />
-      <Route path="/LaunchPage" element={<LaunchPage/>}/>
+      <Route path="/Welcome" element={<Welcome />} />
+      <Route path="/" element={<LaunchPage/>}/>
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/capdashboard" element={<Captaindashboard/>}/>
       <Route path="/captainlogin" element={<CaptainLogin/>}/>
