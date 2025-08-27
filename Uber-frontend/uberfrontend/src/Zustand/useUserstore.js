@@ -4,7 +4,7 @@ import axios from 'axios';
 
 const API_BASE = 'http://localhost:5000';
 
-export const useUserStore = create((set, get) => ({
+export const useUserStore = create((set) => ({
   // ===== STATE =====
   
   // User Data

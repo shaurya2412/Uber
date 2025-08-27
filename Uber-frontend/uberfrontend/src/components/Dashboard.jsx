@@ -146,9 +146,7 @@ const Dashboard = () => {
       )}
     </div>
   );
-  
-  // ===== MAIN RENDER =====
-  return (
+    return (
     <div>
       <div className="bg-black min-h-screen flex items-center">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
