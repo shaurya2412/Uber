@@ -1,8 +1,9 @@
 const http = require("http");
 const app = require("./app");
-const port = process.env.PORT || 3000;
+const config = require("./config");
 
 const server = http.createServer(app);
-server.listen(port, () => {
-    console.log(`Server is running on port ${port}`)
+server.listen(config.PORT, () => {
+    console.log(`Server is running on port ${config.PORT}`);
+    console.log(`MongoDB URI: ${config.MONGODB_URI}`);
 });  

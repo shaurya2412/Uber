@@ -19,7 +19,6 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// The main map component
 const OSMMap = ({ center, zoom, userLocation, driverLocation }) => {
   return (
     <MapContainer
@@ -33,14 +32,12 @@ const OSMMap = ({ center, zoom, userLocation, driverLocation }) => {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {/* User Location Marker */}
       {userLocation && (
         <Marker position={userLocation}>
           <Popup>Your Location</Popup>
         </Marker>
       )}
 
-      {/* Driver Location Marker */}
       {driverLocation && (
         <Marker position={driverLocation}>
           <Popup>Driver is here!</Popup>

@@ -13,16 +13,12 @@ export const useRideStore = create((set, get) => ({
   // ===== ACTIONS =====
   
   // Book a New Ride
-  bookRide: async (pickup, destination, fare) => {
+  bookRide: async (rideData) => {
     set({ isLoading: true, error: null });
     
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_BASE}/rides/book`, {
-        pickup,
-        destination,
-        fare
-      }, {
+      const response = await axios.post(`http://localhost:5000/rides/book`, rideData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

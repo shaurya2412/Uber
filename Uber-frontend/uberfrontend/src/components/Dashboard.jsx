@@ -6,6 +6,7 @@ import RecentRides from "./RecentRides";
 import { useRideStore } from "../zustand/useRideStore";
 import { useUserStore } from "../zustand/useUserStore"; 
 
+
 const Dashboard = () => {
   const { 
     currentRide, 
@@ -22,21 +23,23 @@ const Dashboard = () => {
   
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");
-  const [fare, setFare] = useState(0);
-    useEffect(() => {
+  const [fare, setFare] = useState(15.50);
+  
+  useEffect(() => {
     if (isAuthenticated) {
       fetchCurrentRide();
       fetchRideHistory();
     }
   }, [isAuthenticated, fetchCurrentRide, fetchRideHistory]);
-    const handleBookRide = async () => {
+  
+  const handleBookRide = async () => {
     if (!pickup || !destination) {
       alert("Please enter pickup and destination");
       return;
     }
     
     try {
-      const pickupCoords = { lat: 40.7128, lng: -74.0060 };
+      const pickupCoords = { lat: 40.7128, lng: -74.006 };
       const destCoords = { lat: 40.7589, lng: -73.9851 };
       
       await bookRide({
@@ -48,11 +51,12 @@ const Dashboard = () => {
           address: destination,
           coordinates: destCoords
         },
-        fare: fare || 15.50
+        fare: fare
       });
+      
       setPickup("");
       setDestination("");
-      setFare(0);
+      setFare(15.50);
       
     } catch (error) {
       console.error("Failed to book ride:", error);
@@ -63,16 +67,16 @@ const Dashboard = () => {
     <div className="bg-black p-4 mt-4 ml-4 rounded-2xl flex flex-col w-[32vw] border-1 h-fixed">
       <div className="flex justify-between items-center mb-2">
         <p className="text-2xl font-bold flex flex-row mr-2">
-          <p className="font-semibold mr-2">��</p>
-          Book a Ride
+          <p className="font-semibold mr-2">🚗</p>
+          Book a new ride
         </p>
       </div>
       
       <div className="flex flex-col">
         <input 
-          className="border mt-6 w-90 rounded text-white placeholder-amber-50" 
+          className="border mt-6 w-90 rounded text-white placeholder-amber-50 bg-transparent px-3 py-2" 
           type="text" 
-          placeholder="📍 Pickup from"
+          placeholder="Starting ride from"
           value={pickup}
           onChange={(e) => setPickup(e.target.value)}
         />
@@ -80,21 +84,34 @@ const Dashboard = () => {
         <p className="text flex flex-col mt-4">
           Destination 
           <input 
-            className="border mt-3 w-90 placeholder-amber-50" 
+            className="border mt-3 w-90 placeholder-amber-50 bg-transparent px-3 py-2" 
             type="text" 
-            placeholder="📍 Final Destination"
+            placeholder="Final Destination"
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
           />
         </p>
         
+        <p className="text flex flex-col mt-4">
+          Fare (USD)
+          <input 
+            className="border mt-3 w-90 placeholder-amber-50 bg-transparent px-3 py-2" 
+            type="number" 
+            placeholder="15.50"
+            value={fare}
+            onChange={(e) => setFare(parseFloat(e.target.value) || 15.50)}
+            min="1"
+            step="0.01"
+          />
+        </p>
+        
         <div className="flex flex-col justify-center m-4 bg-black">
-          <p className="flex justify-between">
+          {/* <p className="flex justify-between">
             Ride now 
-            <button className="bg-transparent text-white border border-white">
+            <button className="bg-transparent text-white border border-white px-3 py-1 rounded">
               Schedule
             </button>
-          </p>
+          </p> */}
         </div>
       </div>
       
@@ -120,6 +137,7 @@ const Dashboard = () => {
           Current Ride
         </p>
       </div>
+      <currentRide/>
       
       {currentRide ? (
         <div className="text-white">
@@ -163,7 +181,7 @@ const Dashboard = () => {
           )}
           
           {currentRide && <Currentride />}
-          
+         <Currentride />
                     <RecentRides rides={rideHistory} />
         </div>
       </div>

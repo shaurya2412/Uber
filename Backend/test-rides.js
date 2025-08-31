@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'http://localhost:3000';
 
 // Test credentials (make sure these users exist in your DB)
 const testUser = {
@@ -38,7 +38,7 @@ async function testRideFlow() {
     const rideData = {
       pickup: {
         address: "123 Main Street, New York",
-        coordinates: { lat: 40.7128, lng: -74.0060 }
+        coordinates: { lat: 40.7128, lng: -74.006 }
       },
       destination: {
         address: "456 Oak Avenue, New York",
