@@ -2,16 +2,6 @@
 
 A full-stack ride-sharing application built with Node.js backend and React frontend.
 
-## 📋 Table of Contents
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [API Endpoints](#api-endpoints)
-- [Frontend Routes](#frontend-routes)
-- [Database Models](#database-models)
-
 ## 🎯 Overview
 
 This is a ride-sharing application similar to Uber, with separate interfaces for:
