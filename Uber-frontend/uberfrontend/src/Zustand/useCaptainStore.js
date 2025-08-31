@@ -4,7 +4,7 @@ import axios from 'axios';
 
 const API_BASE = 'http://localhost:5000';
 
-export const useCaptainStore = create((set, get) => ({
+export const useCaptainStore = create((set) => ({
   // ===== STATE =====
   
   // Captain Data

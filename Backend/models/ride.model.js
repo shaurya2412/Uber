@@ -62,6 +62,9 @@ const rideSchema = new mongoose.Schema({
   completedAt: {
     type: Date 
   },
+  cancelledAt: {
+    type: Date 
+  },
   riderRating: {
     type: Number,
     min: 1,

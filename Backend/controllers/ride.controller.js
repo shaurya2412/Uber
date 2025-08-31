@@ -354,4 +354,46 @@ module.exports.getUserRideHistory = async (req, res, next) => {
             error: error.message
         });
     }
+};
+
+module.exports.cancelUserRide = async (req, res, next) => {
+    try {
+        const { rideId } = req.params;
+        const userId = req.user._id;
+
+        const ride = await rideModel.findOne({
+            _id: rideId,
+            user: userId,
+            status: { $in: ['pending', 'accepted'] } // Only allow cancellation of pending or accepted rides
+        });
+
+        if (!ride) {
+            return res.status(404).json({
+                success: false,
+                message: "Ride not found or cannot be cancelled"
+            });
+        }
+
+        // Update ride status to cancelled
+        const updatedRide = await rideModel.findByIdAndUpdate(
+            rideId,
+            {
+                status: 'cancelled',
+                cancelledAt: new Date()
+            },
+            { new: true }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "Ride cancelled successfully",
+            data: updatedRide
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error cancelling ride",
+            error: error.message
+        });
+    }
 }; 

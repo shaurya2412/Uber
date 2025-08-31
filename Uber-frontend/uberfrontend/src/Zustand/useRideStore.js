@@ -4,15 +4,13 @@ import axios from 'axios';
 
 const API_BASE = 'http://localhost:5000';
 
-export const useRideStore = create((set, get) => ({
+export const useRideStore = create((set,) => ({
   rideStatus: 'idle', 
     currentRide: null,
     rideHistory: [],
     isLoading: false,
   error: null,
-  // ===== ACTIONS =====
-  
-  // Book a New Ride
+
   bookRide: async (rideData) => {
     set({ isLoading: true, error: null });
     

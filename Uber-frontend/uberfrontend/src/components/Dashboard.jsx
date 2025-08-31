@@ -66,10 +66,10 @@ const Dashboard = () => {
   const renderRideForm = () => (
     <div className="bg-black p-4 mt-4 ml-4 rounded-2xl flex flex-col w-[32vw] border-1 h-fixed">
       <div className="flex justify-between items-center mb-2">
-        <p className="text-2xl font-bold flex flex-row mr-2">
-          <p className="font-semibold mr-2">🚗</p>
+        <div className="text-2xl font-bold flex flex-row mr-2">
+          <span className="font-semibold mr-2">🚗</span>
           Book a new ride
-        </p>
+        </div>
       </div>
       
       <div className="flex flex-col">
@@ -132,12 +132,12 @@ const Dashboard = () => {
   const renderRideTracking = () => (
     <div className="bg-black p-4 mt-4 ml-4 rounded-2xl flex flex-col w-[32vw] border-1 h-fixed">
       <div className="flex justify-between items-center mb-2">
-        <p className="text-2xl font-bold flex flex-row mr-2">
-          <p className="font-semibold mr-2">🚗</p>
+        <div className="text-2xl font-bold flex flex-row mr-2">
+          <span className="font-semibold mr-2">🚗</span>
           Current Ride
-        </p>
+        </div>
       </div>
-      <currentRide/>
+      <Currentride/>
       
       {currentRide ? (
         <div className="text-white">
