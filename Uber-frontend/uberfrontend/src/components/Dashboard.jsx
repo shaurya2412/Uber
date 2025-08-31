@@ -1,11 +1,29 @@
-// Dashboard.jsx - Updated imports and state
+// Dashboard.jsx
 import React, { useState, useEffect } from "react";
 import Cardcomponent from "./Cardcomponent";
 import Currentride from "./Currentride";
 import RecentRides from "./RecentRides";
 import { useRideStore } from "../zustand/useRideStore";
-import { useUserStore } from "../zustand/useUserStore"; 
+import { useUserStore } from "../zustand/useUserStore";
 
+const getCoordinates = async (place) => {
+  try {
+    const API_KEY = "pk.d4d3cce23c00c2d9e20ac1070c22cc5d";
+const response = await fetch(
+  `https://us1.locationiq.com/v1/search?key=${API_KEY}&q=${encodeURIComponent(place)}&format=json`
+);
+const data = await response.json();
+
+    if (data && data.length > 0) {
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching coordinates:", error);
+    return null;
+  }
+};
 
 const Dashboard = () => {
   const { 
@@ -39,9 +57,15 @@ const Dashboard = () => {
     }
     
     try {
-      const pickupCoords = { lat: 40.7128, lng: -74.006 };
-      const destCoords = { lat: 40.7589, lng: -73.9851 };
-      
+      // ✅ Fetch coordinates dynamically
+      const pickupCoords = await getCoordinates(pickup);
+      const destCoords = await getCoordinates(destination);
+
+      if (!pickupCoords || !destCoords) {
+        alert("Could not fetch coordinates. Please check the place names.");
+        return;
+      }
+
       await bookRide({
         pickup: {
           address: pickup,
@@ -62,7 +86,7 @@ const Dashboard = () => {
       console.error("Failed to book ride:", error);
     }
   };
-  
+
   const renderRideForm = () => (
     <div className="bg-black p-4 mt-4 ml-4 rounded-2xl flex flex-col w-[32vw] border-1 h-fixed">
       <div className="flex justify-between items-center mb-2">
@@ -105,14 +129,7 @@ const Dashboard = () => {
           />
         </p>
         
-        <div className="flex flex-col justify-center m-4 bg-black">
-          {/* <p className="flex justify-between">
-            Ride now 
-            <button className="bg-transparent text-white border border-white px-3 py-1 rounded">
-              Schedule
-            </button>
-          </p> */}
-        </div>
+        <div className="flex flex-col justify-center m-4 bg-black"></div>
       </div>
       
       <button 
@@ -137,7 +154,6 @@ const Dashboard = () => {
           Current Ride
         </div>
       </div>
-      <Currentride/>
       
       {currentRide ? (
         <div className="text-white">
@@ -151,13 +167,14 @@ const Dashboard = () => {
       )}
     </div>
   );
-    return (
+
+  return (
     <div>
       <div className="bg-black min-h-screen flex items-center">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           <Cardcomponent 
             t1="Total Rides" 
-            t2="��" 
+            t2="🚘" 
             t3="This month" 
             t4={rideHistory.length} 
           />
@@ -169,7 +186,7 @@ const Dashboard = () => {
           />
           <Cardcomponent 
             t1="Total Spent" 
-            t2="��" 
+            t2="💵" 
             t3="This month" 
             t4={`$${rideHistory.reduce((sum, ride) => sum + (ride.fare || 0), 0).toFixed(2)}`} 
           />
@@ -181,8 +198,7 @@ const Dashboard = () => {
           )}
           
           {currentRide && <Currentride />}
-         <Currentride />
-                    <RecentRides rides={rideHistory} />
+          <RecentRides rides={rideHistory} />
         </div>
       </div>
       
