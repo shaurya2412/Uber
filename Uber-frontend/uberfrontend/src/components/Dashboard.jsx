@@ -3,11 +3,10 @@ import React, { useState, useEffect } from "react";
 import Cardcomponent from "./Cardcomponent";
 import Currentride from "./Currentride";
 import RecentRides from "./RecentRides";
-import { useRideStore } from "../zustand/useRideStore"; // Add this import
-import { useUserStore } from "../zustand/useUserStore"; // Add this import
+import { useRideStore } from "../zustand/useRideStore";
+import { useUserStore } from "../zustand/useUserStore"; 
 
 const Dashboard = () => {
-  // ===== ZUSTAND STORES =====
   const { 
     currentRide, 
     rideHistory, 
@@ -19,31 +18,24 @@ const Dashboard = () => {
     fetchRideHistory 
   } = useRideStore();
   
-  const {     isAuthenticated } = useUserStore();
+  const { isAuthenticated } = useUserStore();
   
-  // ===== LOCAL STATE =====
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");
   const [fare, setFare] = useState(0);
-  
-  // ===== EFFECTS =====
-  useEffect(() => {
-    // Fetch current ride and history when component mounts
+    useEffect(() => {
     if (isAuthenticated) {
       fetchCurrentRide();
       fetchRideHistory();
     }
   }, [isAuthenticated, fetchCurrentRide, fetchRideHistory]);
-  
-  // ===== HANDLERS =====
-  const handleBookRide = async () => {
+    const handleBookRide = async () => {
     if (!pickup || !destination) {
       alert("Please enter pickup and destination");
       return;
     }
     
     try {
-      // Generate random coordinates for demo (replace with real geocoding)
       const pickupCoords = { lat: 40.7128, lng: -74.0060 };
       const destCoords = { lat: 40.7589, lng: -73.9851 };
       
@@ -56,21 +48,17 @@ const Dashboard = () => {
           address: destination,
           coordinates: destCoords
         },
-        fare: fare || 15.50 // Default fare if not set
+        fare: fare || 15.50
       });
-      
-      // Clear form after successful booking
       setPickup("");
       setDestination("");
       setFare(0);
       
     } catch (error) {
       console.error("Failed to book ride:", error);
-      // Error is already handled in the store
     }
   };
   
-  // ===== RENDER LOGIC =====
   const renderRideForm = () => (
     <div className="bg-black p-4 mt-4 ml-4 rounded-2xl flex flex-col w-[32vw] border-1 h-fixed">
       <div className="flex justify-between items-center mb-2">
@@ -118,7 +106,6 @@ const Dashboard = () => {
         {isLoading ? "Booking..." : "Find rides"}
       </button>
       
-      {/* Error Display */}
       {error && (
         <p className="text-red-500 text-sm mt-2">{error}</p>
       )}
@@ -150,7 +137,6 @@ const Dashboard = () => {
     <div>
       <div className="bg-black min-h-screen flex items-center">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Stats Cards - Now using real data */}
           <Cardcomponent 
             t1="Total Rides" 
             t2="��" 
@@ -170,18 +156,15 @@ const Dashboard = () => {
             t4={`$${rideHistory.reduce((sum, ride) => sum + (ride.fare || 0), 0).toFixed(2)}`} 
           />
           
-          {/* Conditional Rendering based on ride status */}
           {rideStatus === 'idle' || rideStatus === 'searching' ? (
             renderRideForm()
           ) : (
             renderRideTracking()
           )}
           
-          {/* Current Ride Component - Only show when there's an active ride */}
           {currentRide && <Currentride />}
           
-          {/* Recent Rides - Now using real data */}
-          <RecentRides rides={rideHistory} />
+                    <RecentRides rides={rideHistory} />
         </div>
       </div>
       
