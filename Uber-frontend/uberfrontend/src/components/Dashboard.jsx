@@ -41,7 +41,7 @@ const Dashboard = () => {
   
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");
-  const [fare, setFare] = useState(15.50);
+  const [fare, setFare] = useState("");
   
   useEffect(() => {
     if (isAuthenticated) {
@@ -80,7 +80,7 @@ const Dashboard = () => {
       
       setPickup("");
       setDestination("");
-      setFare(15.50);
+      setFare("");
       
     } catch (error) {
       console.error("Failed to book ride:", error);
@@ -123,7 +123,7 @@ const Dashboard = () => {
             type="number" 
             placeholder="15.50"
             value={fare}
-            onChange={(e) => setFare(parseFloat(e.target.value) || 15.50)}
+            onChange={(e) => setFare(parseFloat(e.target.value))}
             min="1"
             step="0.01"
           />
