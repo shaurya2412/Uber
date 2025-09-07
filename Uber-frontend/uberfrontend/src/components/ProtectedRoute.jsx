@@ -3,19 +3,16 @@ import { Navigate } from 'react-router-dom';
 import { useUserStore } from '../Zustand/useUserstore';
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, token, fetchProfile, logout } = useUserStore();
+  const { isAuthenticated,  fetchProfile, logout } = useUserStore();
 
   useEffect(() => {
-    // Check if user is authenticated on component mount
     const checkAuth = async () => {
       const storedToken = localStorage.getItem('token');
       
       if (storedToken && !isAuthenticated) {
         try {
-          // Try to fetch user profile to validate token
           await fetchProfile();
         } catch (error) {
-          // If token is invalid, logout and clear storage
           console.error('Token validation failed:', error);
           logout();
         }
@@ -25,12 +22,10 @@ const ProtectedRoute = ({ children }) => {
     checkAuth();
   }, [isAuthenticated, fetchProfile, logout]);
 
-  // If no token in localStorage, redirect to login
   if (!localStorage.getItem('token')) {
     return <Navigate to="/login" replace />;
   }
 
-  // If not authenticated (even with token), show loading or redirect
   if (!isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -42,7 +37,6 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  // If authenticated, render the protected component
   return children;
 };
 

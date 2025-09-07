@@ -20,9 +20,9 @@ const AllRoutes = () => {
         </ProtectedRoute>
       } />
       <Route path="/capdashboard" element={
-        <CaptainProtectedRoute>
+          <CaptainProtectedRoute>
           <Captaindashboard />
-        </CaptainProtectedRoute>
+        </CaptainProtectedRoute>  
       }/>
       <Route path="/captainlogin" element={<CaptainLogin/>}/>
       <Route path="/captainRegister" element={<CaptainRegister/>}/>

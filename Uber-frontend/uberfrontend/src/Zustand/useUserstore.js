@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = 'http://localhost:5000';
 
 export const useUserStore = create((set) => ({
   // ===== STATE =====
@@ -36,7 +36,7 @@ export const useUserStore = create((set) => ({
       localStorage.setItem('token', token);
       
       set({ 
-        user,
+        user, 
         token,
         isAuthenticated: true,
         isLoading: false 
@@ -65,27 +65,34 @@ export const useUserStore = create((set) => ({
   },
   
   // Fetch User Profile
-  fetchProfile: async () => {
-    set({ isLoading: true, error: null });
+  // Fetch User Profile
+fetchProfile: async () => {
+  set({ isLoading: true, error: null });
+  
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_BASE}/users/profile`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_BASE}/users/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      set({ 
-        user: response.data,
-        isLoading: false 
-      });
-      
-      return response.data;
-    } catch (error) {
-      set({ 
-        error: error.response?.data?.message || 'Failed to fetch profile',
-        isLoading: false 
-      });
-      throw error;
-    }
+    set({ 
+      user: response.data,
+      isAuthenticated: true,   // 👈 FIX: mark authenticated
+      token,                   // 👈 optional: keep token in store
+      isLoading: false 
+    });
+    
+    return response.data;
+  } catch (error) {
+    set({ 
+      error: error.response?.data?.message || 'Failed to fetch profile',
+      isAuthenticated: false,  // 👈 explicitly reset auth on error
+      token: null,
+      user: null,
+      isLoading: false 
+    });
+    throw error;
   }
+}
+
 }));

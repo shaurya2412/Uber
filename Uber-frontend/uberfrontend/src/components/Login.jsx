@@ -68,7 +68,7 @@ const Login = () => {
         <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
           <div className="max-w-md mx-auto p-6 bg-white shadow-md rounded-md">
             <h2 className="text-2xl text-center font-bold text-gray-500 mb-8">
-              What's your phone number or email?
+              UserWhat's your phone number or email?
             </h2>
 
             <form className="space-y-4">

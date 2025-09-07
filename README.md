@@ -1,21 +1,3 @@
-Uber/
-├── Backend/                 # Node.js server
-│   ├── controllers/        # Request handlers
-│   ├── models/            # Database schemas
-│   ├── routes/            # API endpoints
-│   ├── middlewares/       # Authentication & validation
-│   ├── services/          # Business logic
-│   └── db/               # Database connection
-└── Uber-frontend/         # React application
-    └── uberfrontend/
-        └── src/
-            ├── components/     # Reusable UI components
-            ├── captainroutes/  # Captain-specific pages
-            ├── Zustand/        # State management
-            └── assets/         # Images and static files
-```
-
-## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js (v18 or higher)

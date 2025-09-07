@@ -68,7 +68,19 @@ const captainSchema = new mongoose.Schema({
 });
 
 captainSchema.methods.generateAuthToken = function(){
-    return jwt.sign({ _id: this._id }, process.env.JWT_SECRET);
+    console.log('🎫 Generating JWT token for captain:', this._id);
+    console.log('🔑 JWT_SECRET exists:', !!process.env.JWT_SECRET);
+    console.log('🔑 JWT_SECRET length:', process.env.JWT_SECRET ? process.env.JWT_SECRET.length : 'undefined');
+    
+    try {
+        const token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET);
+        console.log('✅ JWT token generated successfully');
+        return token;
+    } catch (error) {
+        console.log('💥 JWT token generation failed:');
+        console.log('Error:', error.message);
+        throw error;
+    }
 };
 
 captainSchema.methods.comparePassword = async function(password){

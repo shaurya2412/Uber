@@ -37,7 +37,7 @@ export const useCaptainStore = create((set) => ({
       
       const { token, captain } = response.data;
       
-      localStorage.setItem('token', token);
+      localStorage.setItem('captaintoken', token);
       
       set({ 
         captain,

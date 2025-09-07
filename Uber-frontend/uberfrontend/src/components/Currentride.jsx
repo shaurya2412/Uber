@@ -1,18 +1,14 @@
 import React, { useEffect } from 'react'
 import { useRideStore } from "../zustand/useRideStore";
-import { useUserStore } from "../zustand/useUserStore";
-
+import { useUserStore } from '../Zustand/useUserstore';
 const Currentride = () => {
   
     const { 
     currentRide, 
-    rideHistory, 
-    rideStatus, 
+
     isLoading, 
     error,
-    bookRide, 
     fetchCurrentRide, 
-    fetchRideHistory,
     cancelRide
   } = useRideStore();
   const { isAuthenticated } = useUserStore();
@@ -127,13 +123,12 @@ const Currentride = () => {
           <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
           <path d="M8 16H3v5" />
         </svg>
-      </button>
+      </button> 
     </div>
     <div className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${getStatusColor(currentRide.status)}`}>
       {getStatusText(currentRide.status)}
     </div>
     
-    {/* Debug information - remove in production */}
     {process.env.NODE_ENV === 'development' && (
       <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
         <div>Ride ID: {currentRide._id}</div>

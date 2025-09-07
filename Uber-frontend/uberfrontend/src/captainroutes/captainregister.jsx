@@ -20,31 +20,51 @@ const CaptainRegister = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    try {
-      const res = await axios.post("http://localhost:5000/captains/register", {
-        name: {
-          firstname,
-          lastname,
-        },
-        email,
-        password,
-        vehicle: {
-          color: vehicleColor,
-          plate: vehiclePlate,
-          vehiclemodel: vehicleModel,
-          capacity: vehicleCapacity
-        }
-      });
+    console.log("🚀 Frontend: Starting captain registration");
+    console.log("📝 Frontend: Form data:", {
+      firstname, lastname, email, password,
+      vehicleColor, vehiclePlate, vehicleModel, vehicleCapacity
+    });
 
-      console.log("Registered:", res.data);
+    const requestData = {
+      name: {
+        firstname,
+        lastname,
+      },
+      email,
+      password,
+      vehicle: {
+        color: vehicleColor,
+        plate: vehiclePlate,
+        vehiclemodel: vehicleModel,
+        capacity: vehicleCapacity
+      }
+    };
+
+    console.log("📤 Frontend: Sending request to backend:", JSON.stringify(requestData, null, 2));
+
+    try {
+      const res = await axios.post("http://localhost:5000/captains/register", requestData);
+
+      console.log("✅ Frontend: Registration successful:", res.data);
+      alert("Registration successful! Redirecting to login...");
       // Navigate to login or dashboard after successful registration
       navigate('/captainlogin');
     } catch (error) {
-      console.error("Registration failed:", error);
+      console.error("❌ Frontend: Registration failed:", error);
+      console.error("❌ Frontend: Error response:", error.response?.data);
+      console.error("❌ Frontend: Error status:", error.response?.status);
+      
       if (error.response?.data?.error) {
-        alert("Validation errors: " + error.response.data.error.map(err => err.msg).join(", "));
+        const errorMessages = error.response.data.error.map(err => err.msg).join(", ");
+        console.log("📝 Frontend: Validation errors:", errorMessages);
+        alert("Validation errors: " + errorMessages);
+      } else if (error.response?.data?.message) {
+        console.log("📝 Frontend: Server message:", error.response.data.message);
+        alert("Server error: " + error.response.data.message);
       } else {
-        alert("Something went wrong while registering.");
+        console.log("📝 Frontend: Network or unknown error");
+        alert("Something went wrong while registering. Check console for details.");
       }
     }
   };
@@ -187,7 +207,7 @@ const CaptainRegister = () => {
           <p className="text-center text-sm text-gray-500 mt-6">
             Already have an account?{" "}
             <span
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/captainlogin')}
               className="text-black font-medium cursor-pointer hover:underline"
             >
               Sign in
