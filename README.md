@@ -16,7 +16,6 @@
    Create `.env` file with:
    ```
    PORT=5000
-   MONGODB_URI=mongodb://localhost:27017/uber-clone
    JWT_SECRET=your-secret-key
    ```
 
