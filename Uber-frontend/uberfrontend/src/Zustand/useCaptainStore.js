@@ -5,27 +5,16 @@ import axios from 'axios';
 const API_BASE = 'http://localhost:5000';
 
 export const useCaptainStore = create((set) => ({
-  // ===== STATE =====
-  
-  // Captain Data
   captain: null,
-  
-  // Authentication
   isAuthenticated: false,
   token: null,
-  
-  // Ride Management
   availableRides: [],
   currentRide: null,
   rideHistory: [],
-  
-  // UI State
   isLoading: false,
-  error: null,
-  
-  // ===== ACTIONS =====
-  
-  // Login Captain
+  error: null,  
+    setAuthenticated: (value) => set({ isAuthenticated: value }),
+
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     
@@ -54,14 +43,22 @@ export const useCaptainStore = create((set) => ({
       });
       throw error;
     }
-  },
+},
+logout: () =>{
+localStorage.removeItem ('captaintoken');
+set({
+  captain:null,
+  isAuthenticated: false,
+  token: null
+})
+},
   
   // Fetch Available Rides
   fetchAvailableRides: async () => {
     set({ isLoading: true, error: null });
     
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('captaintoken');
       const response = await axios.get(`${API_BASE}/rides/available`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -86,7 +83,7 @@ export const useCaptainStore = create((set) => ({
     set({ isLoading: true, error: null });
     
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('captaintoken');
       const response = await axios.post(`${API_BASE}/rides/${rideId}/accept`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });

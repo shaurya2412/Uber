@@ -22,9 +22,9 @@ const CaptainLogin = () => {
         password,
       });
 
-      const { token } = res.data;
+ const token = res.data.captaintoken;
+localStorage.setItem("captaintoken", token);
 
-      localStorage.setItem("token", token);
       localStorage.setItem("role", "captain"); 
 
       console.log("Captain Login successful:", res.data);

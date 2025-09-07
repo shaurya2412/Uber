@@ -41,11 +41,11 @@ module.exports.registerCaptain = async(req, res, next) => {
         console.log('✅ Captain created successfully:', captain._id);
 
         console.log('🎫 Generating auth token...');
-        const token = captain.generateAuthToken();
+        const captaintoken = captain.generateAuthToken();
         console.log('✅ Token generated successfully');
         
         console.log('🎉 Registration completed successfully');
-        res.status(201).json({token, captain});
+        res.status(201).json({captaintoken, captain});
     } catch (err) {
         console.log('💥 Registration error occurred:');
         console.log('Error name:', err.name);
@@ -87,9 +87,9 @@ module.exports.loginCaptain = async(req, res, next)=> {
         return res.status(401).json({message: "Invalid password, or network issue"});
     }
 
-    const token = captain.generateAuthToken();
+    const captaintoken = captain.generateAuthToken();
 
-    res.status(200).json({token, captain});
+    res.status(200).json({captaintoken, captain});
 };
 
 module.exports.getCaptainProfile = async(req, res, next)=>{

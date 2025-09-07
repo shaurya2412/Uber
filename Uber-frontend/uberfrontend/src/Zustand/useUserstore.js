@@ -54,7 +54,6 @@ export const useUserStore = create((set) => ({
 
 
   
-  // Logout User
   logout: () => {
     localStorage.removeItem('token');
     set({ 
@@ -63,9 +62,7 @@ export const useUserStore = create((set) => ({
       isAuthenticated: false 
     });
   },
-  
-  // Fetch User Profile
-  // Fetch User Profile
+
 fetchProfile: async () => {
   set({ isLoading: true, error: null });
   

@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 
 const Captaindashboard = () => {
-  // State for the driver status toggle (Online/Offline)
   const [isOnline, setIsOnline] = useState(false);
 
-  // Reusable ProgressBar component for performance metrics
   const ProgressBar = ({ label, value, icon }) => {
     const percentage = parseInt(value, 10);
     const barColor = percentage >= 90 ? 'bg-green-500' : percentage >= 70 ? 'bg-yellow-500' : 'bg-red-500';
@@ -18,11 +16,10 @@ const Captaindashboard = () => {
           </div>
           <span className="text-sm font-medium">{value}</span>
         </div>
-        {/* Progress bar visual */}
         <div className="w-full bg-black-700 rounded-full h-2.5">
           <div
             className={`${barColor} h-2.5 rounded-full`}
-            style={{ width: `${percentage}%` }} // Dynamically set width based on value
+            style={{ width: `${percentage}%` }} 
           ></div>
         </div>
       </div>
