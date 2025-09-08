@@ -1,7 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import {useCaptainStore} from "../zustand/useCaptainStore";
 
 const Captaindashboard = () => {
   const [isOnline, setIsOnline] = useState(false);
+const [rides, setAvailableRides] = useState([]);
+const {token, active} = useCaptainStore();
+
+  useEffect(() => {
+    const fetchRides = async () => {
+      try { 
+        const res = await axios.get("http://localhost:5000/rides/available", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setAvailableRides(res.data.data);
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
+    };
+
+    fetchRides();
+    const interval = setInterval(fetchRides, 5000);
+
+    return () => clearInterval(interval);
+  }, [token]);
 
   const ProgressBar = ({ label, value, icon }) => {
     const percentage = parseInt(value, 10);
@@ -26,7 +48,6 @@ const Captaindashboard = () => {
     );
   };
 
-  // DriverStatusToggle component
   const DriverStatusToggle = () => {
     return (
       <div>
@@ -35,14 +56,13 @@ const Captaindashboard = () => {
 
         <div className="flex items-center justify-between mt-4">
           <span className="text-lg">Go online to start receiving trips</span>
-          {/* Toggle switch UI */}
           <div
             className={`relative inline-flex flex-shrink-0 h-6 w-12 border-2 ${
               isOnline ? 'border-green-500 bg-green-500' : 'border-black-600 bg-black-700'
             } rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-green-500`}
             role="switch"
-            aria-checked={isOnline}
-            onClick={() => setIsOnline(!isOnline)} // Toggles the online status
+            aria-checked={active}
+            onClick={() => setIsOnline(!active)} 
           >
             <span
               aria-hidden="true"
@@ -52,7 +72,6 @@ const Captaindashboard = () => {
             ></span>
           </div>
         </div>
-        {/* Display current status (Online/Offline) */}
         <div className="text-right mt-2">
            <span className={`text-sm font-medium ${isOnline ? 'text-green-400' : 'text-gray-400'}`}>
              {isOnline ? 'Online' : 'Offline'}
@@ -62,18 +81,14 @@ const Captaindashboard = () => {
     );
   };
 
-  // StatCard component for displaying key metrics
   const StatCard = ({ title, value, change, changeColor, symbol, icon }) => {
     return (
-      // Added border border-gray-700
       <div className="bg-black rounded-lg p-6 shadow-md flex flex-col justify-between border border-gray-700">
         <div className="flex justify-between items-center mb-2">
           <h3 className="text-lg font-medium text-gray-300">{title}</h3>
-          {/* Optional icon for the stat card */}
           {icon && <span className="text-xl">{icon}</span>}
         </div>
         <p className="text-4xl font-bold mb-1">
-          {/* Optional symbol (e.g., dollar sign, arrow) */}
           {symbol && <span className="text-2xl mr-1">{symbol}</span>}
           {value}
         </p>
@@ -82,10 +97,8 @@ const Captaindashboard = () => {
     );
   };
 
-  // CurrentTripCard component to display ongoing trip details
   const CurrentTripCard = () => {
     return (
-      // Added border border-gray-700
       <div className="bg-black rounded-lg p-6 shadow-md border border-gray-700">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Current Trip</h2>
@@ -93,10 +106,10 @@ const Captaindashboard = () => {
         </div>
         <p className="text-gray-400 text-sm mb-4">Trip in progress</p>
 
-        {/* Passenger Info */}
+        {/* Passenger  */}
         <div className="flex items-center mb-4">
           <img
-            src="https://placehold.co/40x40/333333/FFFFFF?text=SM" // Placeholder image for avatar
+            src="https://placehold.co/40x40/333333/FFFFFF?text=SM" 
             alt="Sarah Miller"
             className="w-10 h-10 rounded-full mr-3"
           />
@@ -106,7 +119,6 @@ const Captaindashboard = () => {
           </div>
         </div>
 
-        {/* Pickup & Destination details */}
         <div className="space-y-3 mb-6">
           <div className="flex items-start">
             <span className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0 mt-1 mr-3"></span>
@@ -120,11 +132,10 @@ const Captaindashboard = () => {
             <div>
               <p className="text-gray-400 text-sm">Destination</p>
               <p className="font-medium">456 Oak Avenue, Uptown</p>
-            </div> {/* Removed the stray backslash here */}
+            </div> 
           </div>
         </div>
 
-        {/* Trip remaining time and estimated fare */}
         <div className="flex justify-between items-center text-lg font-semibold border-t border-gray-700 pt-4 mt-4">
           <p className="text-gray-400">12 min remaining</p>
           <p>$18.50 estimated</p>
@@ -133,15 +144,12 @@ const Captaindashboard = () => {
     );
   };
 
-  // PerformanceMetricsCard component
   const PerformanceMetricsCard = () => {
     return (
-      // Added border border-gray-700
       <div className="bg-black rounded-lg p-6 shadow-md border border-gray-700">
         <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
         <p className="text-gray-400 text-sm mb-6">Your driving performance this week</p>
 
-        {/* Using the reusable ProgressBar component */}
         <ProgressBar label="Acceptance Rate" value="94%" icon="📊" />
         <ProgressBar label="Completion Rate" value="98%" icon="✅" />
         <ProgressBar label="On-Time Pickup" value="89%" icon="⏰" />
@@ -149,22 +157,18 @@ const Captaindashboard = () => {
     );
   };
 
-  // RecentTripItem component for individual trip entries in the history
   const RecentTripItem = ({ type, rating, pickup, destination, timeAgo, earnings }) => {
     return (
-      // Added border border-gray-700
       <div className="bg-black rounded-lg p-6 shadow-md mb-4 border border-gray-700">
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center">
             <p className="font-semibold text-lg mr-2">{type}</p>
-            {/* Star rating display */}
             <span className="text-yellow-400">
-              {'⭐'.repeat(rating)} {/* Repeat star emoji based on rating */}
+              {'⭐'.repeat(rating)} 
             </span>
           </div>
           <p className="text-green-400 font-semibold text-lg">${earnings}</p>
         </div>
-        {/* Pickup and Destination details */}
         <div className="space-y-2 mb-3">
           <div className="flex items-center">
             <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
@@ -181,21 +185,15 @@ const Captaindashboard = () => {
   };
 
   return (
-    // Main container for the entire dashboard
-    // Added border border-gray-700 to the container for a full-page border effect
     <div className="min-h-screen bg-black text-white p-6 font-sans border border-gray-700">
       <div className="container mx-auto p-4 md:p-8">
-        {/* Dashboard Header */}
         <h1 className="text-3xl font-bold mb-8">Captain Dashboard</h1>
 
-        {/* Top Section: Driver Status & Stat Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Driver Status Toggle Card - Added border border-gray-700 */}
           <div className="bg-black rounded-lg p-6 shadow-md md:col-span-2 lg:col-span-1 flex flex-col justify-between border border-gray-700">
             <DriverStatusToggle />
           </div>
 
-          {/* Individual Stat Cards - these now use the StatCard component which has a border */}
           <StatCard
             title="Today's Earnings"
             value="$127.50"
@@ -224,25 +222,20 @@ const Captaindashboard = () => {
           />
         </div>
 
-        {/* Middle Section: Current Trip & Performance Metrics */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Current Trip Card - this now uses the CurrentTripCard component which has a border */}
           <div className="lg:col-span-2">
             <CurrentTripCard />
           </div>
 
-          {/* Performance Metrics Card - this now uses the PerformanceMetricsCard component which has a border */}
           <div className="lg:col-span-1">
             <PerformanceMetricsCard />
           </div>
         </div>
 
-        {/* New Section: Recent Trips - Added border border-gray-700 */}
         <div className="bg-black rounded-lg p-6 shadow-md border border-gray-700">
           <h2 className="text-xl font-semibold mb-2">Recent Trips</h2>
           <p className="text-gray-400 text-sm mb-4">Your latest completed rides</p>
 
-          {/* Example Recent Trip Items - these now use the RecentTripItem component which has a border */}
           <RecentTripItem
             type="UberX"
             rating={4}
@@ -267,7 +260,6 @@ const Captaindashboard = () => {
             timeAgo="6 hours ago"
             earnings="12.25"
           />
-          {/* Add more RecentTripItem components as needed */}
         </div>
       </div>
     </div>

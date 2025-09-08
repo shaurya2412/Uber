@@ -5,22 +5,13 @@ import axios from 'axios';
 const API_BASE = 'http://localhost:5000';
 
 export const useUserStore = create((set) => ({
-  // ===== STATE =====
   
-  // User Data
   user: null,
-  
-  // Authentication
   isAuthenticated: false,
-  token: null,
-  
-  // UI State
+  token: null,  
   isLoading: false,
   error: null,
-  
-  // ===== ACTIONS =====
-  
-  // Login User
+    
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     
@@ -32,7 +23,6 @@ export const useUserStore = create((set) => ({
       
       const { token, user } = response.data;
       
-      // Store token
       localStorage.setItem('token', token);
       
       set({ 
@@ -74,8 +64,8 @@ fetchProfile: async () => {
     
     set({ 
       user: response.data,
-      isAuthenticated: true,   // 👈 FIX: mark authenticated
-      token,                   // 👈 optional: keep token in store
+      isAuthenticated: true,  
+      token,                   
       isLoading: false 
     });
     
@@ -83,7 +73,7 @@ fetchProfile: async () => {
   } catch (error) {
     set({ 
       error: error.response?.data?.message || 'Failed to fetch profile',
-      isAuthenticated: false,  // 👈 explicitly reset auth on error
+      isAuthenticated: false,  
       token: null,
       user: null,
       isLoading: false 

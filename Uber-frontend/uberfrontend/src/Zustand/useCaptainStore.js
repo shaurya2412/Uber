@@ -6,13 +6,14 @@ const API_BASE = 'http://localhost:5000';
 
 export const useCaptainStore = create((set) => ({
   captain: null,
-  isAuthenticated: false,
-  token: null,
+  active: true,
+  isAuthenticated: !!localStorage.getItem('captaintoken'),
+  token: localStorage.getItem('captaintoken') || null,
   availableRides: [],
   currentRide: null,
   rideHistory: [],
   isLoading: false,
-  error: null,  
+  error: null,
     setAuthenticated: (value) => set({ isAuthenticated: value }),
 
   login: async (email, password) => {

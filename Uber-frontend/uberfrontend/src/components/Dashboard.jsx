@@ -56,7 +56,6 @@ const Dashboard = () => {
     }
     
     try {
-      // ✅ Fetch coordinates dynamically
       const pickupCoords = await getCoordinates(pickup);
       const destCoords = await getCoordinates(destination);
 
