@@ -1,14 +1,4 @@
-<<<<<<< HEAD
-=======
 
-
-## 🚀 Getting Started
->>>>>>> 12554067dc5a5765945e3354ef24a7f5ec4e9de5
-
-### Prerequisites
-- Node.js (v18 or higher)
-- MongoDB
-- Redis (optional, for caching)
 
 ### Backend Setup
 
@@ -26,7 +16,6 @@
    Create `.env` file with:
    ```
    PORT=5000
-   MONGODB_URI=mongodb://localhost:27017/uber-clone
    JWT_SECRET=your-secret-key
    ```
 
