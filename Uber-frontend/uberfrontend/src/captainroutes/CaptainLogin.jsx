@@ -116,11 +116,12 @@ localStorage.setItem("captaintoken", token);
           <p className="text-center text-sm text-gray-500 mt-6">
             New to Uber as a Captain?{" "}
             <Link
-              to="/captain/register" 
+              to="/captainregister" 
               className="text-black font-medium cursor-pointer hover:underline"
             >
               Register
-            </Link>
+            </Link>,
+           
           </p>
 
           <p className="text-center text-xs text-gray-400 mt-2">

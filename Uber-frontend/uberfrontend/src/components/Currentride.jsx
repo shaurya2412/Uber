@@ -129,14 +129,13 @@ const Currentride = () => {
       {getStatusText(currentRide.status)}
     </div>
     
-    {process.env.NODE_ENV === 'development' && (
+   
       <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
         <div>Ride ID: {currentRide._id}</div>
         <div>Status: {currentRide.status}</div>
         <div>Captain: {currentRide.captain ? 'Assigned' : 'Not assigned'}</div>
         <div>Fare: ${currentRide.fare}</div>
       </div>
-    )}
   </div>
   <div className="p-6 pt-0 space-y-4">
     {currentRide.captain ? (
