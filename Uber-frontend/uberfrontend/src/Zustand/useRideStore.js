@@ -1,4 +1,3 @@
-// stores/useRideStore.js
 import { create } from 'zustand';
 import axios from 'axios';
 
@@ -101,16 +100,13 @@ export const useRideStore = create((set,) => ({
     set({ rideStatus: newStatus });
   },
   
-  // Clear Current Ride (after completion)
   clearCurrentRide: () => {
     set({ 
       currentRide: null,
       rideStatus: 'idle' 
     });
   },
-  
-  // Clear Error
-  clearError: () => {
+    clearError: () => {
     set({ error: null });
   }
 }));

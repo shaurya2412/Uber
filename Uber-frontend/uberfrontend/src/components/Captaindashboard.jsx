@@ -1,269 +1,227 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import {useCaptainStore} from "../zustand/useCaptainStore";
+import React, { use, useState } from "react";
+import {
+  Phone,
+  MessageSquare,
+  X,
+  MapPin,
+  Navigation,
+  DollarSign,
+  Clock,
+  Star,
+  User,
+} from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { useCaptainStore } from "../Zustand/useCaptainStore";
 
-const Captaindashboard = () => {
-  const [isOnline, setIsOnline] = useState(false);
-const [rides, setAvailableRides] = useState([]);
-const {token, active} = useCaptainStore();
+const weeklyEarnings = [
+  { day: "Mon", earnings: 120 },
+  { day: "Tue", earnings: 95 },
+  { day: "Wed", earnings: 140 },
+  { day: "Thu", earnings: 110 },
+  { day: "Fri", earnings: 156 },
+  { day: "Sat", earnings: 180 },
+  { day: "Sun", earnings: 85 },
+];
 
-  useEffect(() => {
-    const fetchRides = async () => {
-      try { 
-        const res = await axios.get("http://localhost:5000/rides/available", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setAvailableRides(res.data.data);
-      } catch (err) {
-        console.error("Polling error:", err);
-      }
-    };
+const recentTrips = [
+  { name: "Mike Chen", time: "2:30 PM", id: "R123455", fare: 18.25, rating: 5 },
+  { name: "Emma Davis", time: "1:45 PM", id: "R123454", fare: 32.1, rating: 4 },
+  { name: "John Smith", time: "12:20 PM", id: "R123453", fare: 15.8, rating: 5 },
+];
 
-    fetchRides();
-    const interval = setInterval(fetchRides, 5000);
+// Card wrapper
+const Card = ({ children }) => (
+  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+    {children}
+  </div>
+);
 
-    return () => clearInterval(interval);
-  }, [token]);
+const CaptainDashboard = () => {
+  const {token, active} = useCaptainStore;
 
-  const ProgressBar = ({ label, value, icon }) => {
-    const percentage = parseInt(value, 10);
-    const barColor = percentage >= 90 ? 'bg-green-500' : percentage >= 70 ? 'bg-yellow-500' : 'bg-red-500';
+  const [isactive, setIsActive] = useState();
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-2xl font-semibold text-gray-900">Captain Dashboard</h1>
+        <div className="flex items-center space-x-3">
+          <span className="text-sm text-gray-600">Status:</span>
 
-    return (
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center text-gray-300">
-            {icon && <span className="mr-2 text-base">{icon}</span>}
-            <span className="text-sm">{label}</span>
-          </div>
-          <span className="text-sm font-medium">{value}</span>
-        </div>
-        <div className="w-full bg-black-700 rounded-full h-2.5">
-          <div
-            className={`${barColor} h-2.5 rounded-full`}
-            style={{ width: `${percentage}%` }} 
-          ></div>
-        </div>
-      </div>
-    );
-  };
-
-  const DriverStatusToggle = () => {
-    return (
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Driver Status</h2>
-        <p className="text-gray-400 text-sm mb-4">Toggle your availability to receive trip requests</p>
-
-        <div className="flex items-center justify-between mt-4">
-          <span className="text-lg">Go online to start receiving trips</span>
-          <div
-            className={`relative inline-flex flex-shrink-0 h-6 w-12 border-2 ${
-              isOnline ? 'border-green-500 bg-green-500' : 'border-black-600 bg-black-700'
-            } rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-green-500`}
-            role="switch"
-            aria-checked={active}
-            onClick={() => setIsOnline(!active)} 
+          {/* Toggle Switch */}
+          <button
+            onClick={() => setIsActive(!isactive)}
+            className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${
+              isactive ? "bg-green-500" : "bg-gray-400"
+            }`}
           >
             <span
-              aria-hidden="true"
-              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200 ${
-                isOnline ? 'translate-x-6' : 'translate-x-0'
+              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                isactive ? "translate-x-6" : "translate-x-1"
               }`}
-            ></span>
-          </div>
-        </div>
-        <div className="text-right mt-2">
-           <span className={`text-sm font-medium ${isOnline ? 'text-green-400' : 'text-gray-400'}`}>
-             {isOnline ? 'Online' : 'Offline'}
-           </span>
-        </div>
-      </div>
-    );
-  };
+            />
+          </button>
 
-  const StatCard = ({ title, value, change, changeColor, symbol, icon }) => {
-    return (
-      <div className="bg-black rounded-lg p-6 shadow-md flex flex-col justify-between border border-gray-700">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="text-lg font-medium text-gray-300">{title}</h3>
-          {icon && <span className="text-xl">{icon}</span>}
-        </div>
-        <p className="text-4xl font-bold mb-1">
-          {symbol && <span className="text-2xl mr-1">{symbol}</span>}
-          {value}
-        </p>
-        <p className={`text-sm ${changeColor || 'text-gray-400'}`}>{change}</p>
-      </div>
-    );
-  };
-
-  const CurrentTripCard = () => {
-    return (
-      <div className="bg-black rounded-lg p-6 shadow-md border border-gray-700">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Current Trip</h2>
-          <span className="bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-full">Active Trip</span>
-        </div>
-        <p className="text-gray-400 text-sm mb-4">Trip in progress</p>
-
-        {/* Passenger  */}
-        <div className="flex items-center mb-4">
+          {/* Status Text */}
+          <span
+            className={`flex items-center font-medium ${
+              isactive ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            ● {isactive ? "Online" : "Offline"}
+          </span>
           <img
-            src="https://placehold.co/40x40/333333/FFFFFF?text=SM" 
-            alt="Sarah Miller"
-            className="w-10 h-10 rounded-full mr-3"
+            src="https://i.pravatar.cc/40"
+            alt="Captain"
+            className="w-10 h-10 rounded-full border border-gray-300"
           />
-          <div>
-            <p className="text-lg font-medium">Sarah Miller</p>
-            <p className="text-gray-400 text-sm">4.9 ⭐ · UberX</p>
-          </div>
         </div>
+      </div>
 
-        <div className="space-y-3 mb-6">
-          <div className="flex items-start">
-            <span className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0 mt-1 mr-3"></span>
-            <div>
-              <p className="text-gray-400 text-sm">Pickup</p>
-              <p className="font-medium">123 Main Street, Downtown</p>
+      {/* Layout */}
+      <div className="grid grid-cols-12 gap-6">
+        {/* Left side */}
+        <div className="col-span-8 space-y-6">
+          {/* Current Ride */}
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">Current Ride</h2>
+              <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-600">
+                In Progress
+              </span>
             </div>
-          </div>
-          <div className="flex items-start">
-            <span className="w-3 h-3 bg-red-500 rounded-full flex-shrink-0 mt-1 mr-3"></span>
-            <div>
-              <p className="text-gray-400 text-sm">Destination</p>
-              <p className="font-medium">456 Oak Avenue, Uptown</p>
-            </div> 
-          </div>
+            <div className="flex items-center space-x-3 mb-4">
+              <img
+                src="https://i.pravatar.cc/100?img=5"
+                alt="Passenger"
+                className="w-12 h-12 rounded-full"
+              />
+              <div>
+                <h3 className="text-gray-800 font-medium">Sarah Johnson</h3>
+                <p className="text-sm text-gray-500">Ride ID: R123456</p>
+              </div>
+            </div>
+            <div className="space-y-3 mb-4">
+              <div className="flex items-center space-x-2">
+                <MapPin className="w-4 h-4 text-green-500" />
+                <p className="text-sm text-gray-700">123 Main St, Downtown</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Navigation className="w-4 h-4 text-red-500" />
+                <p className="text-sm text-gray-700">456 Oak Ave, Uptown</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
+              <span className="flex items-center space-x-1">
+                <Navigation className="w-4 h-4" /> <p>8.2 km</p>
+              </span>
+              <span className="flex items-center space-x-1">
+                <Clock className="w-4 h-4" /> <p>15 min</p>
+              </span>
+              <span className="flex items-center space-x-1">
+                <DollarSign className="w-4 h-4" /> <p>$24.5</p>
+              </span>
+            </div>
+            <div className="flex space-x-3">
+              <button className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100">
+                <Phone className="w-5 h-5" />
+              </button>
+              <button className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100">
+                <MessageSquare className="w-5 h-5" />
+              </button>
+              <button className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </Card>
+
+          {/* Recent Trips */}
+          <Card>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Recent Trips</h2>
+            <div className="space-y-4">
+              {recentTrips.map((trip, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between hover:bg-gray-50 p-2 rounded-lg"
+                >
+                  <div className="flex items-center space-x-3">
+                    <User className="w-8 h-8 text-gray-400" />
+                    <div>
+                      <p className="font-medium text-gray-800">{trip.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {trip.time} • {trip.id}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-gray-800 font-medium">${trip.fare}</p>
+                    <p className="text-sm text-green-600 flex items-center justify-end">
+                      <Star className="w-4 h-4 mr-1" /> {trip.rating}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
 
-        <div className="flex justify-between items-center text-lg font-semibold border-t border-gray-700 pt-4 mt-4">
-          <p className="text-gray-400">12 min remaining</p>
-          <p>$18.50 estimated</p>
-        </div>
-      </div>
-    );
-  };
+        {/* Right side */}
+        <div className="col-span-4 space-y-6">
+          {/* Summary */}
+          <Card>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Today's Summary</h2>
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div>
+                <p className="text-2xl font-bold text-green-600">$156.75</p>
+                <p className="text-sm text-gray-500">Earnings</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">12</p>
+                <p className="text-sm text-gray-500">Trips</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">6.5h</p>
+                <p className="text-sm text-gray-500">Online</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">4.9</p>
+                <p className="text-sm text-gray-500">Rating</p>
+              </div>
+            </div>
+          </Card>
 
-  const PerformanceMetricsCard = () => {
-    return (
-      <div className="bg-black rounded-lg p-6 shadow-md border border-gray-700">
-        <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
-        <p className="text-gray-400 text-sm mb-6">Your driving performance this week</p>
+          {/* Weekly Earnings */}
+          <Card>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Weekly Earnings</h2>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={weeklyEarnings}>
+                <XAxis dataKey="day" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="earnings" fill="#10B981" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
 
-        <ProgressBar label="Acceptance Rate" value="94%" icon="📊" />
-        <ProgressBar label="Completion Rate" value="98%" icon="✅" />
-        <ProgressBar label="On-Time Pickup" value="89%" icon="⏰" />
-      </div>
-    );
-  };
-
-  const RecentTripItem = ({ type, rating, pickup, destination, timeAgo, earnings }) => {
-    return (
-      <div className="bg-black rounded-lg p-6 shadow-md mb-4 border border-gray-700">
-        <div className="flex justify-between items-center mb-2">
-          <div className="flex items-center">
-            <p className="font-semibold text-lg mr-2">{type}</p>
-            <span className="text-yellow-400">
-              {'⭐'.repeat(rating)} 
-            </span>
-          </div>
-          <p className="text-green-400 font-semibold text-lg">${earnings}</p>
-        </div>
-        <div className="space-y-2 mb-3">
-          <div className="flex items-center">
-            <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-            <p className="text-gray-300">{pickup}</p>
-          </div>
-          <div className="flex items-center">
-            <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-            <p className="text-gray-300">{destination}</p>
-          </div>
-        </div>
-        <p className="text-gray-400 text-sm">{timeAgo}</p>
-      </div>
-    );
-  };
-
-  return (
-    <div className="min-h-screen bg-black text-white p-6 font-sans border border-gray-700">
-      <div className="container mx-auto p-4 md:p-8">
-        <h1 className="text-3xl font-bold mb-8">Captain Dashboard</h1>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-black rounded-lg p-6 shadow-md md:col-span-2 lg:col-span-1 flex flex-col justify-between border border-gray-700">
-            <DriverStatusToggle />
-          </div>
-
-          <StatCard
-            title="Today's Earnings"
-            value="$127.50"
-            change="+12% from yesterday"
-            changeColor="text-green-400"
-            symbol="$"
-          />
-          <StatCard
-            title="This Week"
-            value="$892.30"
-            change="+8% from last week"
-            changeColor="text-green-400"
-            symbol="↗"
-          />
-          <StatCard
-            title="Hours Online"
-            value="6.5h"
-            change="Today's active time"
-            icon="⏰"
-          />
-          <StatCard
-            title="Rating"
-            value="4.89"
-            change="Based on 1,247 trips"
-            icon="⭐"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2">
-            <CurrentTripCard />
-          </div>
-
-          <div className="lg:col-span-1">
-            <PerformanceMetricsCard />
-          </div>
-        </div>
-
-        <div className="bg-black rounded-lg p-6 shadow-md border border-gray-700">
-          <h2 className="text-xl font-semibold mb-2">Recent Trips</h2>
-          <p className="text-gray-400 text-sm mb-4">Your latest completed rides</p>
-
-          <RecentTripItem
-            type="UberX"
-            rating={4}
-            pickup="Downtown Mall"
-            destination="Airport Terminal 2"
-            timeAgo="2 hours ago"
-            earnings="24.50"
-          />
-          <RecentTripItem
-            type="UberX"
-            rating={4}
-            pickup="Central Station"
-            destination="Business District"
-            timeAgo="4 hours ago"
-            earnings="16.75"
-          />
-          <RecentTripItem
-            type="UberPool"
-            rating={3}
-            pickup="University Campus"
-            destination="Shopping Center"
-            timeAgo="6 hours ago"
-            earnings="12.25"
-          />
+          {/* Quick Actions */}
+          <Card>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
+            <div className="space-y-3">
+              <button className="w-full py-2 border border-gray-300 rounded-lg hover:bg-gray-100">
+                Go to Popular Area
+              </button>
+              <button className="w-full py-2 border border-gray-300 rounded-lg hover:bg-gray-100">
+                Break Time
+              </button>
+              <button className="w-full py-2 border border-gray-300 rounded-lg hover:bg-gray-100">
+                View Analytics
+              </button>
+            </div>
+          </Card>
         </div>
       </div>
     </div>
   );
-}
+};
 
-export default Captaindashboard;
+export default CaptainDashboard;

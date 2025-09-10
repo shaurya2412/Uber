@@ -4,7 +4,6 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex justify-center items-center">
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
-        {/* Profile Image */}
         <div className="flex justify-center mb-4">
           <img
             src="https://via.placeholder.com/120"
