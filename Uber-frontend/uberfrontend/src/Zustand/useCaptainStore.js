@@ -53,9 +53,7 @@ set({
   token: null
 })
 },
-  
-  // Fetch Available Rides
-  fetchAvailableRides: async () => {
+    fetchAvailableRides: async () => {
     set({ isLoading: true, error: null });
     
     try {
@@ -79,7 +77,6 @@ set({
     }
   },
   
-  // Accept a Ride
   acceptRide: async (rideId) => {
     set({ isLoading: true, error: null });
     

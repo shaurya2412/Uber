@@ -23,7 +23,7 @@ const LaunchPage = () => {
         {/* Left Text */}
         <div className="max-w-xl text-center lg:text-left">
           <span className="inline-block px-3 py-1 text-sm font-medium text-black bg-purple-100 rounded-full">
-            Trusted by 1M+ users
+            Trusted by 10M+ users
           </span>
           <h1 className="text-5xl sm:text-6xl font-extrabold mt-6 leading-tight text-gray-900">
             Your daily commute <br className="hidden sm:inline" />
