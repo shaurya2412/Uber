@@ -11,7 +11,7 @@ module.exports.registerCaptain = async(req, res, next) => {
         console.log('❌ Validation errors:', errors.array());
         return res.status(400).json({error: errors.array()});
     }
-    
+    ``
     try {
         const { name, email, password, vehicle } = req.body;
         const { firstname, lastname } = name;

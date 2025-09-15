@@ -6,13 +6,16 @@ const userSchema = new mongoose.Schema({
     fullname: {
         firstname: {
             type: String,
-            required: true,
             minlength: [3, "First name must be at least 3 characters"]
         },
         lastname: {
             type: String,
             minlength: [3, "Last name must be at least 3 characters"]
         }
+    },
+    name: {
+        type: String,
+        minlength: [3, "Name must be at least 3 characters"]
     },
     email: {
         type: String,
@@ -22,9 +25,13 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
         select: false
     },
+    profilePic: {
+        type: String
+    },
+    googleId: { type: String, unique: true, sparse: true },
+    authProvider: { type: String, enum: ["local", "google"], default: "local" },
     sockerId: {
         type: String
     }

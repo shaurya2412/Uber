@@ -27,7 +27,7 @@ const LaunchPage = () => {
           </span>
           <h1 className="text-5xl sm:text-6xl font-extrabold mt-6 leading-tight text-gray-900">
             Your daily commute <br className="hidden sm:inline" />
-            <span className="text-purple-400">Simplified.</span>
+            <span className="text-black">Simplified.</span>
           </h1>
           <p className="mt-4 text-gray-600 text-lg">
             Safe, reliable, and affordable rides at your fingertips. Join millions

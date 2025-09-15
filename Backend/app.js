@@ -1,6 +1,8 @@
 const dotenv = require('dotenv');
 dotenv.config();
 const express = require("express");
+const googleAuthRoutes = require("./routes/googeAuth");
+
 const cors = require("cors");
 const userRoutes = require("./routes/user.routes")
 const captainRoutes = require("./routes/captain.routes")
@@ -22,5 +24,6 @@ app.get("/", (req,res)=>{
 app.use('/users',userRoutes);
 app.use("/captains", captainRoutes);
 app.use("/rides", rideRoutes);
+app.use("/auth", googleAuthRoutes);
 
 module.exports= app;
