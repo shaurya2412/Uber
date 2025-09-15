@@ -2,16 +2,53 @@ import React, { useState } from "react";
 import { FaGoogle, FaFacebookF } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { GoogleLogin } from "@react-oauth/google";
+import { useUserStore } from "../Zustand/useUserstore";
 
 const Welcome = () => {
   const navigate = useNavigate();
 
   // States for form fields
+  const setUser = useUserStore((state) => state.setUser);
+  const setToken = useUserStore((state) => state.setToken);
   const [firstname, setFirstname] = useState("");
   const [lastname, setLastname] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+
+  
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      console.log("Google Credential:", credentialResponse);
+      
+      const response = await axios.post("http://localhost:5000/auth/google", {
+        credential: credentialResponse.credential
+      });
+
+      const data = response.data;
+      console.log(credentialResponse.credential);
+      console.log(response.data);
+      if (response.status === 200 && data.token) {
+        console.log("Login successful:", data);
+        setUser(data.user);
+        setToken(data.token);
+        navigate("/dashboard");
+      } else {
+        console.error("Login failed:", data.message || "Unknown error");
+        alert(`Login failed: ${data.message || "Unknown error"}`);
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      alert("Google login failed hihihihi. Please try again.");
+    }
+  };
+
+  const handleGoogleError = () => {
+    console.log("Google Login Failed");
+    alert("Google login failed hihihi2. Please try again.");
+  };
+
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -121,9 +158,16 @@ const Welcome = () => {
 
           <div className="text-center text-sm text-gray-500 mb-4">or</div>
 
-          <button className="flex items-center justify-center gap-2 w-full border py-2 rounded-lg mb-3">
-            <FaGoogle /> Continue with Google
-          </button>
+             <GoogleLogin
+                       onSuccess={handleGoogleSuccess}
+                       onError={handleGoogleError}
+                       useOneTap={false}
+                       auto_select={false}
+                       theme="outline"
+                       size="large"
+                       text="continue_with"
+                       shape="rectangular"
+                     />
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Already have an account?{" "}

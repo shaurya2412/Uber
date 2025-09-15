@@ -11,15 +11,13 @@ router.post("/google", async (req, res) => {
     const { credential } = req.body;
     if (!credential) return res.status(400).json({ message: "No credential provided" });
 
-    // Verify ID token with Google
     const ticket = await client.verifyIdToken({
       idToken: credential,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
-    // payload contains: email, email_verified, name, picture, sub (google id), etc.
-    const { email, name, picture, sub /* google id */ } = payload;
+    const { email, name, picture, sub } = payload;
 
     if (!email) return res.status(400).json({ message: "No email in Google token" });
 
