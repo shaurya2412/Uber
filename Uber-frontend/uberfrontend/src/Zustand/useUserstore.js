@@ -11,6 +11,8 @@ export const useUserStore = create((set) => ({
     isLoading: false,
     error: null,
 
+  
+
     setUser: (user) => set({ user }),
     setToken: (token) => set({ token }),
 
@@ -47,7 +49,35 @@ export const useUserStore = create((set) => ({
         isAuthenticated: false 
       });
     },
+    
+ toggleActive: async () => {
+ const currentActiveState = get().active;
+const newActiveState = !currentActiveState;
+const token = get().token;
 
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await axios.put(`${API_BASE}/captains/status`,
+        { active: newActiveState },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      set({
+        active: response.data.captain.active,
+        isLoading: false,
+        error: null,
+      });
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || 'Failed to update status',
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
     fetchProfile: async () => {
       set({ isLoading: true, error: null });
       try {

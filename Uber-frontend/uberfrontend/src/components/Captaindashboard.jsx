@@ -1,4 +1,4 @@
-import React, { use, useState } from "react";
+import React, { use, useState, useEffect } from "react";
 import {
   Phone,
   MessageSquare,
@@ -12,11 +12,11 @@ import {
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useCaptainStore } from "../Zustand/useCaptainStore";
-
+import { useRideStore } from "../Zustand/useRideStore";
 const weeklyEarnings = [
   { day: "Mon", earnings: 120 },
   { day: "Tue", earnings: 95 },
-  { day: "Wed", earnings: 140 },
+  { day: "Wed", earnings: 140 },  
   { day: "Thu", earnings: 110 },
   { day: "Fri", earnings: 156 },
   { day: "Sat", earnings: 180 },
@@ -37,50 +37,63 @@ const Card = ({ children }) => (
 );
 
 const CaptainDashboard = () => {
-  const {token, active} = useCaptainStore;
 
-  const [isactive, setIsActive] = useState();
+  const {captain,active, isAuthenticated, token,availableRides,
+    currentRide,rideHistory,login,toggleActive ,fetchCaptainProfile, logout, fetchAvailableRides,acceptRide} = useCaptainStore();
+
+     const { 
+      
+        rideStatus, 
+        isLoading, 
+        error,
+        bookRide, 
+        fetchCurrentRide, 
+        fetchRideHistory 
+      } = useRideStore();
+
+       useEffect(() => {
+    fetchCaptainProfile();
+    fetchAvailableRides();
+  }, [fetchCaptainProfile, fetchAvailableRides]);
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-sm font-semibold text-gray-900">Captain Dashboard</h1>
-        <div className="flex items-center space-x-3">
-          <span className="text-sm text-gray-600">Status:</span>
+     <div className="min-h-screen bg-gray-50 p-6">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="font-semibold text-gray-600">Captain Dashboard</h1>
+        <div className="flex items-center space-x-3">
+          <span className="text-sm text-gray-600">Status:</span>
 
-          <button
-            onClick={() => setIsActive(!isactive)}
-            className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${
-              isactive ? "bg-green-500" : "bg-gray-400"
-            }`}
-          >
-            <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                isactive ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </button>
 
-          {/* Status Text */}
-          <span
-            className={`flex items-center font-medium ${
-              isactive ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            ● {isactive ? "Online" : "Offline"}
-          </span>
-          <img
-            src="https://i.pravatar.cc/40"
-            alt="Captain"
-            className="w-10 h-10 rounded-full border border-gray-300"
-          />
+         <button
+  onClick={async () => await toggleActive()}
+  className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${
+    active ? "bg-green-500" : "bg-gray-400"
+  }`}
+>
+  <span
+    className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+      active ? "translate-x-6" : "translate-x-1"
+    }`}
+  />
+</button>
+
+          <span
+            className={`flex items-center font-medium ${
+              active ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            ● {active ? "Online" : "Offline"}
+          </span>
+          <img
+            src="https://i.pravatar.cc/40"
+            alt="Captain"
+            className="w-10 h-10 rounded-full border border-gray-300"
+          />
         </div>
       </div>
 
-      {/* Layout */}
       <div className="grid grid-cols-12 gap-6">
-        {/* Left side */}
         <div className="col-span-8 space-y-6">
-          {/* Current Ride */}
           <Card>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-800">Current Ride</h2>
@@ -133,7 +146,6 @@ const CaptainDashboard = () => {
             </div>
           </Card>
 
-          {/* Recent Trips */}
           <Card>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Recent Trips</h2>
             <div className="space-y-4">
@@ -163,10 +175,8 @@ const CaptainDashboard = () => {
           </Card>
         </div>
 
-        {/* Right side */}
         <div className="col-span-4 space-y-6">
-          {/* Summary */}
-          <Card>
+         <Card>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Today's Summary</h2>
             <div className="grid grid-cols-2 gap-4 text-center">
               <div>
@@ -188,7 +198,6 @@ const CaptainDashboard = () => {
             </div>
           </Card>
 
-          {/* Weekly Earnings */}
           <Card>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Weekly Earnings</h2>
             <ResponsiveContainer width="100%" height={200}>
@@ -201,7 +210,6 @@ const CaptainDashboard = () => {
             </ResponsiveContainer>
           </Card>
 
-          {/* Quick Actions */}
           <Card>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
             <div className="space-y-3">

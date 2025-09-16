@@ -50,9 +50,10 @@ const CaptainProtectedRoute = ({ children }) => {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/captainlogin" replace />;
-  }
+  // Only redirect if loading is finished AND not authenticated
+if (!loading && !isAuthenticated) {
+  return <Navigate to="/captainlogin" replace />;
+}
   return children;
 };
 

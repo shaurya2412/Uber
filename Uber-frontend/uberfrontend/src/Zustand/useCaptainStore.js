@@ -1,12 +1,11 @@
-// stores/useCaptainStore.js
 import { create } from 'zustand';
 import axios from 'axios';
 
 const API_BASE = 'http://localhost:5000';
 
-export const useCaptainStore = create((set) => ({
+export const useCaptainStore = create((set,get) => ({
   captain: null,
-  active: true,
+  active: false,
   isAuthenticated: !!localStorage.getItem('captaintoken'),
   token: localStorage.getItem('captaintoken') || null,
   availableRides: [],
@@ -15,6 +14,37 @@ export const useCaptainStore = create((set) => ({
   isLoading: false,
   error: null,
     setAuthenticated: (value) => set({ isAuthenticated: value }),
+
+    fetchCaptainProfile: async () => {
+    const token = get().token;
+    if (!token) {
+      set({ isAuthenticated: false, captain: null, active: false });
+      return;
+    }
+
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await axios.get(`${API_BASE}/captains/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      set({
+        captain: response.data.captain,
+        active: response.data.captain.active,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+      });
+    } catch (error) {
+      get().logout();
+      set({
+        error: error.response?.data?.message || 'Failed to fetch captain profile',
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
 
   login: async (email, password) => {
     set({ isLoading: true, error: null });
@@ -45,6 +75,37 @@ export const useCaptainStore = create((set) => ({
       throw error;
     }
 },
+
+    
+ toggleActive: async () => {
+ const currentActiveState = get().active;
+const newActiveState = !currentActiveState;
+const token = get().token;
+
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await axios.put(`${API_BASE}/captains/status`,
+        { active: newActiveState },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      set({
+        active: response.data.captain.active,
+        isLoading: false,
+        error: null,
+      });
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || 'Failed to update status',
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
 logout: () =>{
 localStorage.removeItem ('captaintoken');
 set({

@@ -17,12 +17,12 @@ router.post("/google", async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    const { email, name, picture, sub } = payload;
+    const { email, name, picture, sub  } = payload;
 
     if (!email) return res.status(400).json({ message: "No email in Google token" });
 
     let user = await User.findOne({ email });
-    if (!user) {
+    if (!user) {    
       user = new User({
         name,
         email,
