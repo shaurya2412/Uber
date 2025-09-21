@@ -46,6 +46,50 @@ export const useCaptainStore = create((set,get) => ({
     }
   },
 
+  // Fetch captain's current active ride (accepted or in_progress)
+  fetchCurrentRide: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = get().token || localStorage.getItem('captaintoken');
+      const response = await axios.get(`${API_BASE} `, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      set({ currentRide: response.data.data, isLoading: false });
+      return response.data.data;
+    } catch (error) {
+      // If 404 no active ride, clear without treating as an error
+      const status = error?.response?.status;
+      if (status === 404) {
+        set({ currentRide: null, isLoading: false });
+        return null;
+      }
+      set({
+        error: error.response?.data?.message || 'Failed to fetch current ride',
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  // Fetch captain's completed ride history
+  fetchRideHistory: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = get().token || localStorage.getItem('captaintoken');
+      const response = await axios.get(`${API_BASE}/rides/history`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      set({ rideHistory: response.data.data, isLoading: false });
+      return response.data.data;
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || 'Failed to fetch ride history',
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     

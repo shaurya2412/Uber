@@ -1,4 +1,4 @@
-import React, { use, useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   Phone,
   MessageSquare,
@@ -39,22 +39,22 @@ const Card = ({ children }) => (
 const CaptainDashboard = () => {
 
   const {captain,active, isAuthenticated, token,availableRides,
-    currentRide,rideHistory,login,toggleActive ,fetchCaptainProfile, logout, fetchAvailableRides,acceptRide} = useCaptainStore();
+    currentRide,rideHistory,login,toggleActive ,fetchCaptainProfile, logout, fetchAvailableRides,acceptRide, fetchCurrentRide, fetchRideHistory} = useCaptainStore();
 
      const { 
       
         rideStatus, 
         isLoading, 
         error,
-        bookRide, 
-        fetchCurrentRide, 
-        fetchRideHistory 
+        bookRide 
       } = useRideStore();
 
        useEffect(() => {
     fetchCaptainProfile();
     fetchAvailableRides();
-  }, [fetchCaptainProfile, fetchAvailableRides]);
+    fetchCurrentRide();
+    fetchRideHistory();
+  }, [fetchCaptainProfile, fetchAvailableRides, fetchCurrentRide, fetchRideHistory]);
 
   return (
      <div className="min-h-screen bg-gray-50 p-6">
@@ -97,42 +97,48 @@ const CaptainDashboard = () => {
           <Card>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-800">Current Ride</h2>
-              <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-600">
-                In Progress
+              <span className={`px-3 py-1 text-xs rounded-full ${currentRide ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-600"}`}>
+                {currentRide ? (currentRide.status || rideStatus || "In Progress") : "No Active Ride"}
               </span>
             </div>
-            <div className="flex items-center space-x-3 mb-4">
-              <img
-                src="https://i.pravatar.cc/100?img=5"
-                alt="Passenger"
-                className="w-12 h-12 rounded-full"
-              />
-              <div>
-                <h3 className="text-gray-800 font-medium">Sarah Johnson</h3>
-                <p className="text-sm text-gray-500">Ride ID: R123456</p>
+            {currentRide ? (
+              <div className="flex items-center space-x-3 mb-4">
+                <img
+                  src="https://i.pravatar.cc/100?img=5"
+                  alt="Passenger"
+                  className="w-12 h-12 rounded-full"
+                />
+                <div>
+                  <h3 className="text-gray-800 font-medium">{currentRide?.rider?.name || currentRide?.user?.name || "Rider"}</h3>
+                  <p className="text-sm text-gray-500">Ride ID: {currentRide?._id || currentRide?.id || "—"}</p>
+                </div>
               </div>
-            </div>
-            <div className="space-y-3 mb-4">
-              <div className="flex items-center space-x-2">
-                <MapPin className="w-4 h-4 text-green-500" />
-                <p className="text-sm text-gray-700">123 Main St, Downtown</p>
+            ) : null}
+            {currentRide ? (
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center space-x-2">
+                  <MapPin className="w-4 h-4 text-green-500" />
+                  <p className="text-sm text-gray-700">{currentRide?.pickup?.address || currentRide?.pickupAddress || "Pickup not set"}</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Navigation className="w-4 h-4 text-red-500" />
+                  <p className="text-sm text-gray-700">{currentRide?.dropoff?.address || currentRide?.destination?.address || currentRide?.dropoffAddress || "Dropoff not set"}</p>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Navigation className="w-4 h-4 text-red-500" />
-                <p className="text-sm text-gray-700">456 Oak Ave, Uptown</p>
+            ) : null}
+            {currentRide ? (
+              <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
+                <span className="flex items-center space-x-1">
+                  <Navigation className="w-4 h-4" /> <p>{currentRide?.distance || currentRide?.estimatedDistance || "—"} km</p>
+                </span>
+                <span className="flex items-center space-x-1">
+                  <Clock className="w-4 h-4" /> <p>{currentRide?.duration || currentRide?.estimatedDuration || "—"} min</p>
+                </span>
+                <span className="flex items-center space-x-1">
+                  <DollarSign className="w-4 h-4" /> <p>${Number(currentRide?.fare || currentRide?.estimatedFare || 0).toFixed(2)}</p>
+                </span>
               </div>
-            </div>
-            <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-              <span className="flex items-center space-x-1">
-                <Navigation className="w-4 h-4" /> <p>8.2 km</p>
-              </span>
-              <span className="flex items-center space-x-1">
-                <Clock className="w-4 h-4" /> <p>15 min</p>
-              </span>
-              <span className="flex items-center space-x-1">
-                <DollarSign className="w-4 h-4" /> <p>$24.5</p>
-              </span>
-            </div>
+            ) : null}
             <div className="flex space-x-3">
               <button className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100">
                 <Phone className="w-5 h-5" />
@@ -149,28 +155,39 @@ const CaptainDashboard = () => {
           <Card>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Recent Trips</h2>
             <div className="space-y-4">
-              {recentTrips.map((trip, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between hover:bg-gray-50 p-2 rounded-lg"
-                >
-                  <div className="flex items-center space-x-3">
-                    <User className="w-8 h-8 text-gray-400" />
-                    <div>
-                      <p className="font-medium text-gray-800">{trip.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {trip.time} • {trip.id}
+              {(!rideHistory || rideHistory.length === 0) && (
+                <div className="text-sm text-gray-500">No trips yet.</div>
+              )}
+              {rideHistory && rideHistory.map((trip, idx) => {
+                const time = trip?.createdAt ? new Date(trip.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+                return (
+                  <div
+                    key={trip?._id || idx}
+                    className="flex items-center justify-between hover:bg-gray-50 p-2 rounded-lg"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <User className="w-8 h-8 text-gray-400" />
+                      <div>
+                        <p className="font-medium text-gray-800">{
+                          trip?.rider?.name ||
+                          trip?.user?.name ||
+                          (trip?.user?.fullname ? `${trip.user.fullname.firstname || ""} ${trip.user.fullname.lastname || ""}`.trim() : null) ||
+                          "Rider"
+                        }</p>
+                        <p className="text-sm text-gray-500">
+                          {time} • {trip?._id || "—"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-gray-800 font-medium">${Number(trip?.fare || 0).toFixed(2)}</p>
+                      <p className="text-sm text-green-600 flex items-center justify-end">
+                        <Star className="w-4 h-4 mr-1" /> {trip?.rating || "—"}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-gray-800 font-medium">${trip.fare}</p>
-                    <p className="text-sm text-green-600 flex items-center justify-end">
-                      <Star className="w-4 h-4 mr-1" /> {trip.rating}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Card>
         </div>
@@ -180,11 +197,11 @@ const CaptainDashboard = () => {
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Today's Summary</h2>
             <div className="grid grid-cols-2 gap-4 text-center">
               <div>
-                <p className="text-2xl font-bold text-green-600">$156.75</p>
+                <p className="text-2xl font-bold text-green-600">${Number((rideHistory || []).reduce((s, t) => s + (Number(t?.fare) || 0), 0)).toFixed(2)}</p>
                 <p className="text-sm text-gray-500">Earnings</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-800">12</p>
+                <p className="text-2xl font-bold text-gray-800">{(rideHistory || []).length}</p>
                 <p className="text-sm text-gray-500">Trips</p>
               </div>
               <div>
@@ -192,7 +209,12 @@ const CaptainDashboard = () => {
                 <p className="text-sm text-gray-500">Online</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-800">4.9</p>
+                <p className="text-2xl font-bold text-gray-800">{(() => {
+                  const trips = rideHistory || [];
+                  if (!trips.length) return 0;
+                  const total = trips.reduce((s, t) => s + (Number(t?.rating) || 0), 0);
+                  return (total / trips.length).toFixed(1);
+                })()}</p>
                 <p className="text-sm text-gray-500">Rating</p>
               </div>
             </div>
@@ -201,7 +223,24 @@ const CaptainDashboard = () => {
           <Card>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Weekly Earnings</h2>
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={weeklyEarnings}>
+              <BarChart data={(rideHistory && rideHistory.length) ? (() => {
+                const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                const map = days.reduce((acc, d) => ({ ...acc, [d]: 0 }), {});
+                (rideHistory || []).forEach((trip) => {
+                  const date = trip?.createdAt ? new Date(trip.createdAt) : null;
+                  const d = date ? days[date.getDay()] : null;
+                  if (d) map[d] += Number(trip?.fare) || 0;
+                });
+                return days.map((d) => ({ day: d, earnings: Number(map[d]?.toFixed?.(2) || map[d]) }));
+              })() : [
+                { day: "Mon", earnings: 0 },
+                { day: "Tue", earnings: 0 },
+                { day: "Wed", earnings: 0 },
+                { day: "Thu", earnings: 0 },
+                { day: "Fri", earnings: 0 },
+                { day: "Sat", earnings: 0 },
+                { day: "Sun", earnings: 0 },
+              ]}>
                 <XAxis dataKey="day" />
                 <YAxis />
                 <Tooltip />
