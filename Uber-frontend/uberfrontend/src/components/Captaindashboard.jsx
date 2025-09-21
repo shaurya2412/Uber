@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Phone,
   MessageSquare,
@@ -13,6 +13,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useCaptainStore } from "../Zustand/useCaptainStore";
 import { useRideStore } from "../Zustand/useRideStore";
+import MagicBento from "./MagicBento";
 const weeklyEarnings = [
   { day: "Mon", earnings: 120 },
   { day: "Tue", earnings: 95 },
@@ -37,6 +38,8 @@ const Card = ({ children }) => (
 );
 
 const CaptainDashboard = () => {
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
 
   const {captain,active, isAuthenticated, token,availableRides,
     currentRide,rideHistory,login,toggleActive ,fetchCaptainProfile, logout, fetchAvailableRides,acceptRide, fetchCurrentRide, fetchRideHistory} = useCaptainStore();
@@ -49,12 +52,96 @@ const CaptainDashboard = () => {
         bookRide 
       } = useRideStore();
 
+  // Debug authentication state
+  console.log('🔍 Dashboard - Auth state:', { 
+    isAuthenticated, 
+    hasToken: !!token, 
+    hasCaptain: !!captain,
+    active 
+  });
+
+  // Calculate values once to avoid recalculation on every render
+  const totalEarnings = Number((rideHistory || []).reduce((s, t) => s + (Number(t?.fare) || 0), 0)).toFixed(2);
+  const tripCount = (rideHistory || []).length;
+  const averageRating = (() => {
+    const trips = rideHistory || [];
+    if (!trips.length) return '0.0';
+    const total = trips.reduce((s, t) => s + (Number(t?.rating) || 0), 0);
+    return (total / trips.length).toFixed(1);
+  })();
+  const recentTrip = rideHistory && rideHistory.length > 0 ? rideHistory[0] : null;
+
+  // Captain-specific bento card data with rich content
+  const captainBentoData = [
+    {
+      color: currentRide ? '#10b981' : '#6b7280',
+      title: currentRide ? 'Active Ride' : 'No Active Ride',
+      description: currentRide 
+        ? `${currentRide?.pickup?.address || 'Pickup'} → ${currentRide?.destination?.address || 'Destination'}`
+        : 'Waiting for next ride',
+      label: currentRide ? 'In Progress' : 'Idle',
+      extraInfo: currentRide ? `$${Number(currentRide?.fare || 0).toFixed(2)}` : null
+    },
+    {
+      color: '#3b82f6',
+      title: 'Today\'s Revenue',
+      description: `$${totalEarnings} earned`,
+      label: 'Earnings',
+      extraInfo: `${tripCount} trips`
+    },
+    {
+      color: '#8b5cf6',
+      title: 'Recent Trip',
+      description: recentTrip 
+        ? `${recentTrip?.user?.fullname?.firstname || 'Rider'} ${recentTrip?.user?.fullname?.lastname || ''}`.trim()
+        : 'No trips yet',
+      label: 'Latest',
+      extraInfo: recentTrip 
+        ? `$${Number(recentTrip?.fare || 0).toFixed(2)}`
+        : null
+    },
+    {
+      color: active ? '#10b981' : '#ef4444',
+      title: 'Status',
+      description: active ? 'Online and ready' : 'Offline',
+      label: active ? 'Online' : 'Offline',
+      extraInfo: active ? '6.5h today' : 'Inactive'
+    },
+    {
+      color: '#f59e0b',
+      title: 'Available Rides',
+      description: `${availableRides?.length || 0} rides waiting for pickup`,
+      label: 'Pending',
+      extraInfo: availableRides?.length > 0 ? 'Tap to view' : 'None'
+    },
+    {
+      color: '#ec4899',
+      title: 'Performance',
+      description: `${averageRating} avg rating`,
+      label: 'Quality',
+      extraInfo: `${tripCount} completed`
+    }
+  ];
+
        useEffect(() => {
-    fetchCaptainProfile();
-    fetchAvailableRides();
-    fetchCurrentRide();
-    fetchRideHistory();
-  }, [fetchCaptainProfile, fetchAvailableRides, fetchCurrentRide, fetchRideHistory]);
+    const loadData = async () => {
+      try {
+        setDataLoaded(false);
+        await Promise.all([
+          fetchCaptainProfile(),
+          fetchAvailableRides(),
+          fetchCurrentRide(),
+          fetchRideHistory()
+        ]);
+        setDataLoaded(true);
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        setDataLoaded(true); // Still show the dashboard even if there's an error
+      }
+    };
+    
+    loadData();
+  }, [fetchCaptainProfile, fetchAvailableRides, fetchCurrentRide, fetchRideHistory]);
 
   return (
      <div className="min-h-screen bg-gray-50 p-6">
@@ -64,11 +151,25 @@ const CaptainDashboard = () => {
           <span className="text-sm text-gray-600">Status:</span>
 
 
-         <button
-  onClick={async () => await toggleActive()}
+         <button
+  onClick={async () => {
+    if (isToggling) return;
+    console.log('Toggle clicked, current active state:', active);
+    setIsToggling(true);
+    try {
+      const result = await toggleActive();
+      console.log('Toggle result:', result);
+    } catch (error) {
+      console.error('Error toggling status:', error);
+      alert('Failed to update status: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setIsToggling(false);
+    }
+  }}
+  disabled={isToggling}
   className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${
     active ? "bg-green-500" : "bg-gray-400"
-  }`}
+  } ${isToggling ? "opacity-50 cursor-not-allowed" : ""}`}
 >
   <span
     className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
@@ -90,6 +191,29 @@ const CaptainDashboard = () => {
             className="w-10 h-10 rounded-full border border-gray-300"
           />
         </div>
+      </div>
+
+      {/* Magic Bento Section */}
+      <div className="mb-8">
+        {!dataLoaded ? (
+          <div className="flex items-center justify-center h-64 bg-gray-100 rounded-2xl">
+            <div className="text-gray-500">Loading dashboard data...</div>
+          </div>
+        ) : (
+          <MagicBento 
+            textAutoHide={true}
+            enableStars={true}
+            enableSpotlight={true}
+            enableBorderGlow={true}
+            enableTilt={true}
+            enableMagnetism={true}
+            clickEffect={true}
+            spotlightRadius={300}
+            particleCount={12}
+            glowColor="132, 0, 255"
+            cardData={captainBentoData}
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-12 gap-6">

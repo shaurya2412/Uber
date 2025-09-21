@@ -93,6 +93,46 @@ module.exports.loginCaptain = async(req, res, next)=> {
 };
 
 module.exports.getCaptainProfile = async(req, res, next)=>{
-    res.status(200).json(req.captain);
+    res.status(200).json({
+        success: true,
+        captain: req.captain
+    });
+};
+
+module.exports.updateCaptainStatus = async(req, res, next)=>{
+    try {
+        const { active } = req.body;
+        const captainId = req.captain._id;
+
+        console.log('🔄 Updating captain status:', { captainId, active });
+
+        const captain = await captainModel.findByIdAndUpdate(
+            captainId,
+            { active: active },
+            { new: true }
+        );
+
+        console.log('✅ Captain updated:', { captainId: captain._id, active: captain.active });
+
+        if (!captain) {
+            return res.status(404).json({
+                success: false,
+                message: "Captain not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Status updated successfully",
+            captain: captain
+        });
+    } catch (error) {
+        console.error('❌ Error updating captain status:', error);
+        res.status(500).json({
+            success: false,
+            message: "Error updating captain status",
+            error: error.message
+        });
+    }
 };
 
