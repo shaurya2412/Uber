@@ -80,12 +80,12 @@ const CaptainDashboard = () => {
         ? `${currentRide?.pickup?.address || 'Pickup'} → ${currentRide?.destination?.address || 'Destination'}`
         : 'Waiting for next ride',
       label: currentRide ? 'In Progress' : 'Idle',
-      extraInfo: currentRide ? `$${Number(currentRide?.fare || 0).toFixed(2)}` : null
+      extraInfo: currentRide ? `₹${Number(currentRide?.fare || 0).toFixed(2)}` : null
     },
     {
       color: '#3b82f6',
       title: 'Today\'s Revenue',
-      description: `$${totalEarnings} earned`,
+      description: `₹${totalEarnings} earned`,
       label: 'Earnings',
       extraInfo: `${tripCount} trips`
     },
@@ -97,7 +97,7 @@ const CaptainDashboard = () => {
         : 'No trips yet',
       label: 'Latest',
       extraInfo: recentTrip 
-        ? `$${Number(recentTrip?.fare || 0).toFixed(2)}`
+        ? `₹${Number(recentTrip?.fare || 0).toFixed(2)}`
         : null
     },
     {
@@ -304,7 +304,7 @@ const CaptainDashboard = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-gray-800 font-medium">${Number(trip?.fare || 0).toFixed(2)}</p>
+                      <p className="text-gray-800 font-medium">₹{Number(trip?.fare || 0).toFixed(2)}</p>
                       <p className="text-sm text-green-600 flex items-center justify-end">
                         <Star className="w-4 h-4 mr-1" /> {trip?.rating || "—"}
                       </p>
@@ -321,7 +321,7 @@ const CaptainDashboard = () => {
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Today's Summary</h2>
             <div className="grid grid-cols-2 gap-4 text-center">
               <div>
-                <p className="text-2xl font-bold text-green-600">${Number((rideHistory || []).reduce((s, t) => s + (Number(t?.fare) || 0), 0)).toFixed(2)}</p>
+                <p className="text-2xl font-bold text-green-600">₹{Number((rideHistory || []).reduce((s, t) => s + (Number(t?.fare) || 0), 0)).toFixed(2)}</p>
                 <p className="text-sm text-gray-500">Earnings</p>
               </div>
               <div>
