@@ -1,7 +1,5 @@
 import { create } from 'zustand';
-import axios from 'axios';
-
-const API_BASE = 'http://localhost:5000';
+import apiService from '../services/apiService';
 
 export const useCaptainStore = create((set,get) => ({
   captain: null,
@@ -28,15 +26,13 @@ export const useCaptainStore = create((set,get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      console.log('📡 Making profile request to:', `${API_BASE}/captains/profile`);
-      const response = await axios.get(`${API_BASE}/captains/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      console.log('📡 Making profile request to captains/profile');
+      const response = await apiService.captain.getProfile();
 
-      console.log('✅ Profile response:', response.data);
+      console.log('✅ Profile response:', response);
       set({
-        captain: response.data.captain,
-        active: response.data.captain.active || false,
+        captain: response.captain,
+        active: response.captain.active || false,
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -56,12 +52,9 @@ export const useCaptainStore = create((set,get) => ({
   fetchCurrentRide: async () => {
     set({ isLoading: true, error: null });
     try {
-      const token = get().token || localStorage.getItem('captaintoken');
-      const response = await axios.get(`${API_BASE}/rides/current`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      set({ currentRide: response.data.data, isLoading: false });
-      return response.data.data;
+      const response = await apiService.ride.getCurrentRide();
+      set({ currentRide: response.data, isLoading: false });
+      return response.data;
     } catch (error) {
       // If 404 no active ride, clear without treating as an error
       const status = error?.response?.status;
@@ -81,12 +74,9 @@ export const useCaptainStore = create((set,get) => ({
   fetchRideHistory: async () => {
     set({ isLoading: true, error: null });
     try {
-      const token = get().token || localStorage.getItem('captaintoken');
-      const response = await axios.get(`${API_BASE}/rides/history`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      set({ rideHistory: response.data.data, isLoading: false });
-      return response.data.data;
+      const response = await apiService.ride.getRideHistory();
+      set({ rideHistory: response.data, isLoading: false });
+      return response.data;
     } catch (error) {
       set({
         error: error.response?.data?.message || 'Failed to fetch ride history',
@@ -100,12 +90,9 @@ export const useCaptainStore = create((set,get) => ({
     set({ isLoading: true, error: null });
     
     try {
-      const response = await axios.post(`${API_BASE}/captains/login`, {
-        email,
-        password
-      });
+      const response = await apiService.captain.login(email, password);
       
-      const { token, captain } = response.data;
+      const { token, captain } = response;
       
       localStorage.setItem('captaintoken', token);
       
@@ -116,7 +103,7 @@ export const useCaptainStore = create((set,get) => ({
         isLoading: false 
       });
       
-      return response.data;
+      return response;
     } catch (error) {
       set({ 
         error: error.response?.data?.message || 'Login failed',
@@ -147,17 +134,12 @@ console.log('🎫 Token preview:', token ? token.substring(0, 20) + '...' : 'nul
     }
 
     try {
-      const response = await axios.put(`${API_BASE}/captains/status`,
-        { active: newActiveState },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      const response = await apiService.captain.updateStatus(newActiveState);
       
-      console.log('✅ Toggle response:', response.data);
+      console.log('✅ Toggle response:', response);
       
       set({
-        active: response.data.captain.active,
+        active: response.captain.active,
         isLoading: false,
         error: null,
       });
@@ -183,17 +165,14 @@ set({
     set({ isLoading: true, error: null });
     
     try {
-      const token = localStorage.getItem('captaintoken');
-      const response = await axios.get(`${API_BASE}/rides/available`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await apiService.ride.getAvailableRides();
       
       set({ 
-        availableRides: response.data.data,
+        availableRides: response.data,
         isLoading: false 
       });
       
-      return response.data.data;
+      return response.data;
     } catch (error) {
       set({ 
         error: error.response?.data?.message || 'Failed to fetch rides',
@@ -207,17 +186,14 @@ set({
     set({ isLoading: true, error: null });
     
     try {
-      const token = localStorage.getItem('captaintoken');
-      const response = await axios.post(`${API_BASE}/rides/${rideId}/accept`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await apiService.ride.acceptRide(rideId);
       
       set({ 
-        currentRide: response.data.data,
+        currentRide: response.data,
         isLoading: false 
       });
       
-      return response.data;
+      return response;
     } catch (error) {
       set({ 
         error: error.response?.data?.message || 'Failed to accept ride',

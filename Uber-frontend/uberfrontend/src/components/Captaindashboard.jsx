@@ -14,6 +14,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recha
 import { useCaptainStore } from "../Zustand/useCaptainStore";
 import { useRideStore } from "../Zustand/useRideStore";
 import MagicBento from "./MagicBento";
+import EnhancedMap from "./EnhancedMap";
 const weeklyEarnings = [
   { day: "Mon", earnings: 120 },
   { day: "Tue", earnings: 95 },
@@ -386,6 +387,51 @@ const CaptainDashboard = () => {
                 View Analytics
               </button>
             </div>
+          </Card>
+
+          {/* Enhanced Map Integration for Captain Dashboard */}
+          <Card>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Current Location & Ride Map</h2>
+            <div className="h-64 rounded-lg overflow-hidden border border-gray-200">
+              <EnhancedMap
+                center={
+                  currentRide?.pickup?.coordinates
+                    ? [currentRide.pickup.coordinates.lat, currentRide.pickup.coordinates.lng]
+                    : [28.6139, 77.209] // Default center (Delhi)
+                }
+                zoom={currentRide ? 15 : 12}
+                userLocation={
+                  currentRide?.pickup?.coordinates
+                    ? [currentRide.pickup.coordinates.lat, currentRide.pickup.coordinates.lng]
+                    : null
+                }
+                driverLocation={
+                  currentRide?.captain?.location || captain?.location
+                    ? [currentRide?.captain?.location?.lat || captain?.location?.lat, 
+                       currentRide?.captain?.location?.lng || captain?.location?.lng]
+                    : null
+                }
+                pickupLocation={
+                  currentRide?.pickup?.coordinates
+                    ? [currentRide.pickup.coordinates.lat, currentRide.pickup.coordinates.lng]
+                    : null
+                }
+                destinationLocation={
+                  currentRide?.destination?.coordinates
+                    ? [currentRide.destination.coordinates.lat, currentRide.destination.coordinates.lng]
+                    : null
+                }
+                showRoute={!!currentRide}
+                rideStatus={currentRide?.status || 'idle'}
+              />
+            </div>
+            {currentRide && (
+              <div className="mt-3 text-sm text-gray-600">
+                <p>📍 Pickup: {currentRide?.pickup?.address || 'Location not set'}</p>
+                <p>🎯 Destination: {currentRide?.destination?.address || 'Location not set'}</p>
+                <p>🚗 Status: <span className="font-medium capitalize">{currentRide?.status || 'Unknown'}</span></p>
+              </div>
+            )}
           </Card>
         </div>
       </div>

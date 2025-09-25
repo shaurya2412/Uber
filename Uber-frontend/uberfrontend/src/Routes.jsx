@@ -8,6 +8,11 @@ import CaptainRegister from "./captainroutes/captainregister";
 import LaunchPage from "./components/Launchpage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CaptainProtectedRoute from "./components/CaptainProtectedRoute";
+import IntegrationTest from "./components/IntegrationTest";
+import IndiaMapTest from "./components/IndiaMapTest";
+import CoordinateDebug from "./components/CoordinateDebug";
+import IndiaPointersTest from "./components/IndiaPointersTest";
+import IndianCoordinatesTest from "./components/IndianCoordinatesTest";
 const AllRoutes = () => {
   return (
     <Routes>
@@ -24,6 +29,11 @@ const AllRoutes = () => {
       }/>
       <Route path="/captainlogin" element={<CaptainLogin/>}/>
       <Route path="/captainRegister" element={<CaptainRegister/>}/>
+      <Route path="/test" element={<IntegrationTest/>}/>
+      <Route path="/india-test" element={<IndiaMapTest/>}/>
+      <Route path="/coord-debug" element={<CoordinateDebug/>}/>
+      <Route path="/india-pointers" element={<IndiaPointersTest/>}/>
+      <Route path="/indian-coords" element={<IndianCoordinatesTest/>}/>
       <Route path="*" element={<div>404 - Page Not Found</div>}
 
       />
