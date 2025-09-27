@@ -1,6 +1,7 @@
 // Dashboard.jsx
 import React, { useState, useEffect } from "react";
 import Cardcomponent from "./Cardcomponent";
+import OSMMap from "./Map";
 import Currentride from "./Currentride";
 import RecentRides from "./RecentRides";
 import { useUserStore } from "../Zustand/useUserstore";
@@ -84,7 +85,7 @@ const Dashboard = () => {
       console.error("Failed to book ride:", error);
     }
   };
-
+console.log(pickupCoords,destCoords);
   const renderRideForm = () => (
     <div className="bg-black p-4 mt-4 ml-4 rounded-2xl flex flex-col w-[32vw] border-1 h-fixed">
       <div className="flex justify-between items-center mb-2">
@@ -164,7 +165,10 @@ const Dashboard = () => {
         <p className="text-white">No active ride</p>
       )}
     </div>
-  );
+  );      console.log("there is an issue with latitude",currentRide?.pickup.coordinates.lat);
+   console.log("there is an issue with longitude",currentRide?.pickup.coordinates.lng);
+  
+
 
   return (
     <div>
@@ -194,21 +198,33 @@ const Dashboard = () => {
           ) : (
             renderRideTracking()
           )}
-          
           {currentRide && <Currentride />}
           <RecentRides rides={rideHistory} />
         </div>
       </div>
       
+      
       {/* Map Integration Placeholder */}
-      <div className="min-h-[500px] rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center bg-muted/10">
-        <div className="text-center space-y-2">
-          <div className="text-lg font-medium text-muted-foreground">Map Integration</div>
-          <div className="text-sm text-muted-foreground">
-            Integrate with Google Maps, Mapbox, or similar service for live tracking
-          </div>
-        </div>
-      </div>
+     <div className="h-[500px] w-full rounded-lg overflow-hidden">
+  <OSMMap
+    center={
+      [28.6139, 77.2090] // fallback center (Delhi)
+    }
+    zoom={13}
+    userLocation={
+      currentRide? 
+        [currentRide.destination.coordinates.lat, currentRide.destination.coordinates.lng]
+        : [28.6139, 77.2090]
+    }
+    driverLocation={
+      currentRide
+        ? [currentRide.destination.coordinates.lat, currentRide.destination.coordinates.lng]
+        : [28.5355, 77.3910]
+    }
+  />
+</div>
+
+
     </div>
   );
 };
