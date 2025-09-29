@@ -103,4 +103,10 @@ const token = get().token;
         throw error;
       }
     }
+    ,
+    logout: () => {
+  localStorage.removeItem("token");
+  set({ isAuthenticated: false });
+}
+
   }));

@@ -148,6 +148,11 @@ const CaptainDashboard = () => {
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-semibold text-gray-600">Captain Dashboard</h1>
         <div className="flex items-center space-x-3">
+  <div><button onClick={()=>{
+    useCaptainStore.getState().logout();
+          window.location.href = "/captainlogin";
+          }}>logout</button></div>
+  
           <span className="text-sm text-gray-600">Status:</span>
 
 
