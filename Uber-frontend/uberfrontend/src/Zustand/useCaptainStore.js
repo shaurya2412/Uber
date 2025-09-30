@@ -203,7 +203,7 @@ set({
     }
   },
   
-  acceptRide: async (rideId) => {
+  acceptRide: async (rideId) => { 
     set({ isLoading: true, error: null });
     
     try {

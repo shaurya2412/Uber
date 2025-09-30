@@ -5,7 +5,7 @@ import OSMMap from "./Map";
 import Currentride from "./Currentride";
 import RecentRides from "./RecentRides";
 import { useUserStore } from "../Zustand/useUserstore";
-import { useRideStore } from "../zustand/useRideStore";
+import { useRideStore } from "../Zustand/useRideStore";
 
 const getCoordinates = async (place) => {
   try {

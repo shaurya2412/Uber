@@ -13,22 +13,6 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useCaptainStore } from "../Zustand/useCaptainStore";
 import { useRideStore } from "../Zustand/useRideStore";
-import MagicBento from "./MagicBento";
-const weeklyEarnings = [
-  { day: "Mon", earnings: 120 },
-  { day: "Tue", earnings: 95 },
-  { day: "Wed", earnings: 140 },  
-  { day: "Thu", earnings: 110 },
-  { day: "Fri", earnings: 156 },
-  { day: "Sat", earnings: 180 },
-  { day: "Sun", earnings: 85 },
-];
-
-const recentTrips = [
-  { name: "Mike Chen", time: "2:30 PM", id: "R123455", fare: 18.25, rating: 5 },
-  { name: "Emma Davis", time: "1:45 PM", id: "R123454", fare: 32.1, rating: 4 },
-  { name: "John Smith", time: "12:20 PM", id: "R123453", fare: 15.8, rating: 5 },
-];
 
 // Card wrapper
 const Card = ({ children }) => (
@@ -42,25 +26,15 @@ const CaptainDashboard = () => {
   const [isToggling, setIsToggling] = useState(false);
 
   const {captain,active, isAuthenticated, token,availableRides,
-    currentRide,rideHistory,login,toggleActive ,fetchCaptainProfile, logout, fetchAvailableRides,acceptRide, fetchCurrentRide, fetchRideHistory} = useCaptainStore();
-
-     const { 
-      
-        rideStatus, 
-        isLoading, 
-        error,
-        bookRide 
-      } = useRideStore();
-
-  // Debug authentication state
+    currentRide,rideHistory,login,toggleActive ,fetchCaptainProfile, fetchAvailableRides,acceptRide, fetchCurrentRide, fetchRideHistory} = useCaptainStore();
+     const {rideStatus} = useRideStore();
   console.log('🔍 Dashboard - Auth state:', { 
     isAuthenticated, 
     hasToken: !!token, 
     hasCaptain: !!captain,
     active 
   });
-
-  // Calculate values once to avoid recalculation on every render
+console.log("Ride user:", availableRides?.[0]?.user?._id);
   const totalEarnings = Number((rideHistory || []).reduce((s, t) => s + (Number(t?.fare) || 0), 0)).toFixed(2);
   const tripCount = (rideHistory || []).length;
   const averageRating = (() => {
@@ -71,57 +45,10 @@ const CaptainDashboard = () => {
   })();
   const recentTrip = rideHistory && rideHistory.length > 0 ? rideHistory[0] : null;
 
-  // Captain-specific bento card data with rich content
-  const captainBentoData = [
-    {
-      color: currentRide ? '#10b981' : '#6b7280',
-      title: currentRide ? 'Active Ride' : 'No Active Ride',
-      description: currentRide 
-        ? `${currentRide?.pickup?.address || 'Pickup'} → ${currentRide?.destination?.address || 'Destination'}`
-        : 'Waiting for next ride',
-      label: currentRide ? 'In Progress' : 'Idle',
-      extraInfo: currentRide ? `₹${Number(currentRide?.fare || 0).toFixed(2)}` : null
-    },
-    {
-      color: '#3b82f6',
-      title: 'Today\'s Revenue',
-      description: `₹${totalEarnings} earned`,
-      label: 'Earnings',
-      extraInfo: `${tripCount} trips`
-    },
-    {
-      color: '#8b5cf6',
-      title: 'Recent Trip',
-      description: recentTrip 
-        ? `${recentTrip?.user?.fullname?.firstname || 'Rider'} ${recentTrip?.user?.fullname?.lastname || ''}`.trim()
-        : 'No trips yet',
-      label: 'Latest',
-      extraInfo: recentTrip 
-        ? `₹${Number(recentTrip?.fare || 0).toFixed(2)}`
-        : null
-    },
-    {
-      color: active ? '#10b981' : '#ef4444',
-      title: 'Status',
-      description: active ? 'Online and ready' : 'Offline',
-      label: active ? 'Online' : 'Offline',
-      extraInfo: active ? '6.5h today' : 'Inactive'
-    },
-    {
-      color: '#f59e0b',
-      title: 'Available Rides',
-      description: `${availableRides?.length || 0} rides waiting for pickup`,
-      label: 'Pending',
-      extraInfo: availableRides?.length > 0 ? 'Tap to view' : 'None'
-    },
-    {
-      color: '#ec4899',
-      title: 'Performance',
-      description: `${averageRating} avg rating`,
-      label: 'Quality',
-      extraInfo: `${tripCount} completed`
-    }
-  ];
+useEffect(() => {
+  console.log("Available rides:", availableRides);
+}, [availableRides]);
+
 
        useEffect(() => {
     const loadData = async () => {
@@ -204,21 +131,54 @@ const CaptainDashboard = () => {
           <div className="flex items-center justify-center h-64 bg-gray-100 rounded-2xl">
             <div className="text-gray-500">Loading dashboard data...</div>
           </div>
-        ) : (
-          <MagicBento 
-            textAutoHide={true}
-            enableStars={true}
-            enableSpotlight={true}
-            enableBorderGlow={true}
-            enableTilt={true}
-            enableMagnetism={true}
-            clickEffect={true}
-            spotlightRadius={300}
-            particleCount={12}
-            glowColor="132, 0, 255"
-            cardData={captainBentoData}
-          />
+        ) : (<div >,</div>
         )}
+        <Card>
+  <h2 className="text-lg font-semibold text-gray-800 mb-4">Available Rides</h2>
+
+  {(!availableRides || availableRides.length === 0) && (
+    <div className="text-sm text-gray-500">No available rides right now.</div>
+  )}
+
+  <div className="space-y-3">
+    {availableRides && availableRides.map((ride, idx) => (
+      <div
+        key={ride?._id || idx}
+        className="p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition"
+      >
+        <div className="flex items-center justify-between mb-2">
+        <p className="font-medium text-gray-800">
+  {ride?.user?.fullname
+    ? `${ride.user.fullname.firstname || ""} ${ride.user.fullname.lastname || ""}`.trim()
+    : "Unknown Rider"}
+</p>
+
+          <span className="text-xs text-gray-500">
+            Ride ID: {ride?._id || "—"}
+          </span>
+        </div>
+
+        <p className="text-sm text-gray-600">
+          <strong>Pickup:</strong> {ride?.pickup?.address || "—"}
+        </p>
+        <p className="text-sm text-gray-600">
+          <strong>Destination:</strong> {ride?.destination?.address || "—"}
+        </p>
+        <p className="text-sm text-gray-600">
+          <strong>Fare:</strong> ₹{Number(ride?.fare || 0).toFixed(2)}
+        </p>
+
+        <button
+          className="mt-2 w-full py-1.5 rounded bg-green-600 text-white text-sm hover:bg-green-700"
+          onClick={acceptRide}
+        >
+          Accept Ride
+        </button>
+      </div>
+    ))}
+  </div>
+</Card>
+
       </div>
 
       <div className="grid grid-cols-12 gap-6">
