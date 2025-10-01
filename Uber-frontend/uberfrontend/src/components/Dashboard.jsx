@@ -5,8 +5,7 @@ import OSMMap from "./Map";
 import Currentride from "./Currentride";
 import RecentRides from "./RecentRides";
 import { useUserStore } from "../Zustand/useUserstore";
-import { useRideStore } from "../Zustand/useRideStore";
-
+import { useRideStore } from "../zustand/useRideStore";
 const getCoordinates = async (place) => {
   try {
     const API_KEY = "pk.d4d3cce23c00c2d9e20ac1070c22cc5d";

@@ -12,8 +12,7 @@ import {
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useCaptainStore } from "../Zustand/useCaptainStore";
-import { useRideStore } from "../Zustand/useRideStore";
-
+import { useRideStore } from "../zustand/useRideStore";
 // Card wrapper
 const Card = ({ children }) => (
   <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
@@ -24,33 +23,56 @@ const Card = ({ children }) => (
 const CaptainDashboard = () => {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
+  const [showAllAvailableRides, setShowAllAvailableRides] = useState(false);
 
-  const {captain,active, isAuthenticated, token,availableRides,
-    currentRide,rideHistory,login,toggleActive ,fetchCaptainProfile, fetchAvailableRides,acceptRide, fetchCurrentRide, fetchRideHistory} = useCaptainStore();
-     const {rideStatus} = useRideStore();
-  console.log('🔍 Dashboard - Auth state:', { 
-    isAuthenticated, 
-    hasToken: !!token, 
+  const {
+    captain,
+    active,
+    isAuthenticated,
+    token,
+    availableRides,
+    currentRide,
+    rideHistory,
+    login,
+    toggleActive,
+    fetchCaptainProfile,
+    fetchAvailableRides,
+    acceptRide,
+    fetchCurrentRide,
+    fetchRideHistory,
+  } = useCaptainStore();
+
+  const { rideStatus } = useRideStore();
+
+  console.log("🔍 Dashboard - Auth state:", {
+    captain,
+    isAuthenticated,
+    hasToken: !!token,
     hasCaptain: !!captain,
-    active 
+    active,
   });
-console.log("Ride user:", availableRides?.[0]?.user?._id);
-  const totalEarnings = Number((rideHistory || []).reduce((s, t) => s + (Number(t?.fare) || 0), 0)).toFixed(2);
+  console.log("Ride user:", availableRides?.[0]?.user?._id);
+
+  const totalEarnings = Number(
+    (rideHistory || []).reduce((s, t) => s + (Number(t?.fare) || 0), 0)
+  ).toFixed(2);
   const tripCount = (rideHistory || []).length;
+
   const averageRating = (() => {
     const trips = rideHistory || [];
-    if (!trips.length) return '0.0';
+    if (!trips.length) return "0.0";
     const total = trips.reduce((s, t) => s + (Number(t?.rating) || 0), 0);
     return (total / trips.length).toFixed(1);
   })();
-  const recentTrip = rideHistory && rideHistory.length > 0 ? rideHistory[0] : null;
 
-useEffect(() => {
-  console.log("Available rides:", availableRides);
-}, [availableRides]);
+  const recentTrip =
+    rideHistory && rideHistory.length > 0 ? rideHistory[0] : null;
 
+  useEffect(() => {
+    console.log("Available rides:", availableRides);
+  }, [availableRides]);
 
-       useEffect(() => {
+  useEffect(() => {
     const loadData = async () => {
       try {
         setDataLoaded(false);
@@ -58,128 +80,163 @@ useEffect(() => {
           fetchCaptainProfile(),
           fetchAvailableRides(),
           fetchCurrentRide(),
-          fetchRideHistory()
+          fetchRideHistory(),
         ]);
         setDataLoaded(true);
       } catch (error) {
-        console.error('Error loading dashboard data:', error);
+        console.error("Error loading dashboard data:", error);
         setDataLoaded(true); // Still show the dashboard even if there's an error
       }
     };
-    
+
     loadData();
   }, [fetchCaptainProfile, fetchAvailableRides, fetchCurrentRide, fetchRideHistory]);
 
   return (
-     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="font-semibold text-gray-600">Captain Dashboard</h1>
-        <div className="flex items-center space-x-3">
-  <div><button onClick={()=>{
-    useCaptainStore.getState().logout();
-          window.location.href = "/captainlogin";
-          }}>logout</button></div>
-  
-          <span className="text-sm text-gray-600">Status:</span>
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="font-semibold text-gray-600">Captain Dashboard</h1>
+        <div className="flex items-center space-x-3">
+          <div>
+            <button
+              onClick={() => {
+                useCaptainStore.getState().logout();
+                window.location.href = "/captainlogin";
+              }}
+            >
+              Logout
+            </button>
+          </div>
 
+          <span className="text-sm text-gray-600">Status:</span>
 
-         <button
-  onClick={async () => {
-    if (isToggling) return;
-    console.log('Toggle clicked, current active state:', active);
-    setIsToggling(true);
-    try {
-      const result = await toggleActive();
-      console.log('Toggle result:', result);
-    } catch (error) {
-      console.error('Error toggling status:', error);
-      alert('Failed to update status: ' + (error.response?.data?.message || error.message));
-    } finally {
-      setIsToggling(false);
-    }
-  }}
-  disabled={isToggling}
-  className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${
-    active ? "bg-green-500" : "bg-gray-400"
-  } ${isToggling ? "opacity-50 cursor-not-allowed" : ""}`}
->
-  <span
-    className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-      active ? "translate-x-6" : "translate-x-1"
-    }`}
-  />
-</button>
+          <button
+            onClick={async () => {
+              if (isToggling) return;
+              console.log("Toggle clicked, current active state:", active);
+              setIsToggling(true);
+              try {
+                const result = await toggleActive();
+                console.log("Toggle result:", result);
+              } catch (error) {
+                console.error("Error toggling status:", error);
+                alert(
+                  "Failed to update status: " +
+                    (error.response?.data?.message || error.message)
+                );
+              } finally {
+                setIsToggling(false);
+              }
+            }}
+            disabled={isToggling}
+            className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${
+              active ? "bg-green-500" : "bg-gray-400"
+            } ${isToggling ? "opacity-50 cursor-not-allowed" : ""}`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                active ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
 
-          <span
-            className={`flex items-center font-medium ${
-              active ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            ● {active ? "Online" : "Offline"}
-          </span>
-          <img
-            src="https://i.pravatar.cc/40"
-            alt="Captain"
-            className="w-10 h-10 rounded-full border border-gray-300"
-          />
+          <span
+            className={`flex items-center font-medium ${
+              active ? "text-green-600" : "text-red-600"        
+            }`}
+          >
+            ● {active ? "Online" : "Offline"}
+          </span>
+          <div className="text-blue-600 shadow-2xl"> {captain?.fullname.firstname} {captain?.fullname.lastname}</div>
+          <img
+            src="https://i.pravatar.cc/40"
+            alt="Captain"
+            className="w-10 h-10 rounded-full border border-gray-300"
+          />
         </div>
       </div>
 
-      {/* Magic Bento Section */}
+      {/* Available Rides */}
       <div className="mb-8">
         {!dataLoaded ? (
           <div className="flex items-center justify-center h-64 bg-gray-100 rounded-2xl">
             <div className="text-gray-500">Loading dashboard data...</div>
           </div>
-        ) : (<div >,</div>
+        ) : (
+          <Card>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+              Available Rides
+            </h2>
+
+            {(!availableRides || availableRides.length === 0) && (
+              <div className="text-sm text-gray-500">
+                No available rides right now.
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {availableRides &&
+                (showAllAvailableRides
+                  ? availableRides
+                  : availableRides.slice(0, 3)
+                ).map((ride, idx) => (
+                  <div
+                    key={ride?._id || idx}
+                    className="p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-medium text-gray-800">
+                        {ride?.user?.fullname
+                          ? `${ride.user.fullname.firstname || ""} ${
+                              ride.user.fullname.lastname || ""
+                            }`.trim()
+                          : "Unknown Rider"}
+                      </p>
+                      <span className="text-xs text-gray-500">
+                        Ride ID: {ride?._id || "—"}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-gray-600">
+                      <strong>Pickup:</strong>{" "}
+                      {ride?.pickup?.address || "—"}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      <strong>Destination:</strong>{" "}
+                      {ride?.destination?.address || "—"}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      <strong>Fare:</strong> ₹
+                      {Number(ride?.fare || 0).toFixed(2)}
+                    </p>
+
+                    <button
+                      className="mt-2 w-full py-1.5 rounded bg-green-600 text-white text-sm hover:bg-green-700"
+                      onClick={() => acceptRide(ride?._id)}
+                    >
+                      Accept Ride
+                    </button>
+                  </div>
+                ))}
+
+              {availableRides && availableRides.length > 3 && (
+                <button
+                  onClick={() =>
+                    setShowAllAvailableRides(!showAllAvailableRides)
+                  }
+                  className="mt-3 w-full py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
+                >
+                  {showAllAvailableRides
+                    ? "See Less"
+                    : "See All Rides"}
+                </button>
+              )}
+            </div>
+          </Card>
         )}
-        <Card>
-  <h2 className="text-lg font-semibold text-gray-800 mb-4">Available Rides</h2>
-
-  {(!availableRides || availableRides.length === 0) && (
-    <div className="text-sm text-gray-500">No available rides right now.</div>
-  )}
-
-  <div className="space-y-3">
-    {availableRides && availableRides.map((ride, idx) => (
-      <div
-        key={ride?._id || idx}
-        className="p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition"
-      >
-        <div className="flex items-center justify-between mb-2">
-        <p className="font-medium text-gray-800">
-  {ride?.user?.fullname
-    ? `${ride.user.fullname.firstname || ""} ${ride.user.fullname.lastname || ""}`.trim()
-    : "Unknown Rider"}
-</p>
-
-          <span className="text-xs text-gray-500">
-            Ride ID: {ride?._id || "—"}
-          </span>
-        </div>
-
-        <p className="text-sm text-gray-600">
-          <strong>Pickup:</strong> {ride?.pickup?.address || "—"}
-        </p>
-        <p className="text-sm text-gray-600">
-          <strong>Destination:</strong> {ride?.destination?.address || "—"}
-        </p>
-        <p className="text-sm text-gray-600">
-          <strong>Fare:</strong> ₹{Number(ride?.fare || 0).toFixed(2)}
-        </p>
-
-        <button
-          className="mt-2 w-full py-1.5 rounded bg-green-600 text-white text-sm hover:bg-green-700"
-          onClick={acceptRide}
-        >
-          Accept Ride
-        </button>
       </div>
-    ))}
-  </div>
-</Card>
 
-      </div>
 
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-8 space-y-6">
