@@ -42,7 +42,7 @@ const CaptainDashboard = () => {
     fetchRideHistory,
   } = useCaptainStore();
 
-  const { rideStatus,cancelRidecaptain } = useRideStore();
+  const { finishRide,rideStatus,cancelRidecaptain,StartRide } = useRideStore();
 
   console.log("🔍 Dashboard - Auth state:", {
     captain,
@@ -289,20 +289,37 @@ const CaptainDashboard = () => {
               </div>
             ) : null}
             <div className="flex space-x-3">
-              <div>
-               <button>Start ride</button>
-              </div>
-              {currentRide  ? (
-                
-              <button
-  className="p-2 rounded-lg bg-red-50 text-white hover:bg-red-100"
-  onClick={() => cancelRidecaptain(currentRide?._id)}
->
-  Cancel Ride
-</button>
+  {/* Start Ride */}
+  {currentRide && currentRide.status === "accepted" && (
+    <button
+      onClick={() => StartRide(currentRide?._id)}
+      className="p-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
+    >
+      Start Ride
+    </button>
+  )}
 
-): null }
-            </div>
+  {/* Finish Ride */}
+    {currentRide && currentRide.status === "in_progress" && (
+    <button
+      onClick={() => finishRide(currentRide?._id)}
+      className="p-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
+    >
+      Finish Ride
+    </button>
+  )}
+
+  {/* Cancel Ride */}
+  {currentRide && currentRide.status !== "completed" && (
+    <button
+      onClick={() => cancelRidecaptain(currentRide?._id)}
+      className="p-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+    >
+      Cancel Ride
+    </button>
+  )}
+</div>
+
           </Card>
 
           <Card>

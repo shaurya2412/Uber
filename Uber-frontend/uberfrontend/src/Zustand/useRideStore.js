@@ -36,7 +36,70 @@ export const useRideStore = create((set,) => ({
       throw error;
     }
   },
+
+ StartRide: async (rideId) => {
+  set({ isLoading: true, error: null });
   
+  try {
+    const token = localStorage.getItem('captaintoken'); // Changed to captaintoken
+    const response = await axios.post(`${API_BASE}/rides/${rideId}/start`,
+      {}, // Empty body for POST
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    const startRide = response.data.data;
+    if (startRide) { // Fixed casing
+      set({
+        currentRide: startRide, // Fixed casing
+        rideStatus: 'in_progress', // Add status update
+        isLoading: false
+      });
+    }
+    
+    return response.data; // Add return statement
+  } catch (error) { // Add error handling
+    set({
+      isLoading: false,
+      error: error.response?.data?.message || 'Failed to start ride'
+    });
+    throw error;
+  }
+},
+
+finishRide: async (rideId) => {
+  try {
+    set({ isLoading: true, error: null });
+    const token = localStorage.getItem("captaintoken");
+    const res = await axios.post(
+      `${API_BASE}/rides/${rideId}/complete`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    const finishRide = res.data.data;
+
+    if (finishRide) {
+      set({
+        currentRide: finishRide, // ✅ Keep the completed ride data
+        rideStatus: "completed",
+        isLoading: false,
+      });
+    }
+
+    return finishRide; // ✅ Fixed: correct variable name
+  } catch (error) {
+    console.error("❌ Failed to finish ride:", error);
+    set({
+      isLoading: false,
+      error: error.response?.data?.message || error.message,
+    });
+    throw error;
+  }
+},
+
+
   // Fetch Current Active Ride
   fetchCurrentRide: async () => {
     set({ isLoading: true, error: null });
