@@ -42,7 +42,7 @@ const CaptainDashboard = () => {
     fetchRideHistory,
   } = useCaptainStore();
 
-  const { rideStatus } = useRideStore();
+  const { rideStatus,cancelRidecaptain } = useRideStore();
 
   console.log("🔍 Dashboard - Auth state:", {
     captain,
@@ -52,6 +52,9 @@ const CaptainDashboard = () => {
     active,
   });
   console.log("Ride user:", availableRides?.[0]?.user?._id);
+  console.log(currentRide)
+  console.log(token);
+  console.log(currentRide?._id);
 
   const totalEarnings = Number(
     (rideHistory || []).reduce((s, t) => s + (Number(t?.fare) || 0), 0)
@@ -255,7 +258,7 @@ const CaptainDashboard = () => {
                   className="w-12 h-12 rounded-full"
                 />
                 <div>
-                  <h3 className="text-gray-800 font-medium">{currentRide?.rider?.name || currentRide?.user?.name || "Rider"}</h3>
+                  <h3 className="text-gray-800 font-medium">{currentRide.user.fullname.firstname || "Rider"}</h3>
                   <p className="text-sm text-gray-500">Ride ID: {currentRide?._id || currentRide?.id || "—"}</p>
                 </div>
               </div>
@@ -278,23 +281,27 @@ const CaptainDashboard = () => {
                   <Navigation className="w-4 h-4" /> <p>{currentRide?.distance || currentRide?.estimatedDistance || "—"} km</p>
                 </span>
                 <span className="flex items-center space-x-1">
-                  <Clock className="w-4 h-4" /> <p>{currentRide?.duration || currentRide?.estimatedDuration || "—"} min</p>
+                  <Clock className="w-4 h-4" /> <p>{Date.now() || "—"} min</p>
                 </span>
                 <span className="flex items-center space-x-1">
-                  <DollarSign className="w-4 h-4" /> <p>${Number(currentRide?.fare || currentRide?.estimatedFare || 0).toFixed(2)}</p>
+                  <DollarSign className="w-4 h-4" /> <p>{Number(currentRide?.fare || currentRide?.estimatedFare || 0).toFixed(2)}</p>
                 </span>
               </div>
             ) : null}
             <div className="flex space-x-3">
-              <button className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100">
-                <Phone className="w-5 h-5" />
-              </button>
-              <button className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100">
-                <MessageSquare className="w-5 h-5" />
-              </button>
-              <button className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100">
-                <X className="w-5 h-5" />
-              </button>
+              <div>
+               <button>Start ride</button>
+              </div>
+              {currentRide  ? (
+                
+              <button
+  className="p-2 rounded-lg bg-red-50 text-white hover:bg-red-100"
+  onClick={() => cancelRidecaptain(currentRide?._id)}
+>
+  Cancel Ride
+</button>
+
+): null }
             </div>
           </Card>
 

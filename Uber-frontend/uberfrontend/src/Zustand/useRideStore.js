@@ -6,6 +6,8 @@ const API_BASE = 'http://localhost:5000';
 export const useRideStore = create((set,) => ({
   rideStatus: 'idle', 
     currentRide: null,
+      token: localStorage.getItem('captaintoken') || null,
+
     rideHistory: [],
     isLoading: false,
   error: null,
@@ -70,6 +72,43 @@ export const useRideStore = create((set,) => ({
     }
   },
   
+
+ cancelRidecaptain: async (rideId) => {
+    const token = localStorage.getItem("captaintoken"); // or captaintoken if for captain
+    if (!token) {
+      set({ error: "Not authenticated" });
+      return;
+    }
+
+    try {
+      set({ isLoading: true, error: null });
+      const res = await axios.post(
+        `${API_BASE}/rides/${rideId}/captain-cancel`,
+        {}, // empty body
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Update state
+      set({
+        currentRide: null, // ride is no longer active
+        rideStatus: "idle",
+        isLoading: false,
+      });
+
+      return res.data; // could contain success message or cancelled ride details
+    } catch (error) {
+      console.error("❌ Failed to cancel ride:", error);
+      set({
+        isLoading: false,
+        error: error.response?.data?.message || error.message,
+      });
+    }
+  },
+
+
+
   // Fetch Ride History
   fetchRideHistory: async () => {
     set({ isLoading: true, error: null });

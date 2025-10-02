@@ -397,3 +397,44 @@ module.exports.cancelUserRide = async (req, res, next) => {
         });
     }
 }; 
+module.exports.cancelcaptainRide = async (req, res, next) => {
+    try {
+        const { rideId } = req.params;
+        const captainId = req.captain?._id;
+
+        const ride = await rideModel.findOne({
+            _id: rideId,
+            captain: captainId,
+            status: { $in: ['pending', 'accepted','in_progress'] } // Only allow cancellation of pending or accepted rides
+        });
+
+        if (!ride) {
+            return res.status(404).json({
+                success: false,
+                message: "Ride not found or cannot be cancelled"
+            });
+        }
+
+        // Update ride status to cancelled
+        const updatedRide = await rideModel.findByIdAndUpdate(
+            rideId,
+            {
+                status: 'cancelled',
+                cancelledAt: new Date()
+            },
+            { new: true }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "Ride cancelled successfully",
+            data: updatedRide
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error cancelling ride",
+            error: error.message
+        });
+    }
+}; 
