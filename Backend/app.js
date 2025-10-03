@@ -24,6 +24,6 @@ app.use('/users',userRoutes);
 app.use("/captains", captainRoutes);
 app.use("/rides", rideRoutes);
 app.use("/auth", googleAuthRoutes);
-app.use("/calculate", fareRoutes);
+app.use("/api/fare", fareRoutes);
 
 module.exports= app;

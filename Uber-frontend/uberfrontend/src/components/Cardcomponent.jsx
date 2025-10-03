@@ -2,14 +2,14 @@ import React from 'react'
 
 const Cardcomponent = (props) => {
   return (
-  <div className="bg-black p-6 ml-2 rounded-2xl flex flex-col w-[32vw] border-1 h-fixed ">
-    <div className="flex justify-between items-center mb-2">
-      <div className="font-semibold">{props.t1}</div>
-      <div>{props.t2}</div>   
+  <div className="bg-white/95 backdrop-blur p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 w-full">
+    <div className="flex justify-between items-start mb-1">
+      <div className="text-gray-500 text-sm font-medium">{props.t1}</div>
+      <div className="text-2xl">{props.t2}</div>   
     </div>
-    <div className="flex flex-col">
-      <div className="font-bold text-3xl">{props.t4}</div>
-      <div className="text-gray-400 text-sm">{props.t3}</div>
+    <div className="flex items-end justify-between mt-1">
+      <div className="font-extrabold text-3xl text-gray-900">{props.t4}</div>
+      <div className="text-gray-400 text-xs">{props.t3}</div>
     </div>
   </div>
   )

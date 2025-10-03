@@ -4,7 +4,7 @@ import Cardcomponent from "./Cardcomponent";
 import OSMMap from "./Map";
 import Currentride from "./Currentride";
 import RecentRides from "./RecentRides";
-import { useUserStore } from "../Zustand/useUserstore";
+import { useUserStore } from "../Zustand/useUserStore";
 import { useRideStore } from "../zustand/useRideStore";
 const getCoordinates = async (place) => {
   try {
@@ -88,27 +88,27 @@ const Dashboard = () => {
   };
 
   const renderRideForm = () => (
-    <div className="bg-black p-4 mt-4 ml-4 rounded-2xl flex flex-col w-[32vw] border-1 h-fixed">
-      <div className="flex justify-between items-center mb-2">
-        <div className="text-2xl font-bold flex flex-row mr-2">
-          <span className="font-semibold mr-2">🚗</span>
+    <div className="bg-white/95 backdrop-blur p-5 mt-4 rounded-2xl shadow-sm hover:shadow-md transition-shadow w-full max-w-xl">
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+          <span className="text-2xl">🚗</span>
           Book a new ride
         </div>
       </div>
 
       <div className="flex flex-col">
         <input
-          className="border mt-6 w-90 rounded text-white placeholder-amber-50 bg-transparent px-3 py-2"
+          className="mt-4 w-full rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
           type="text"
           placeholder="Starting ride from"
           value={pickup}
           onChange={(e) => setPickup(e.target.value)}
         />
 
-        <p className="text flex flex-col mt-4">
+        <p className="text-sm text-gray-600 flex flex-col mt-4">
           Destination
           <input
-            className="border mt-3 w-90 placeholder-amber-50 bg-transparent px-3 py-2"
+            className="mt-2 w-full rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
             type="text"
             placeholder="Final Destination"
             value={destination}
@@ -116,10 +116,10 @@ const Dashboard = () => {
           />
         </p>
 
-        <p className="text flex flex-col mt-4">
+        <p className="text-sm text-gray-600 flex flex-col mt-4">
           Fare (USD)
           <input
-            className="border mt-3 w-90 placeholder-amber-50 bg-transparent px-3 py-2"
+            className="mt-2 w-full rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
             type="number"
             placeholder="15.50"
             value={fare}
@@ -131,14 +131,14 @@ const Dashboard = () => {
       </div>
 
       <button
-        className="mt-8 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 disabled:opacity-50"
+        className="mt-6 bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors w-full"
         onClick={handleBookRide}
         disabled={isLoading}
       >
         {isLoading ? "Booking..." : "Find rides"}
       </button>
 
-      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+      {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
     </div>
   );
 
@@ -186,9 +186,9 @@ const Dashboard = () => {
   );
 
   return (
-    <div>
-      <div className="bg-black min-h-screen flex items-center">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Cardcomponent
             t1="Total Rides"
             t2="🚘"
@@ -209,58 +209,63 @@ const Dashboard = () => {
               .reduce((sum, ride) => sum + (ride.fare || 0), 0)
               .toFixed(2)}`}
           />
-
-          {rideStatus === "idle" || rideStatus === "searching"
-            ? renderRideForm()
-            : renderRideTracking()}
-          {currentRide && <Currentride />}
-          <RecentRides rides={rideHistory} />
-       <div className="flex justify-end p-4">
-  <button
-    onClick={() => {
-      useUserStore.getState().logout();
-      // optional: clear ride state too
-      useRideStore.getState().clearCurrentRide();
-      window.location.href = "/login"; // redirect to login page
-    }}
-    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-  >
-    Logout
-  </button>
-</div>
-
         </div>
-      </div>
 
-      {/* Map Integration */}
-      <div className="h-[500px] w-full rounded-lg overflow-hidden">
-        <OSMMap
-          center={
-            currentRide
-              ? [
-                  currentRide.pickup?.coordinates?.lat,
-                  currentRide.pickup?.coordinates?.lng,
-                ]
-              : [28.6139, 77.2090]
-          }
-          zoom={13}
-          userLocation={
-            currentRide
-              ? [
-                  currentRide.pickup?.coordinates?.lat,
-                  currentRide.pickup?.coordinates?.lng,
-                ]
-              : [28.6139, 77.2090]
-          }
-          driverLocation={
-            currentRide
-              ? [
-                  currentRide.destination?.coordinates?.lat,
-                  currentRide.destination?.coordinates?.lng,
-                ]
-              : [28.5355, 77.3910]
-          }
-        />
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className="col-span-1 space-y-6">
+            {rideStatus === "idle" || rideStatus === "searching"
+              ? renderRideForm()
+              : renderRideTracking()}
+            {currentRide && <Currentride />}
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  useUserStore.getState().logout();
+                  useRideStore.getState().clearCurrentRide();
+                  window.location.href = "/login";
+                }}
+                className="bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+          <div className="ml-30">
+            <div className="p-4 h-[520px] w-[120vh] rounded-2xl overflow-hidden shadow-sm ring-1 ring-gray-100 bg-white">
+              <OSMMap
+                center={
+                  currentRide
+                    ? [
+                        currentRide.pickup?.coordinates?.lat,
+                        currentRide.pickup?.coordinates?.lng,
+                      ]
+                    : [28.6139, 77.2090]
+                }
+                zoom={13}
+                userLocation={
+                  currentRide
+                    ? [
+                        currentRide.pickup?.coordinates?.lat,
+                        currentRide.pickup?.coordinates?.lng,
+                      ]
+                    : [28.6139, 77.2090]
+                }
+                driverLocation={
+                  currentRide
+                    ? [
+                        currentRide.destination?.coordinates?.lat,
+                        currentRide.destination?.coordinates?.lng,
+                      ]
+                    : [28.5355, 77.3910]
+                }
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <RecentRides rides={rideHistory} />
+        </div>
       </div>
     </div>
   );
