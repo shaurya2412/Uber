@@ -6,6 +6,7 @@ import Currentride from "./Currentride";
 import RecentRides from "./RecentRides";
 import { useUserStore } from "../Zustand/useUserStore";
 import { useRideStore } from "../zustand/useRideStore";
+
 const getCoordinates = async (place) => {
   try {
     const API_KEY = "pk.d4d3cce23c00c2d9e20ac1070c22cc5d";
@@ -26,7 +27,7 @@ const getCoordinates = async (place) => {
     return null;
   }
 };
-   
+
 const Dashboard = () => {
   const {
     currentRide,
@@ -37,9 +38,10 @@ const Dashboard = () => {
     bookRide,
     fetchCurrentRide,
     fetchRideHistory,
+    calculatetheprice,
   } = useRideStore();
 
-  const { isAuthenticated ,logout} = useUserStore();
+  const { isAuthenticated } = useUserStore();
 
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");
@@ -52,6 +54,35 @@ const Dashboard = () => {
     }
   }, [isAuthenticated, fetchCurrentRide, fetchRideHistory]);
 
+  // 🔹 Calculate Fare
+  const handleCalculateFare = async () => {
+    if (!pickup || !destination) {
+      alert("Please enter pickup and destination");
+      return;
+    }
+
+    try {
+      const pickupCoords = await getCoordinates(pickup);
+      const destCoords = await getCoordinates(destination);
+
+      if (!pickupCoords || !destCoords) {
+        alert("Could not fetch coordinates. Please check the place names.");
+        return;
+      }
+
+      const result = await calculatetheprice(pickupCoords, destCoords);
+
+      if (result?.fare || result?.estimatedFare) {
+        setFare(result.fare || result.estimatedFare);
+      } else {
+        alert("Failed to calculate fare");
+      }
+    } catch (error) {
+      console.error("Error calculating fare:", error);
+    }
+  };
+
+  // 🔹 Book Ride
   const handleBookRide = async () => {
     if (!pickup || !destination) {
       alert("Please enter pickup and destination");
@@ -123,11 +154,19 @@ const Dashboard = () => {
             type="number"
             placeholder="15.50"
             value={fare}
-            onChange={(e) => setFare(parseFloat(e.target.value))}
+            onChange={(e) => setFare(parseFloat(e.target.value) || 0)}
             min="1"
             step="0.01"
           />
         </p>
+
+        <button
+          onClick={handleCalculateFare}
+          className="mt-4 bg-gray-800 text-white px-4 py-3 rounded-xl hover:bg-gray-900 transition-colors"
+          disabled={isLoading}
+        >
+          {isLoading ? "Calculating..." : "Calculate Fare"}
+        </button>
       </div>
 
       <button
@@ -135,59 +174,17 @@ const Dashboard = () => {
         onClick={handleBookRide}
         disabled={isLoading}
       >
-        {isLoading ? "Booking..." : "Find rides"}
+        {isLoading ? "Booking..." : "Find Rides"}
       </button>
 
       {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
     </div>
   );
 
-  const renderRideTracking = () => (
-    <div className="bg-black p-4 mt-4 ml-4 rounded-2xl flex flex-col w-[32vw] border-1 h-fixed">
-      <div className="flex justify-between items-center mb-2">
-        <div className="text-2xl font-bold flex flex-row mr-2">
-          <span className="font-semibold mr-2">🚗</span>
-          Current Ride
-        </div>
-      </div>
-
-      {currentRide ? (
-        <div className="text-white">
-          <p>
-            <strong>Status:</strong> {currentRide.status}
-          </p>
-          <p>
-            <strong>Pickup:</strong> {currentRide.pickup.address}
-          </p>
-          <p>
-            <strong>Destination:</strong> {currentRide.destination.address}
-          </p>
-          <p>
-            <strong>Fare:</strong> ${currentRide.fare}
-          </p>
-        </div>
-      ) : (
-        <p className="text-white">No active ride</p>
-      )}
-    </div>
-  );
-
-  console.log(
-    "Pickup Lat:",
-    currentRide?.pickup?.coordinates?.lat,
-    "Pickup Lng:",
-    currentRide?.pickup?.coordinates?.lng
-  );
-  console.log(
-    "Destination Lat:",
-    currentRide?.destination?.coordinates?.lat,
-    "Destination Lng:",
-    currentRide?.destination?.coordinates?.lng
-  );
-
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Cardcomponent
             t1="Total Rides"
@@ -211,12 +208,13 @@ const Dashboard = () => {
           />
         </div>
 
+        {/* Map + Ride Info */}
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           <div className="col-span-1 space-y-6">
-            {rideStatus === "idle" || rideStatus === "searching"
-              ? renderRideForm()
-              : renderRideTracking()}
-            {currentRide && <Currentride />}
+          {!currentRide
+  ? renderRideForm()
+  : <Currentride />}
+
             <div className="flex justify-end">
               <button
                 onClick={() => {
@@ -230,7 +228,8 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
-          <div className="ml-30">
+
+          <div className="ml-24">
             <div className="p-4 h-[520px] w-[120vh] rounded-2xl overflow-hidden shadow-sm ring-1 ring-gray-100 bg-white">
               <OSMMap
                 center={
@@ -239,7 +238,7 @@ const Dashboard = () => {
                         currentRide.pickup?.coordinates?.lat,
                         currentRide.pickup?.coordinates?.lng,
                       ]
-                    : [28.6139, 77.2090]
+                    : [28.6139, 77.209]
                 }
                 zoom={13}
                 userLocation={
@@ -248,7 +247,7 @@ const Dashboard = () => {
                         currentRide.pickup?.coordinates?.lat,
                         currentRide.pickup?.coordinates?.lng,
                       ]
-                    : [28.6139, 77.2090]
+                    : [28.6139, 77.209]
                 }
                 driverLocation={
                   currentRide
@@ -256,13 +255,14 @@ const Dashboard = () => {
                         currentRide.destination?.coordinates?.lat,
                         currentRide.destination?.coordinates?.lng,
                       ]
-                    : [28.5355, 77.3910]
+                    : [28.5355, 77.391]
                 }
               />
             </div>
           </div>
         </div>
 
+        {/* Ride History */}
         <div className="mt-6">
           <RecentRides rides={rideHistory} />
         </div>

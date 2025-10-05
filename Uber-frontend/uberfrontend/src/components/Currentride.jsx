@@ -5,10 +5,11 @@ const Currentride = () => {
   
     const { 
     currentRide, 
-
+calculatetheprice,
     isLoading, 
     error,
     fetchCurrentRide, 
+    cancelRideUser,
     cancelRide,
     bookRide
   } = useRideStore();
@@ -34,25 +35,46 @@ const Currentride = () => {
       return null;
     }
   };
+const handleBookRide = async () => {
+  if (!pickup || !destination) return;
 
-  const handleBookRide = async () => {
-    if (!pickup || !destination) return;
-    try {
-      const pickupCoords = await getCoordinates(pickup);
-      const destCoords = await getCoordinates(destination);
-      if (!pickupCoords || !destCoords) return;
-      await bookRide({
-        pickup: { address: pickup, coordinates: pickupCoords },
-        destination: { address: destination, coordinates: destCoords },
-        fare: fare,
-      });
-      setPickup("");
-      setDestination("");
-      setFare(0);
-    } catch (err) {
-      console.error("Failed to book ride:", err);
+  try {
+    const pickupCoords = await getCoordinates(pickup);
+    const destCoords = await getCoordinates(destination);
+
+    if (!pickupCoords || !destCoords) return;
+
+   const fareData = await calculatetheprice(
+      { lat: pickupCoords.lat, lng: pickupCoords.lng },
+      { lat: destCoords.lat, lng: destCoords.lng }
+    );
+    console.log(fareData);
+
+    if (!fareData?.fare) {
+      console.error("❌ Fare calculation failed");
+      return;
     }
-  };
+
+    setFare(parseFloat(fareData.fare));
+
+    await bookRide({
+      pickup: { address: pickup, lat: pickupCoords.lat, lng: pickupCoords.lng },
+      destination: {
+        address: destination,
+        lat: destCoords.lat,
+        lng: destCoords.lng,
+      },
+      fare: fareData.fare,
+    });
+
+      setPickup("");
+    setDestination("");
+    setFare(0);
+  } catch (err) {
+    console.error("Failed to book ride:", err);
+  }
+};
+
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -60,7 +82,10 @@ const Currentride = () => {
     }
   }, [isAuthenticated, fetchCurrentRide]);
 
-  // If no current ride, show a message with refresh button
+
+
+  console.log("current ride display: ",currentRide);
+
   if (!currentRide) {
     return (
       <div className="rounded-2xl m-4 border border-gray-100 bg-white shadow-sm">
@@ -68,7 +93,7 @@ const Currentride = () => {
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
               <span className="text-2xl">🚗</span>
-              Book a new ride
+              Book a new rides
             </h3>
             <button 
               onClick={fetchCurrentRide}
@@ -94,6 +119,13 @@ const Currentride = () => {
               onChange={(e) => setDestination(e.target.value)}
             />
             <input
+  className="mt-3 w-full rounded-xl border border-gray-200 bg-gray-100 text-gray-900 px-4 py-3 focus:outline-none"
+  type="number"
+  placeholder="Fare (INR)"
+  value={fare}
+  readOnly
+/>
+            <input
               className="mt-3 w-full rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               type="number"
               placeholder="Fare (USD)"
@@ -115,6 +147,7 @@ const Currentride = () => {
       </div>
     );
   }
+
 
   // Helper function to get captain initials
   const getCaptainInitials = (captain) => {
@@ -148,7 +181,7 @@ const Currentride = () => {
   };
 
   return(
-<div className="rounded-2xl m-4 border border-gray-100 bg-white shadow-sm">
+<div className="rounded-2xl ml-3 border border-gray-100 bg-white shadow-sm">
   <div className="p-5">
     <div className="flex items-center justify-between">
       <h3 className="flex items-center gap-2 text-xl font-semibold text-gray-900">
@@ -156,8 +189,8 @@ const Currentride = () => {
         Current Ride
       </h3>
       <div className="flex items-center gap-3">
-        <span className="text-xs text-gray-600">{currentRide.captain ? 'Driver assigned' : 'Searching driver'}</span>
-        <button onClick={fetchCurrentRide} disabled={isLoading} className="inline-flex items-center justify-center rounded-md text-xs font-medium border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 h-8 px-2 transition-colors disabled:opacity-50" title="Refresh ride status">
+        <span className="text-xs text-gray-600">{currentRide.captain ? 'Ride Accepted' : 'Searching driver'}</span>
+        <button onClick={fetchCurrentRide} disabled={isLoading} className="inline-flex items-center justify-center rounded-md text-xs font-medium border border-white hover:border-gray-300 hover:bg-gray-50 text-white h-8 px-2 transition-colors disabled:opacity-50" title="Refresh ride status">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></svg>
         </button>
       </div>
@@ -215,7 +248,7 @@ const Currentride = () => {
           <p className="text-sm text-gray-500">
             {currentRide.captain.vehicle?.vehiclemodel} • {currentRide.captain.vehicle?.plate}
           </p>
-        </div>
+        </div>  
       </div>
     ) : (
       <div className="flex items-center gap-3">
@@ -254,7 +287,7 @@ const Currentride = () => {
         Message
       </button>
       {currentRide.status === 'pending' && (
-        <button onClick={() => cancelRide(currentRide._id)} disabled={isLoading} className="inline-flex items-center justify-center rounded-xl border border-gray-200 text-gray-700 h-11 px-4 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors disabled:opacity-50">
+        <button onClick={() => cancelRideUser(currentRide._id)} disabled={isLoading} className="inline-flex items-center justify-center rounded-xl border border-gray-200 text-gray-700 h-11 px-4 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors disabled:opacity-50">
           Cancel
         </button>
       )}
