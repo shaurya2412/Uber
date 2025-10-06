@@ -45,7 +45,7 @@ const RecentRides = () => {
       {/* Header */}
       <div className="flex items-center justify-between p-5 border-b border-gray-100">
         <h3 className="text-xl font-semibold text-gray-900">Recent Rides</h3>
-        <button className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 h-9 px-3 transition-colors">
+        <button className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-white h-9 px-3 transition-colors">
           View All
         </button>
       </div>
@@ -131,10 +131,11 @@ const RecentRides = () => {
               </div>
             </div>
 
-            {/* Right side (Fare + Status) */}
+            {/* Right side (Fare + Status) */
+            }
             <div className="text-right space-y-1">
               <p className="font-semibold text-gray-900">
-                ${ride.fare?.toFixed(2)}
+                ₹{ride.fare?.toFixed(2)}
               </p>
               <p
                 className={`text-xs font-medium px-2 py-1 rounded-full inline-block ${

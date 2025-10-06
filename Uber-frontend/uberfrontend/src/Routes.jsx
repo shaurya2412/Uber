@@ -22,6 +22,7 @@ const AllRoutes = () => {
       <Route path="/capdashboard" element={
           <Captaindashboard />
       }/>
+      <Route path="/userdashboardHeader" element={<userdashboardHeader/>}/>
       <Route path="/captainlogin" element={<CaptainLogin/>}/>
       <Route path="/captainRegister" element={<CaptainRegister/>}/>
       <Route path="*" element={<div>404 - Page Not Found</div>}

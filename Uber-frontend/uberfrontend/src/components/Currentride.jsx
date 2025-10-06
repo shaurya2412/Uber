@@ -66,14 +66,10 @@ const handleBookRide = async () => {
       },
       fare: fareData.fare,
     });
-
-    // Clear form fields after successful booking
     setPickup("");
     setDestination("");
     setFare(0);
-    
-    // Don't call fetchCurrentRide here - the bookRide function already sets currentRide
-    // This prevents showing the wrong ride
+  
   } catch (err) {
     console.error("Failed to book ride:", err);
   }
@@ -82,8 +78,6 @@ const handleBookRide = async () => {
 
   useEffect(() => {
     if (isAuthenticated && !currentRide) {
-      // Only fetch current ride if we don't already have one
-      // This prevents overriding a newly booked ride
       fetchCurrentRide();
     }
   }, [isAuthenticated, fetchCurrentRide, currentRide]);
@@ -155,7 +149,6 @@ const handleBookRide = async () => {
   }
 
 
-  // Helper function to get captain initials
   const getCaptainInitials = (captain) => {
     if (!captain?.fullname) return 'NA';
     const { firstname, lastname } = captain.fullname;
@@ -174,7 +167,6 @@ const handleBookRide = async () => {
     }
   };
 
-  // Helper function to get status color
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -223,8 +215,8 @@ const handleBookRide = async () => {
 
     <div className="grid grid-cols-3 gap-4 text-sm">
       <div>
-        <div className="flex items-center gap-2 text-xs text-gray-500"><span>$</span><span>Est. Fare</span></div>
-        <div className="text-lg font-semibold text-gray-900">${currentRide.fare?.toFixed(2) || '0.00'}</div>
+        <div className="flex items-center gap-2 text-xs text-gray-500"><span>₹</span><span>Est. Fare</span></div>
+        <div className="text-lg font-semibold text-gray-900">₹ {currentRide.fare?.toFixed(2) || '0.00'}</div>
       </div>
       <div>
         <div className="flex items-center gap-2 text-xs text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19 7-7-7-7"/><path d="M5 12h14"/></svg><span>Est. Distance</span></div>

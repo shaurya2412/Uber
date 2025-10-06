@@ -333,7 +333,6 @@ const CaptainDashboard = () => {
       onClick={async () => {
         try {
           await finishRide(currentRide._id);
-          // Refresh ride history after finishing
           await fetchRideHistory();
         } catch (error) {
           console.error('Failed to finish ride:', error);
