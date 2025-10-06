@@ -82,6 +82,8 @@ const Dashboard = () => {
     }
   };
 
+  console.log("ride history:", rideHistory);
+
   // 🔹 Book Ride
   const handleBookRide = async () => {
     if (!pickup || !destination) {

@@ -115,4 +115,65 @@ export const useRideStore = create((set) => ({
   clearCurrentRide: () => set({ currentRide: null, rideStatus: 'idle' }),
 
   clearError: () => set({ error: null }),
+
+  // Captain functions
+  StartRide: async (rideId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = localStorage.getItem('captaintoken');
+      const response = await axios.post(
+        `${API_BASE}/rides/${rideId}/start`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      set({ isLoading: false });
+      return response.data;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.message || 'Failed to start ride',
+      });
+      throw error;
+    }
+  },
+
+  finishRide: async (rideId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = localStorage.getItem('captaintoken');
+      const response = await axios.post(
+        `${API_BASE}/rides/${rideId}/complete`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      set({ currentRide: null, rideStatus: 'idle', isLoading: false });
+      return response.data;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.message || 'Failed to finish ride',
+      });
+      throw error;
+    }
+  },
+
+  cancelRidecaptain: async (rideId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = localStorage.getItem('captaintoken');
+      const response = await axios.post(
+        `${API_BASE}/rides/${rideId}/captain-cancel`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      set({ currentRide: null, rideStatus: 'idle', isLoading: false });
+      return response.data;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.message || 'Failed to cancel ride',
+      });
+      throw error;
+    }
+  },
 }));

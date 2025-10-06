@@ -42,7 +42,7 @@ const CaptainDashboard = () => {
     fetchRideHistory,
   } = useCaptainStore();
 
-  const { finishRide,rideStatus,cancelRidecaptain,StartRide } = useRideStore();
+  const { finishRide, rideStatus, cancelRidecaptain, StartRide, isLoading: rideLoading, error: rideError } = useRideStore();
 
   console.log("🔍 Dashboard - Auth state:", {
     captain,
@@ -215,10 +215,23 @@ const CaptainDashboard = () => {
                     </p>
 
                     <button
-                      className="mt-2 w-full py-1.5 rounded bg-green-600 text-white text-sm hover:bg-green-700"
-                      onClick={() => acceptRide(ride?._id)}
+                      className="mt-2 w-full py-1.5 rounded bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-50"
+                      onClick={async () => {
+                        try {
+                          await acceptRide(ride._id);
+                          // Refresh available rides and current ride after accepting
+                          await Promise.all([
+                            fetchAvailableRides(),
+                            fetchCurrentRide()
+                          ]);
+                        } catch (error) {
+                          console.error('Failed to accept ride:', error);
+                          alert('Failed to accept ride: ' + (error.response?.data?.message || error.message));
+                        }
+                      }}
+                     
                     >
-                      Accept Ride
+                      { 'Accepting...' }
                     </button>
                   </div>
                 ))}
@@ -288,34 +301,69 @@ const CaptainDashboard = () => {
                 </span>
               </div>
             ) : null}
+            {rideError && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
+                {rideError}
+              </div>
+            )}
             <div className="flex space-x-3">
   {/* Start Ride */}
   {currentRide && currentRide.status === "accepted" && (
     <button
-      onClick={() => StartRide(currentRide?._id)}
-      className="p-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
+      onClick={async () => {
+        try {
+          await StartRide(currentRide._id);
+          // Refresh the current ride after starting
+          await fetchCurrentRide();
+        } catch (error) {
+          console.error('Failed to start ride:', error);
+          alert('Failed to start ride: ' + (error.response?.data?.message || error.message));
+        }
+      }}
+      disabled={rideLoading}
+      className="p-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
     >
-      Start Ride
+      {rideLoading ? 'Starting...' : 'Start Ride'}
     </button>
   )}
 
   {/* Finish Ride */}
-    {currentRide && currentRide.status === "in_progress" && (
+  {currentRide && currentRide.status === "in_progress" && (
     <button
-      onClick={() => finishRide(currentRide?._id)}
-      className="p-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
+      onClick={async () => {
+        try {
+          await finishRide(currentRide._id);
+          // Refresh ride history after finishing
+          await fetchRideHistory();
+        } catch (error) {
+          console.error('Failed to finish ride:', error);
+          alert('Failed to finish ride: ' + (error.response?.data?.message || error.message));
+        }
+      }}
+      disabled={rideLoading}
+      className="p-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
     >
-      Finish Ride
+      {rideLoading ? 'Finishing...' : 'Finish Ride'}
     </button>
   )}
 
   {/* Cancel Ride */}
   {currentRide && currentRide.status !== "completed" && (
     <button
-      onClick={() => cancelRidecaptain(currentRide?._id)}
-      className="p-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+      onClick={async () => {
+        try {
+          await cancelRidecaptain(currentRide._id);
+          // Refresh the current ride after canceling
+          await fetchCurrentRide();
+        } catch (error) {
+          console.error('Failed to cancel ride:', error);
+          alert('Failed to cancel ride: ' + (error.response?.data?.message || error.message));
+        }
+      }}
+      disabled={rideLoading}
+      className="p-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
     >
-      Cancel Ride
+      {rideLoading ? 'Canceling...' : 'Cancel Ride'}
     </button>
   )}
 </div>
