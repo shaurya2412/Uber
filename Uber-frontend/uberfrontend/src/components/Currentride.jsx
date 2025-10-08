@@ -207,7 +207,6 @@ const Currentride = () => {
         </div>
 
         <div className="mt-5 flex gap-3">
-          {/* ✅ Finish Ride + Trigger Payment */}
           <button
             onClick={async () => {
               try {
@@ -215,7 +214,6 @@ const Currentride = () => {
                 await fetchRideHistory();
                 await fetchCurrentRide();
 
-                // Trigger Razorpay after successful ride completion
                 await openRazorpayPayment(currentRide.fare);
               } catch (error) {
                 console.error("Failed to finish ride:", error);

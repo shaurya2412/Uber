@@ -1,51 +1,49 @@
 import React, { useState } from "react";
-import { FaGoogle } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { GoogleLogin } from "@react-oauth/google";
 import { useUserStore } from "../Zustand/useUserstore";
+import toast, { Toaster } from "react-hot-toast";
 
 const Login = () => {
   const navigate = useNavigate();
-const setUser = useUserStore((state) => state.setUser);
-const setToken = useUserStore((state) => state.setToken);
+  const setUser = useUserStore((state) => state.setUser);
+  const setToken = useUserStore((state) => state.setToken);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // ✅ GOOGLE LOGIN SUCCESS
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      console.log("Google Credential:", credentialResponse);
-      
       const response = await axios.post("http://localhost:5000/auth/google", {
-        credential: credentialResponse.credential
+        credential: credentialResponse.credential,
       });
 
       const data = response.data;
-      console.log(credentialResponse.credential);
-      console.log(response.data);
+
       if (response.status === 200 && data.token) {
-        console.log("Login successful:", data);
         setUser(data.user);
         setToken(data.token);
+
+        toast.success("Google login successful 🚀");
         navigate("/dashboard");
       } else {
-        console.error("Login failed:", data.message || "Unknown error");
-        alert(`Login failed: ${data.message || "Unknown error"}`);
+        toast.error(data.message || "Google login failed ❌");
       }
     } catch (error) {
       console.error("Google login error:", error);
-      alert("Google login failed hihihihi. Please try again.");
+      toast.error("Google login failed. Please try again 😢");
     }
   };
 
+  // ✅ GOOGLE LOGIN FAILURE
   const handleGoogleError = () => {
-    console.log("Google Login Failed");
-    alert("Google login failed hihihi2. Please try again.");
+    toast.error("Google login cancelled or failed ❌");
   };
 
+  // ✅ EMAIL/PASSWORD LOGIN
   const handlelogin = async (e) => {
     e.preventDefault();
-
     try {
       const res = await axios.post("http://localhost:5000/users/login", {
         email,
@@ -55,11 +53,11 @@ const setToken = useUserStore((state) => state.setToken);
       const { token } = res.data;
       localStorage.setItem("token", token);
 
-      console.log("Login successful:", res.data);
+      toast.success("Login successful 🎉");
       navigate("/dashboard");
     } catch (error) {
       console.error("Login failed:", error);
-      alert("Invalid email or password.");
+      toast.error("Invalid email or password ❌");
     }
   };
 
@@ -68,9 +66,12 @@ const setToken = useUserStore((state) => state.setToken);
       <div className="w-1/2 bg-gradient-to-b from-[#0f0f0f] to-[#1a1a1a] text-white p-12 flex flex-col justify-center">
         <div className="max-w-md mx-auto">
           <h1 className="text-4xl font-bold mb-4">Uber</h1>
-          <h2 className="text-2xl font-semibold mb-6">Go anywhere with Uber</h2>
+          <h2 className="text-2xl font-semibold mb-6">
+            Go anywhere with Uber
+          </h2>
           <p className="mb-6 text-gray-300">
-            Request a ride, hop in, and go. Choose from a variety of ride types and get where you need to be.
+            Request a ride, hop in, and go. Choose from a variety of ride types
+            and get where you need to be.
           </p>
         </div>
       </div>
@@ -81,7 +82,7 @@ const setToken = useUserStore((state) => state.setToken);
             What's your phone number or email?
           </h2>
 
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={handlelogin}>
             <input
               type="email"
               placeholder="Enter phone number or email"
@@ -98,14 +99,14 @@ const setToken = useUserStore((state) => state.setToken);
               className="border border-gray-300 px-3 py-2 rounded-xl bg-gray-200 text-black w-full"
               required
             />
-          </form>
 
-          <button
-            onClick={handlelogin}
-            className="bg-black text-white w-full py-2 rounded-lg font-semibold hover:bg-gray-800 transition mt-6"
-          >
-            Login
-          </button>
+            <button
+              type="submit"
+              className="bg-black text-white w-full py-2 rounded-lg font-semibold hover:bg-gray-800 transition mt-6"
+            >
+              Login
+            </button>
+          </form>
 
           <div className="text-center text-sm text-gray-500 my-4">or</div>
 
@@ -114,7 +115,6 @@ const setToken = useUserStore((state) => state.setToken);
               onSuccess={handleGoogleSuccess}
               onError={handleGoogleError}
               useOneTap={false}
-              auto_select={false}
               theme="outline"
               size="large"
               text="continue_with"
@@ -123,6 +123,8 @@ const setToken = useUserStore((state) => state.setToken);
           </div>
         </div>
       </div>
+
+      <Toaster position="top-right" reverseOrder={false} />
     </div>
   );
 };

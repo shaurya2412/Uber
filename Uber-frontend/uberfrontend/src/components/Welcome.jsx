@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { GoogleLogin } from "@react-oauth/google";
 import { useUserStore } from "../Zustand/useUserstore";
+import toast, { Toaster } from "react-hot-toast";
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -62,11 +63,11 @@ const Welcome = () => {
         email,
         password,
       });
-
+toast.success("new user registered");
       console.log("Registered:", res.data);
     } catch (error) {
       console.error("Registration failed:", error);
-      alert("Something went wrong while registering.");
+      toast.error("Something went wrong while registering.");
     }
   };
 
@@ -109,6 +110,7 @@ const Welcome = () => {
                   onChange={(e) => setFirstname(e.target.value)}
                   className="border border-gray-300 px-3 py-2 rounded text-black w-full"
                   required
+                  
                 />
                 <input
                   type="text"
@@ -148,7 +150,7 @@ const Welcome = () => {
               />
 
               <button
-                type="submit"
+                onClick={handleRegister}
                 className="bg-black text-white w-full py-2 rounded-lg font-semibold hover:bg-gray-800 transition"
               >
                 Create account →
@@ -178,6 +180,7 @@ const Welcome = () => {
 
               Sign in
             </span>
+                 <Toaster position="top-right" reverseOrder={false} />
            
           </p>
            <p className="text-center text-sm text-gray-500 mt-1">

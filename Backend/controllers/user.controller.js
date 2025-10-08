@@ -3,26 +3,34 @@ const userService = require("../services/user.service")
 const {validationResult} = require('express-validator');
 
 module.exports.registerUser = async(req, res, next) => {
-
+  try {
     const errors = validationResult(req);
     if (!errors.isEmpty()){
         return res.status(400).json({error: errors.array()});
     }
-const { fullname, email, password } = req.body;
-const { firstname, lastname } = fullname;
+    const { fullname, email, password } = req.body;
+    const { firstname, lastname } = fullname;
+
+    const existing = await userModel.findOne({ email });
+    if (existing) {
+      return res.status(400).json({ error: [{ msg: 'Email already registered' }] });
+    }
 
     const hashedPassword = await userModel.hashPassword(password);
 
-  const user = await userService.createUser({
+    const user = await userService.createUser({
       firstname,
       lastname,
       email,
-    password:hashedPassword
-  })
+      password:hashedPassword
+    })
 
-  const token = user.generateAuthToken();
-  
-  res.status(201).json({token, user});  
+    const token = user.generateAuthToken();
+    
+    res.status(201).json({token, user});  
+  } catch (err) {
+    return next(err);
+  }
 }
 
 module.exports.loginUser = async(req, res, next)=> {
