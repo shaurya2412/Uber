@@ -42,7 +42,7 @@ const Dashboard = () => {
     calculatetheprice,
   } = useRideStore();
 
-  const { isAuthenticated } = useUserStore();
+  const { isAuthenticated,fetchProfile } = useUserStore();
 
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");

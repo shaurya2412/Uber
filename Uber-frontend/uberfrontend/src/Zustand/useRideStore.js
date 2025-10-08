@@ -146,7 +146,27 @@ export const useRideStore = create((set) => ({
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      set({ currentRide: null, rideStatus: 'idle', isLoading: false });
+      set({ currentRide: 'completed', rideStatus: 'idle', isLoading: false });
+      return response.data;
+    } catch (error) {
+      set({ 
+        isLoading: false,
+        error: error.response?.data?.message || 'Failed to finish ride',
+      });
+      throw error;
+    }
+  },
+
+  finishRideuser: async (rideId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API_BASE}/rides/${rideId}/completeuser`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      set({ currentRide: null, rideStatus: 'completed', isLoading: false });
       return response.data;
     } catch (error) {
       set({
@@ -156,6 +176,7 @@ export const useRideStore = create((set) => ({
       throw error;
     }
   },
+
 
   cancelRidecaptain: async (rideId) => {
     set({ isLoading: true, error: null });

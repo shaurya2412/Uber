@@ -327,7 +327,6 @@ const CaptainDashboard = () => {
     </button>
   )}
 
-  {/* Finish Ride */}
   {currentRide && currentRide.status === "in_progress" && (
     <button
       onClick={async () => {

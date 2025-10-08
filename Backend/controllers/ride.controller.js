@@ -153,6 +153,46 @@ module.exports.completeRide = async (req, res, next) => {
     }
 };
 
+module.exports.usercompleteRide = async (req, res, next) => {
+    try {
+        const { rideId } = req.params;
+        const userId = req.user._id;
+
+        const ride = await rideModel.findOneAndUpdate(
+            { 
+                _id: rideId, 
+                user: userId,
+                status: 'in_progress' 
+            },
+            {
+                status: 'completed',
+                completedAt: new Date()
+            },
+            { new: true }
+        ).populate('captain', 'fullname email');
+
+        if (!ride) {
+            return res.status(404).json({
+                success: false,
+                message: "Ride not found or cannot be completed"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Ride completed successfully",
+            data: ride
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error completing ride",
+            error: error.message
+        });
+    }
+};
+
+
 module.exports.getCurrentRide = async (req, res, next) => {
     try {
         const captainId = req.captain._id;

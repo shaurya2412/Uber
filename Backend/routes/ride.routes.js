@@ -8,6 +8,8 @@ router.get('/available', authMiddleware.authCaptain, rideController.getAvailable
 router.post('/:rideId/accept', authMiddleware.authCaptain, rideController.acceptRide);
 router.post('/:rideId/start', authMiddleware.authCaptain, rideController.startRide);
 router.post('/:rideId/complete', authMiddleware.authCaptain, rideController.completeRide);
+router.post('/:rideId/completeuser',authMiddleware.authUser, rideController.usercompleteRide);
+
 router.get('/current', authMiddleware.authCaptain, rideController.getCurrentRide);
 router.get('/history', authMiddleware.authCaptain, rideController.getRideHistory);
 router.put('/:rideId/location', 
