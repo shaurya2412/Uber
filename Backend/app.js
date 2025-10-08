@@ -7,12 +7,14 @@ const cors = require("cors");
 const userRoutes = require("./routes/user.routes")
 const captainRoutes = require("./routes/captain.routes")
 const rideRoutes = require("./routes/ride.routes")
+const Razorpayorders = require("./routes/payment.routes")
+const Verifypayment = require("./routes/verify.routes")
+
 const connectTodb = require('./db/db');
 connectTodb();
 const app = express();
 app.use(cors());
 const cookieParser = require("cookie-parser");
-
 app.use(express.json());
  
 app.use(cookieParser());
@@ -25,5 +27,9 @@ app.use("/captains", captainRoutes);
 app.use("/rides", rideRoutes);
 app.use("/auth", googleAuthRoutes);
 app.use("/api/fare", fareRoutes);
+app.use("/create-orders",Razorpayorders)
+app.use("/verify",Verifypayment);
+
+
 
 module.exports= app;

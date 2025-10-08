@@ -74,6 +74,14 @@ const rideSchema = new mongoose.Schema({
     type: Number,
     min: 1,
     max: 5 
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid', 'failed'],
+    default: 'pending'
+  },
+  paidAt: {
+    type: Date
   }
 }, { timestamps: true }); 
 const Ride = mongoose.model('Ride', rideSchema);
