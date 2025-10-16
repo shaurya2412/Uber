@@ -24,13 +24,7 @@ const RecentRides = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="rounded-2xl m-4 bg-white p-6 text-center text-red-600">
-        Failed to load rides: {error}
-      </div>
-    );
-  }
+ 
 
   if (!rideHistory || rideHistory.length === 0) {
     return (

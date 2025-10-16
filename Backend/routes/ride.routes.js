@@ -38,6 +38,6 @@ router.get('/user-current', authMiddleware.authUser, rideController.getUserCurre
 router.get('/user-history', authMiddleware.authUser, rideController.getUserRideHistory);
 router.post('/:rideId/cancel', authMiddleware.authUser, rideController.cancelUserRide);
 router.post('/:rideId/captain-cancel', authMiddleware.authCaptain, rideController.cancelcaptainRide);
-
+router.get("/dashboard-stats",authMiddleware.authUser, rideController.getUserDashboardStats);
 
 module.exports = router;

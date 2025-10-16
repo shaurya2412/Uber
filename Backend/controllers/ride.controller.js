@@ -478,3 +478,49 @@ module.exports.cancelcaptainRide = async (req, res, next) => {
         });
     }
 }; 
+
+module.exports.getUserDashboardStats = async (req, res, next) => {
+  try {
+    const userId = req?.user._id;
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const [totalRides, totalSpentAgg, activeRide] = await Promise.all([
+      rideModel.countDocuments({
+        user: userId,
+        createdAt: { $gte: startOfMonth },
+      }),
+
+      rideModel.aggregate([
+        { $match: { user: userId, createdAt: { $gte: startOfMonth } } },
+        { $group: { _id: null, total: { $sum: "$fare" } } },
+      ]),
+
+      rideModel.findOne({
+        user: userId,
+        status: { $in: ["accepted", "in_progress"] },
+      }).select("pickupLocation dropoffLocation status fare"),
+    ]);
+
+    const totalSpent =
+      totalSpentAgg.length > 0 ? totalSpentAgg[0].total : 0;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalRides,
+        totalSpent: Number(totalSpent.toFixed(2)),
+        activeRide: activeRide || null,
+      },
+    });
+  } catch (error) {
+    console.error("Dashboard stats error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching dashboard stats",
+      error: error.message,
+    });
+  }
+};

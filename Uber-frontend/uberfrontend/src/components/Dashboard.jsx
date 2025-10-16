@@ -5,7 +5,7 @@ import OSMMap from "./Map";
 import Currentride from "./Currentride";
 import RecentRides from "./RecentRides";
 import { useUserStore } from "../Zustand/useUserStore";
-import { useRideStore } from "../zustand/useRideStore";
+import { useRideStore } from "../Zustand/useRideStore";
 import UserdashboardHeader from "./userdashboardHeader";
 
 const getCoordinates = async (place) => {
@@ -40,6 +40,8 @@ const Dashboard = () => {
     fetchCurrentRide,
     fetchRideHistory,
     calculatetheprice,
+    fetchusermetrics,
+    stats
   } = useRideStore();
 
   const { isAuthenticated,fetchProfile } = useUserStore();
@@ -48,12 +50,15 @@ const Dashboard = () => {
   const [destination, setDestination] = useState("");
   const [fare, setFare] = useState(0);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchCurrentRide();
-      fetchRideHistory();
-    }
-  }, [isAuthenticated, fetchCurrentRide, fetchRideHistory]);
+useEffect(() => {
+  if (isAuthenticated) {
+    fetchCurrentRide();
+    fetchRideHistory();
+    fetchusermetrics();
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [isAuthenticated]);
+
 
   // 🔹 Calculate Fare
   const handleCalculateFare = async () => {
@@ -179,11 +184,10 @@ const Dashboard = () => {
       >
         {isLoading ? "Booking..." : "Find Rides"}
       </button>
-
-      {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
     </div>
   );
 
+  // metrics are fetched in useEffect and stored in `stats`
   return (
 
     <div className="bg-gray-50 min-h-screen">
@@ -191,26 +195,27 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Cardcomponent
-            t1="Total Rides"
-            t2="🚘"
-            t3="This month"
-            t4={rideHistory.length}
-          />
-          <Cardcomponent
-            t1="Active Ride"
-            t2="⏱️"
-            t3="Current"
-            t4={currentRide ? "Yes" : "No"}
-          />
-          <Cardcomponent
-            t1="Total Spent"
-            t2="💵"
-            t3="This month"
-            t4={`₹${rideHistory
-              .reduce((sum, ride) => sum + (ride.fare || 0), 0)
-              .toFixed(2)}`}
-          />
+         <Cardcomponent
+  t1="Total Rides"
+  t2="🚘"
+  t3="This month"
+  t4={stats.totalRides}
+/>
+
+<Cardcomponent
+  t1="Active Ride"
+  t2="⏱️"
+  t3="Current"
+  t4={stats.activeRide ? "Yes" : "No"}
+/>
+
+<Cardcomponent
+  t1="Total Spent"
+  t2="💵"
+  t3="This month"
+  t4={`₹${stats.totalSpent.toFixed(2)}`}
+/>
+
         </div>
 
         {/* Map + Ride Info */}
@@ -256,7 +261,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Ride History */}
         <div className="mt-6">
           <RecentRides rides={rideHistory} />
         </div>

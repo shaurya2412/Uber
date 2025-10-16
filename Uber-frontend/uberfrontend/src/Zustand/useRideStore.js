@@ -11,7 +11,12 @@ export const useRideStore = create((set) => ({
   rideHistory: [],
   isLoading: false,
   error: null,
-
+  // Dashboard metrics for user
+  stats: {
+    totalRides: 0,
+    totalSpent: 0,
+    activeRide: null,
+  },
   bookRide: async (rideData) => {
     set({ isLoading: true, error: null });
     try {
@@ -177,6 +182,29 @@ export const useRideStore = create((set) => ({
     }
   },
 
+  fetchusermetrics: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE}/rides/dashboard-stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      set({
+        stats: response.data.data,
+        isLoading: false,
+      });
+      return response.data.data;
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      set({
+        isLoading: false,
+        error: error.response?.data?.message || "Error fetching stats",
+      });
+      throw error;
+    }
+  },
+      
+  
 
   cancelRidecaptain: async (rideId) => {
     set({ isLoading: true, error: null });
