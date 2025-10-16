@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useUserStore } from '../Zustand/useUserstore';
+import { useUserStore } from '../Zustand/useUserStore';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated,  fetchProfile, logout } = useUserStore();

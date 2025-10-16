@@ -6,7 +6,7 @@ import { CiLogout } from "react-icons/ci";
 import { BsWallet2 } from "react-icons/bs";
 import { MdHistory } from "react-icons/md";
 
-import { useRideStore } from "../Zustand/useRideStore";
+import { useRideStore } from "../zustand/useRideStore";
 import { useUserStore } from "../Zustand/useUserStore";
 
 const UserDashboardHeader = () => {
