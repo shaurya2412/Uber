@@ -9,6 +9,7 @@ const captainRoutes = require("./routes/captain.routes")
 const rideRoutes = require("./routes/ride.routes")
 const Razorpayorders = require("./routes/payment.routes")
 const Verifypayment = require("./routes/verify.routes")
+const testEmailRoute = require("./routes/testEmail");
 
 const connectTodb = require('./db/db');
 connectTodb();
@@ -27,6 +28,8 @@ app.use("/captains", captainRoutes);
 app.use("/rides", rideRoutes);
 app.use("/auth", googleAuthRoutes);
 app.use("/api/fare", fareRoutes);
+app.use("/api", testEmailRoute);
+
 app.use("/create-orders",Razorpayorders)
 app.use("/verify",Verifypayment);
 
