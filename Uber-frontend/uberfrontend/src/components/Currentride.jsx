@@ -20,6 +20,8 @@ const Currentride = () => {
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");
   const [fare, setFare] = useState(0);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
 
   // 🔹 Helper to fetch coordinates
   const getCoordinates = async (place) => {
@@ -39,44 +41,85 @@ const Currentride = () => {
     }
   };
 
-  // 🔹 Book Ride
-  const handleBookRide = async () => {
-    if (!pickup || !destination) return;
+  // 🔹 Calculate Fare
+  const handleCalculateFare = async () => {
+    if (!pickup || !destination) {
+      alert("Please enter pickup and destination");
+      return;
+    }
 
+    setIsCalculating(true);
     try {
       const pickupCoords = await getCoordinates(pickup);
       const destCoords = await getCoordinates(destination);
 
-      if (!pickupCoords || !destCoords) return;
+      if (!pickupCoords || !destCoords) {
+        alert("Could not fetch coordinates. Please check the place names.");
+        return;
+      }
 
       const fareData = await calculatetheprice(
         { lat: pickupCoords.lat, lng: pickupCoords.lng },
         { lat: destCoords.lat, lng: destCoords.lng }
       );
-      console.log(fareData);
 
-      if (!fareData?.fare) {
-        console.error("❌ Fare calculation failed");
+      if (fareData?.fare) {
+        setFare(parseFloat(fareData.fare));
+        console.log("✅ Fare calculated:", fareData.fare);
+      } else {
+        alert("Failed to calculate fare");
+      }
+    } catch (err) {
+      console.error("Failed to calculate fare:", err);
+      alert("Failed to calculate fare. Please try again.");
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
+  // 🔹 Book Ride
+  const handleBookRide = async () => {
+    if (!pickup || !destination) {
+      alert("Please enter pickup and destination");
+      return;
+    }
+
+    if (fare === 0) {
+      alert("Please calculate fare first");
+      return;
+    }
+
+    setIsBooking(true);
+    try {
+      const pickupCoords = await getCoordinates(pickup);
+      const destCoords = await getCoordinates(destination);
+
+      if (!pickupCoords || !destCoords) {
+        alert("Could not fetch coordinates. Please check the place names.");
         return;
       }
 
-      setFare(parseFloat(fareData.fare));
-
       await bookRide({
-        pickup: { address: pickup, lat: pickupCoords.lat, lng: pickupCoords.lng },
+        pickup: { 
+          address: pickup, 
+          coordinates: { lat: pickupCoords.lat, lng: pickupCoords.lng }
+        },
         destination: {
           address: destination,
-          lat: destCoords.lat,
-          lng: destCoords.lng,
+          coordinates: { lat: destCoords.lat, lng: destCoords.lng }
         },
-        fare: fareData.fare,
+        fare: fare,
       });
 
       setPickup("");
       setDestination("");
       setFare(0);
+      console.log("✅ Ride booked successfully");
     } catch (err) {
       console.error("Failed to book ride:", err);
+      alert("Failed to book ride. Please try again.");
+    } finally {
+      setIsBooking(false);
     }
   };
 
@@ -100,10 +143,18 @@ const Currentride = () => {
     }
 
     try {
+      console.log("🔄 Initiating payment for fare:", fare);
+      
       // Step 1: Create Razorpay order
       const { data } = await axios.post("http://localhost:5000/create-orders/create-order", {
         amount: fare,
       });
+
+      if (!data.success) {
+        throw new Error(data.message || "Failed to create payment order");
+      }
+
+      console.log("✅ Payment order created:", data.order.id);
 
       // Step 2: Configure Razorpay options
       const options = {
@@ -115,19 +166,30 @@ const Currentride = () => {
         image: "https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png",
         order_id: data.order.id,
         handler: async function (response) {
-          const verifyRes = await axios.post("http://localhost:5000/verify/verify-payment", {
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-          });
+          try {
+            console.log("🔄 Verifying payment:", response.razorpay_payment_id);
+            
+            const verifyRes = await axios.post("http://localhost:5000/verify/verify-payment", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              rideId: currentRide._id, // Include rideId for receipt email
+            });
 
-          if (verifyRes.data.success) {
-            alert("✅ Payment Successful!");
-            await axios.post(`http://localhost:5000/rides/${currentRide._id}/mark-paid`);
-            await fetchRideHistory();
-            await fetchCurrentRide();
-          } else {
-            alert("❌ Payment verification failed!");
+            if (verifyRes.data.success) {
+              console.log("✅ Payment verified successfully");
+              alert("✅ Payment Successful! Receipt sent to your email.");
+              
+              // Refresh ride data
+              await fetchRideHistory();
+              await fetchCurrentRide();
+            } else {
+              console.error("❌ Payment verification failed:", verifyRes.data.message);
+              alert(`❌ Payment verification failed: ${verifyRes.data.message}`);
+            }
+          } catch (verifyError) {
+            console.error("❌ Payment verification error:", verifyError);
+            alert("❌ Payment verification failed. Please contact support.");
           }
         },
         prefill: {
@@ -142,8 +204,16 @@ const Currentride = () => {
       const razor = new window.Razorpay(options);
       razor.open();
     } catch (error) {
-      console.error("Payment Error:", error);
-      alert("Error initiating payment");
+      console.error("❌ Payment Error:", error);
+      
+      // Provide specific error messages
+      if (error.response?.data?.message) {
+        alert(`Payment Error: ${error.response.data.message}`);
+      } else if (error.message) {
+        alert(`Payment Error: ${error.message}`);
+      } else {
+        alert("Error initiating payment. Please check your internet connection and try again.");
+      }
     }
   };
 
@@ -180,13 +250,33 @@ const Currentride = () => {
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
             />
+            
+            {/* Fare Display */}
+            {fare > 0 && (
+              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-xl">
+                <p className="text-sm text-green-800">
+                  <strong>Estimated Fare: ₹{fare}</strong>
+                </p>
+              </div>
+            )}
           </div>
+          
+          {/* Calculate Fare Button */}
           <button
-            className="mt-5 bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors w-full"
-            onClick={handleBookRide}
-            disabled={isLoading}
+            className="mt-4 bg-gray-800 text-white px-4 py-3 rounded-xl hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full"
+            onClick={handleCalculateFare}
+            disabled={isCalculating || isBooking || !pickup || !destination}
           >
-            {isLoading ? "Booking..." : "Find rides"}
+            {isCalculating ? "Calculating..." : "Calculate Fare"}
+          </button>
+
+          {/* Book Ride Button */}
+          <button
+            className="mt-3 bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full"
+            onClick={handleBookRide}
+            disabled={isBooking || isCalculating || fare === 0 || !pickup || !destination}
+          >
+            {isBooking ? "Booking..." : "Book Ride"}
           </button>
         </div>
       </div>

@@ -13,7 +13,30 @@ function generateTripReceiptHTML(tripData) {
     receiptNo,
     mapUrl,
     date,
+    fareBreakdown,
+    companyInfo,
+    captainInfo
   } = tripData;
+
+  // Default fare breakdown if not provided
+  const defaultFareBreakdown = {
+    baseFare: Math.round(fare * 0.4),
+    distanceFare: Math.round(fare * 0.5),
+    timeFare: Math.round(fare * 0.05),
+    taxes: Math.round(fare * 0.05),
+    total: fare
+  };
+
+  const breakdown = fareBreakdown || defaultFareBreakdown;
+
+  // Default company info if not provided
+  const defaultCompanyInfo = {
+    name: process.env.COMPANY_NAME || 'Uber Clone',
+    email: process.env.COMPANY_EMAIL || 'support@uberclone.com',
+    address: process.env.COMPANY_ADDRESS || 'Noida, India'
+  };
+
+  const company = companyInfo || defaultCompanyInfo;
 
   return `
   <div style="font-family: 'Helvetica Neue', Arial, sans-serif; color: #222; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 10px; overflow: hidden;">
@@ -21,8 +44,8 @@ function generateTripReceiptHTML(tripData) {
       <div style="display: flex; align-items: center;">
         <img src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png" alt="Uber Logo" width="70" style="margin-right: 15px;">
         <div>
-          <strong>Uber Technologies, Inc</strong><br/>
-          <span style="font-size: 13px;">1455 Market Street<br/>San Francisco, CA 94103</span>
+          <strong>${company.name}</strong><br/>
+          <span style="font-size: 13px;">${company.address}</span>
         </div>
       </div>
       <div style="text-align: right;">
@@ -68,8 +91,58 @@ function generateTripReceiptHTML(tripData) {
       </table>
     </div>
 
-    <div style="padding: 15px 20px; border-top: 1px solid #eee; text-align: right; font-weight: bold;">
-      Total: ₹${fare}
+    ${captainInfo ? `
+    <div style="padding: 15px 20px; border-top: 1px solid #eee; background-color: #f8f9fa;">
+      <h4 style="margin: 0 0 10px 0; font-size: 16px;">Your Driver</h4>
+      <div style="display: flex; align-items: center;">
+        <div style="width: 40px; height: 40px; background-color: #ddd; border-radius: 50%; margin-right: 10px; display: flex; align-items: center; justify-content: center;">
+          <span style="font-weight: bold;">${captainInfo.name && typeof captainInfo.name === 'string' && captainInfo.name.length > 0 ? captainInfo.name.charAt(0).toUpperCase() : 'D'}</span>
+        </div>
+        <div>
+          <div style="font-weight: bold;">${captainInfo.name && typeof captainInfo.name === 'string' ? captainInfo.name : 'Driver'}</div>
+          <div style="font-size: 13px; color: #555;">${captainInfo.vehicleNumber && typeof captainInfo.vehicleNumber === 'string' ? captainInfo.vehicleNumber : 'Vehicle Info'}</div>
+          <div style="font-size: 13px; color: #555;">Rating: ${captainInfo.rating && typeof captainInfo.rating === 'number' ? captainInfo.rating.toFixed(1) : '4.5'} ⭐</div>
+        </div>
+      </div>
+    </div>
+    ` : ''}
+
+    <div style="padding: 15px 20px; border-top: 1px solid #eee;">
+      <h4 style="margin: 0 0 15px 0; font-size: 16px;">Fare Breakdown</h4>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">Base fare</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #f0f0f0; text-align: right;">₹${breakdown.baseFare}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">Distance (${distance} km)</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #f0f0f0; text-align: right;">₹${breakdown.distanceFare}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">Time (${duration})</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #f0f0f0; text-align: right;">₹${breakdown.timeFare}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">Taxes & Fees</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #f0f0f0; text-align: right;">₹${breakdown.taxes}</td>
+        </tr>
+        <tr style="font-weight: bold; font-size: 16px;">
+          <td style="padding: 12px 0;">Total</td>
+          <td style="padding: 12px 0; text-align: right;">₹${breakdown.total}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="padding: 15px 20px; background-color: #f8f9fa; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #666;">
+      <div style="margin-bottom: 8px;">
+        <strong>${company.name}</strong> | ${company.email}
+      </div>
+      <div>
+        © 2025 ${company.name} Technologies Pvt. Ltd. | All rights reserved.
+      </div>
+      <div style="margin-top: 8px; font-size: 11px;">
+        Need help? Contact us at ${company.email}
+      </div>
     </div>
   </div>
   `;

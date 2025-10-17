@@ -8,6 +8,7 @@ import CaptainRegister from "./captainroutes/captainregister";
 import LaunchPage from "./components/Launchpage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CaptainProtectedRoute from "./components/CaptainProtectedRoute";
+import AllRides from "./components/AllRides";
 const AllRoutes = () => {
   return (
     <Routes>
@@ -17,6 +18,11 @@ const AllRoutes = () => {
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/rides" element={
+        <ProtectedRoute>
+          <AllRides />
         </ProtectedRoute>
       } />
       <Route path="/capdashboard" element={

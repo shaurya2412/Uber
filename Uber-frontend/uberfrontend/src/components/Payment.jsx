@@ -5,29 +5,46 @@ const Payment = () => {
 
   const handlePayment = async () => {
     try {
+      console.log("🔄 Initiating test payment for ₹500");
+      
       const { data } = await axios.post("http://localhost:5000/create-orders/create-order", {
         amount: 500, // ₹500
       });
+
+      if (!data.success) {
+        throw new Error(data.message || "Failed to create payment order");
+      }
+
+      console.log("✅ Payment order created:", data.order.id);
 
       const options = {
         key: data.key, 
         amount: data.order.amount, 
         currency: data.order.currency,
         name: "Uber Clone",
-        description: "Ride Payment",
+        description: "Ride Payment Test",
         image: "https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png",
         order_id: data.order.id,
         handler: async function (response) {
-          const res = await axios.post("http://localhost:5000/verify/verify-payment", {
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-          });
+          try {
+            console.log("🔄 Verifying payment:", response.razorpay_payment_id);
+            
+            const res = await axios.post("http://localhost:5000/verify/verify-payment", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
 
-          if (res.data.success) {
-            alert("✅ Payment Successful!");
-          } else {
-            alert("❌ Payment Verification Failed!");
+            if (res.data.success) {
+              console.log("✅ Payment verified successfully");
+              alert("✅ Payment Successful!");
+            } else {
+              console.error("❌ Payment verification failed:", res.data.message);
+              alert(`❌ Payment Verification Failed: ${res.data.message}`);
+            }
+          } catch (verifyError) {
+            console.error("❌ Payment verification error:", verifyError);
+            alert("❌ Payment verification failed. Please contact support.");
           }
         },
         prefill: {
@@ -47,8 +64,16 @@ const Payment = () => {
       razor.open();
 
     } catch (error) {
-      console.error(error);
-      alert("Error while initiating payment");
+      console.error("❌ Payment Error:", error);
+      
+      // Provide specific error messages
+      if (error.response?.data?.message) {
+        alert(`Payment Error: ${error.response.data.message}`);
+      } else if (error.message) {
+        alert(`Payment Error: ${error.message}`);
+      } else {
+        alert("Error while initiating payment. Please check your internet connection and try again.");
+      }
     }
   };
 

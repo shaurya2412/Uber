@@ -1,35 +1,19 @@
 const express = require("express");
 const router = express.Router();
-const { sendEmail } = require("../services/emailService");
-const { generateTripReceiptHTML } = require("../services/receiptTemplate");
+const { sendTestReceipt } = require("../services/receiptService");
 
+// Test route for receipt email with enhanced template
 router.get("/test-receipt", async (req, res) => {
-  const tripData = {
-    user: { name: "Shaurya", email: "shauryaa2412@gmail.com" },
-    tripId: "UBR102938",
-    pickup: "Sector 18, Noida",
-    drop: "Connaught Place, New Delhi",
-    fare: 184.5,
-    distance: 12.4,
-    duration: "00:22:45",
-    carType: "Black Sedan",
-    paymentMethod: "Razorpay - **** 3219",
-    receiptNo: "RCP1845",
-    mapUrl:
-      "https://maps.googleapis.com/maps/api/staticmap?size=300x200&path=color:0x0000ff|weight:3|28.567|77.324|28.628|77.218&key=YOUR_MAPS_API_KEY",
-    date: "16 Oct 2025, 10:22 PM",
-  };
-
   try {
-    await sendEmail({
-      to: tripData.user.email,
-      subject: `Your Ride Receipt - ${tripData.tripId}`,
-      html: generateTripReceiptHTML(tripData),
-    });
-    res.send("✅ Trip receipt sent successfully!");
+    const result = await sendTestReceipt();
+    res.json({ success: true, message: result.message });
   } catch (error) {
-    console.error("❌ Error sending receipt:", error);
-    res.status(500).send("Error sending receipt.");
+    console.error("❌ Error sending test receipt:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Error sending test receipt.",
+      error: error.message 
+    });
   }
 });
 

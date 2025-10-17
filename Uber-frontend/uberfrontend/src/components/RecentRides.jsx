@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useRideStore } from "../zustand/useRideStore";
 
 const RecentRides = () => {
@@ -8,6 +9,9 @@ const RecentRides = () => {
     isLoading,
     error,
   } = useRideStore();
+
+  // Hooks must be called unconditionally at the top level
+  const navigate = useNavigate();
 
   // Fetch history if empty
   useEffect(() => {
@@ -39,9 +43,9 @@ const RecentRides = () => {
       {/* Header */}
       <div className="flex items-center justify-between p-5 border-b border-gray-100">
         <h3 className="text-xl font-semibold text-gray-900">Recent Rides</h3>
-        <button className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-white h-9 px-3 transition-colors">
+        <Link to="/rides" className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-white h-9 px-3 transition-colors">
           View All
-        </button>
+        </Link>
       </div>
 
       {/* Ride List */}

@@ -40,18 +40,15 @@ export const useRideStore = create((set) => ({
   },
 
   calculatetheprice: async (pickup, destination) => {
-    set({ isLoading: true, error: null });
     try {
       const res = await axios.post(`${API_BASE}/api/fare/calculate`, {
         pickup,
         destination,
       });
-      set({ isLoading: false });
       return res.data; // expected { fare: number } or { estimatedFare: number }
     } catch (error) {
       console.error("Error in calculating fare:", error);
       set({
-        isLoading: false,
         error: error.response?.data?.message || error.message,
       });
       throw error;

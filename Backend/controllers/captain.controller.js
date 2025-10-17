@@ -31,6 +31,7 @@ module.exports.registerCaptain = async(req, res, next) => {
             firstname,
             lastname,
             email,
+            phonenumber,
             password: hashedPassword,
             color,
             plate,

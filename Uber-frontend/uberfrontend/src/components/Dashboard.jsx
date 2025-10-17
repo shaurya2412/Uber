@@ -49,6 +49,8 @@ const Dashboard = () => {
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");
   const [fare, setFare] = useState(0);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
 
 useEffect(() => {
   if (isAuthenticated) {
@@ -67,6 +69,7 @@ useEffect(() => {
       return;
     }
 
+    setIsCalculating(true);
     try {
       const pickupCoords = await getCoordinates(pickup);
       const destCoords = await getCoordinates(destination);
@@ -80,11 +83,15 @@ useEffect(() => {
 
       if (result?.fare || result?.estimatedFare) {
         setFare(result.fare || result.estimatedFare);
+        console.log("✅ Fare calculated:", result.fare || result.estimatedFare);
       } else {
         alert("Failed to calculate fare");
       }
     } catch (error) {
       console.error("Error calculating fare:", error);
+      alert("Failed to calculate fare. Please try again.");
+    } finally {
+      setIsCalculating(false);
     }
   };
 
@@ -97,6 +104,12 @@ useEffect(() => {
       return;
     }
 
+    if (fare === 0) {
+      alert("Please calculate fare first");
+      return;
+    }
+
+    setIsBooking(true);
     try {
       const pickupCoords = await getCoordinates(pickup);
       const destCoords = await getCoordinates(destination);
@@ -121,8 +134,12 @@ useEffect(() => {
       setPickup("");
       setDestination("");
       setFare(0);
+      console.log("✅ Ride booked successfully");
     } catch (error) {
       console.error("Failed to book ride:", error);
+      alert("Failed to book ride. Please try again.");
+    } finally {
+      setIsBooking(false);
     }
   };
 
@@ -155,35 +172,33 @@ useEffect(() => {
           />
         </p>
 
-        <p className="text-sm text-gray-600 flex flex-col mt-4">
-          Fare (USD)
-          <input
-            className="mt-2 w-full rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            type="number"
-            placeholder="15.50"
-            value={fare}
-            onChange={(e) => setFare(parseFloat(e.target.value) || 0)}
-            min="1"
-            step="0.01"
-          />
-        </p>
+        {/* Fare Display */}
+        {fare > 0 && (
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl">
+            <p className="text-sm text-green-800">
+              <strong>Estimated Fare: ₹{fare}</strong>
+            </p>
+          </div>
+        )}
 
+        {/* Calculate Fare Button */}
         <button
           onClick={handleCalculateFare}
-          className="mt-4 bg-gray-800 text-white px-4 py-3 rounded-xl hover:bg-gray-900 transition-colors"
-          disabled={isLoading}
+          className="mt-4 bg-gray-800 text-white px-4 py-3 rounded-xl hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full"
+          disabled={isCalculating || isBooking || !pickup || !destination}
         >
-          {isLoading ? "Calculating..." : "Calculate Fare"}
+          {isCalculating ? "Calculating..." : "Calculate Fare"}
+        </button>
+
+        {/* Book Ride Button */}
+        <button
+          className="mt-3 bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full"
+          onClick={handleBookRide}
+          disabled={isBooking || isCalculating || fare === 0 || !pickup || !destination}
+        >
+          {isBooking ? "Booking..." : "Book Ride"}
         </button>
       </div>
-
-      <button
-        className="mt-6 bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors w-full"
-        onClick={handleBookRide}
-        disabled={isLoading}
-      >
-        {isLoading ? "Booking..." : "Find Rides"}
-      </button>
     </div>
   );
 

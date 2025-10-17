@@ -396,6 +396,68 @@ module.exports.getUserRideHistory = async (req, res, next) => {
     }
 };
 
+// Stream a PDF receipt for a given ride
+module.exports.getRideReceiptPdf = async (req, res, next) => {
+    try {
+        const PDFDocument = require('pdfkit');
+        const rideId = req.params.rideId;
+
+        const ride = await rideModel.findOne({ _id: rideId, user: req.user._id })
+            .populate('captain', 'fullname vehicleNumber rating')
+            .lean();
+
+        if (!ride) {
+            return res.status(404).json({ success: false, message: 'Ride not found' });
+        }
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=receipt_${rideId}.pdf`);
+
+        const doc = new PDFDocument({ margin: 40 });
+        doc.pipe(res);
+
+        // Header
+        doc
+          .fontSize(20)
+          .text('Ride Receipt', { align: 'left' })
+          .moveDown(0.5);
+
+        doc
+          .fontSize(10)
+          .text(`Receipt ID: RCP-${String(ride._id).slice(-8).toUpperCase()}`)
+          .text(`Date: ${(ride.completedAt || ride.updatedAt || ride.createdAt).toLocaleString()}`)
+          .text(`Payment: ${ride.paymentStatus === 'paid' ? 'Paid' : 'Pending'}`)
+          .text(`Payment ID: ${ride.paymentId || '—'}`)
+          .moveDown();
+
+        // Trip details
+        doc.fontSize(12).text('Trip Details', { underline: true }).moveDown(0.5);
+        doc.fontSize(10)
+          .text(`Pickup: ${ride.pickup?.address}`)
+          .text(`Drop: ${ride.destination?.address}`)
+          .text(`Distance: ${ride.distance ?? 0} km`)
+          .text(`Fare: ₹${Number(ride.fare).toFixed(2)}`)
+          .moveDown();
+
+        // Captain details
+        doc.fontSize(12).text('Captain Details', { underline: true }).moveDown(0.5);
+        doc.fontSize(10)
+          .text(`Name: ${ride.captain?.fullname || '—'}`)
+          .text(`Vehicle Number: ${ride.captain?.vehicleNumber || '—'}`)
+          .text(`Rating: ${ride.captain?.rating ?? '—'}`)
+          .moveDown();
+
+        // Footer
+        doc.moveDown().fontSize(9).fillColor('gray')
+          .text('Thank you for riding with us.', { align: 'center' });
+
+        doc.end();
+    } catch (error) {
+        console.error('PDF generation error:', error);
+        res.status(500).json({ success: false, message: 'Failed to generate receipt' });
+    }
+};
+
 module.exports.cancelUserRide = async (req, res, next) => {
     try {
         const { rideId } = req.params;

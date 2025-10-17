@@ -80,6 +80,9 @@ const rideSchema = new mongoose.Schema({
     enum: ['pending', 'paid', 'failed'],
     default: 'pending'
   },
+  paymentId: {
+    type: String
+  },
   paidAt: {
     type: Date
   }
