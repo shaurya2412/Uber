@@ -57,9 +57,7 @@ useEffect(() => {
     fetchCurrentRide();
     fetchRideHistory();
     fetchusermetrics();
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [isAuthenticated]);
+  }}, [isAuthenticated]);
 
 
   // 🔹 Calculate Fare
