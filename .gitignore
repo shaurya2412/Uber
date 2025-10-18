@@ -6,6 +6,11 @@ Uber-frontend/uberfrontend/node_modules/
 Backend/.env
 Uber-frontend/uberfrontend/.env
 
+Uber-chat-helper/.env
+Uber-chat-helper/node_modules
+
+
+
 # Logs
 *.log
 npm-debug.log*
