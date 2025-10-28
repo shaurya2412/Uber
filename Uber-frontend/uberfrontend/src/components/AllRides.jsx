@@ -33,7 +33,7 @@ const AllRides = () => {
   };
 
   if (isLoading) {
-    return <div className="p-6">Loading...</div>;
+    return <div className="p-6">Loading..getting.</div>;
   }
   if (error) {
     return <div className="p-6 text-red-600">{error}</div>;
