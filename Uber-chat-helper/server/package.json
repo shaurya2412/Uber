@@ -1,19 +1,22 @@
 {
   "name": "server",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.ts",
-  "scripts": {
-    "dev": "npx ts-node index.ts",
-    "seed": "npx ts-node seed-database.ts"
-  },
+"scripts": {
+  "dev": "node --loader ts-node/esm index.ts",
+  "embed": "node --loader ts-node/esm addRideEmbeddings.ts",
+  "agent": "node --loader ts-node/esm agent.ts"
+},
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "@types/node": "^24.8.1",
-    "typescript": "^5.9.3",
-     "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.9.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@langchain/core": "^0.3.78",
@@ -21,14 +24,11 @@
     "@langchain/langgraph": "^0.4.9",
     "@langchain/langgraph-checkpoint-mongodb": "^0.1.1",
     "@langchain/mongodb": "^0.1.1",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "langchain": "^0.3.36",
     "mongodb": "^6.20.0",
-    "ts-node": "^10.9.2",
     "zod": "^3.25.76"
   }
 }

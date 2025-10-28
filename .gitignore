@@ -10,6 +10,31 @@ Uber-chat-helper/.env
 Uber-chat-helper/node_modules
 
 
+# ────────────────────────────────
+# Chat Helper (AI Integration)
+# ────────────────────────────────
+
+# Node modules
+Uber-chat-helper/server/node_modules/
+    
+# Environment variables
+Uber-chat-helper/server/.env
+
+# Build or compiled output (if you add one later)
+Uber-chat-helper/server/dist/
+
+# Logs
+Uber-chat-helper/server/*.log
+
+# Temporary or generated files
+Uber-chat-helper/server/*.tmp
+Uber-chat-helper/server/*.tsbuildinfo
+
+# Local development configs (optional)
+Uber-chat-helper/server/.DS_Store
+Uber-chat-helper/server/.env.local
+Uber-chat-helper/server/.env.*.local
+
 
 # Logs
 *.log
