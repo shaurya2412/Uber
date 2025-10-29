@@ -1,148 +1,124 @@
-# Uber Clone (Full Stack)
+🚀 Production Release: Major Enhancements & Bug Fixes Deployed Successfully!
 
-A full‑stack Uber‑like application with separate roles for riders (users) and drivers (captains). Backend is Node.js/Express with MongoDB; frontend is React (Vite) with Zustand state.
+Hi Team,
 
-## Quick Start
+Exciting news! We're thrilled to announce the successful deployment of our latest release to Production. This release brings significant improvements across the platform, enhancing both user and seller experiences.
 
-- Backend: `Backend/`
-- Frontend: `Uber-frontend/uberfrontend/`
+This is a testament to the hard work and dedication of everyone involved – from planning and development to thorough QA and smooth deployment. Thank you for your incredible efforts!
 
-### Prerequisites
-- Node.js 18+
-- MongoDB running locally or in the cloud
+Here's a quick overview of what's new and improved:
 
-### 1) Backend setup
-```bash
-cd Backend
-npm install
-# Create .env
-# PORT=5000
-# MONGODB_URI=mongodb://localhost:27017/uber
-# JWT_SECRET=your-secret-key
-npm run dev   # or: npm start
-```
-Backend default: `http://localhost:5000`
+✨ Release Highlights ✨
 
-### 2) Frontend setup
-```bash
-cd Uber-frontend/uberfrontend
-npm install
-npm run dev
-```
-Frontend default: `http://localhost:5173`
+I. Overview / Summary
+This release focuses on significant user interface and experience improvements, along with critical bug fixes and the introduction of a new partial payment feature for sellers. These updates aim to enhance platform stability, improve user interaction, and provide new functionalities for our seller community.
 
-## Architecture
-- Backend: Express, Mongoose, JWT, express-validator
-- Frontend: React, Vite, React Router, Zustand, Axios, Tailwind (styles), Leaflet (maps-ready)
-- Auth: JWT stored in `localStorage` on the client; sent as `Authorization: Bearer <token>`
+II. New Features / Major Enhancements
 
-## Environment Variables
+Partial Payment Option for Sellers:
 
-Backend (`Backend/.env`):
-```
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/uber
-JWT_SECRET=your-secret-key
-```
+A new partial payment option helps sellers manage payments more flexibly and reduce returns to origin (RTO).
 
-Frontend (`Uber-frontend/uberfrontend/.env`):
-```
-VITE_API_BASE_URL=http://localhost:5000
-# Optional if using Google/Map services
-VITE_GOOGLE_MAPS_API_KEY=your_key
-```
+Sellers can configure partial payment value and type via the user preference interface.
 
-## Run Scripts
+Product Sharing URL Fix: Ensures correct links are generated and shared.
 
-Backend (from `Backend/`):
-- `npm run dev`: start with nodemon
-- `npm start`: start production server
+New 'In-Stock' Filter: Allows users to easily view only products currently in stock.
 
-Frontend (from `Uber-frontend/uberfrontend/`):
-- `npm run dev`: start Vite dev server
-- `npm run build`: production build
-- `npm run preview`: preview build
+Product Detail - Review Button and Dropdown: Enables users to rate products and view ratings from other users directly on the order detail page.
 
-## Backend API Overview
-Base URL: `http://localhost:5000`
+Product Detail - Main Image Management: Images on product detail pages now feature a blur effect to fill non-card-specific dimensions, improving visual presentation.
 
-Authentication uses JWT. Middleware reads token from cookie or `Authorization` header.
+Enhanced Discounts Functionality: New discount types have been added for better user engagement.
 
-### Users (`/users`)
-- POST `/register` body: `{ fullname:{firstname,lastname}, email, password }` → `{ token, user }`
-- POST `/login` body: `{ email, password }` → `{ token, user }`
-- GET `/profile` auth: user → returns current user
+Dynamic Tags on Product Detail & Drawer: Tags now work dynamically on product detail pages and in the product drawer.
 
-### Captains (`/captains`)
-- POST `/register` body: `{ name:{firstname,lastname}, email, password, vehicle:{ color, plate, vehiclemodel, capacity } }` → `{ captaintoken, captain }`
-- POST `/login` body: `{ email, password }` → `{ captaintoken, captain }`
-- GET `/profile` auth: captain → `{ success, captain }`
-- PUT `/status` auth: captain body: `{ active: boolean }` → `{ success, captain }`
+Order Details - Print Invoice Option: A new option to print invoices has been added to the Order Details page.
 
-### Rides (`/rides`)
-User actions (auth: user):
-- POST `/book` body:
-  ```json
-  {
-    "pickup": { "address": "...", "coordinates": { "lat": 0, "lng": 0 } },
-    "destination": { "address": "...", "coordinates": { "lat": 0, "lng": 0 } },
-    "fare": 123
-  }
-  ```
-- GET `/user-current` → current ride in `pending|accepted|in_progress`
-- GET `/user-history?page=&limit=` → completed rides
-- POST `/:rideId/cancel` → cancel `pending|accepted`
+III. User Interface & Experience Improvements
 
-Captain actions (auth: captain):
-- GET `/available` → pending rides
-- POST `/:rideId/accept` → claim a pending ride (one active ride per captain)
-- POST `/:rideId/start` → move `accepted` → `in_progress`
-- POST `/:rideId/complete` → move `in_progress` → `completed`
-- PUT `/:rideId/location` body `{ lat, lng }` → update current location
-- GET `/current` → current `accepted|in_progress` ride
-- GET `/history?page=&limit=` → completed rides
+Footer Enhancements: Fixed Collection/Category links, removed the News Letter section, and added links for Policies and My Profile.
 
-Validation via `express-validator` on emails, passwords, coordinates, required fields. Standard HTTP codes: 400 validation, 401 auth, 404 not found, 500 server error.
+Dashboard/Page Flow Improvements: Removed empty pages with no functional links.
 
-## Data Models (Mongoose)
-- User: `fullname { firstname, lastname }`, `email`, `password`, methods `generateAuthToken`, `comparePassword`
-- Captain: `fullname`, `email`, `password`, `active`, `vehicle { color, plate, vehiclemodel, capacity, location }`
-- Ride: refs `user`, `captain`, `pickup`, `destination`, `fare`, `status (pending|accepted|in_progress|completed|cancelled)`, timestamps
+Content Updates: Text has been changed in the service section.
 
-## Frontend Overview
-Routing (`src/Routes.jsx`):
-- `/` → LaunchPage
-- `/login` → Login (user)
-- `/dashboard` → ProtectedRoute(User) → Dashboard
-- `/captainlogin` → CaptainLogin
-- `/captainRegister` → Captain registration
-- `/capdashboard` → Captain dashboard (wrap with `CaptainProtectedRoute` if restricting access)
+Product Listing & Display:
 
-Guards:
-- `ProtectedRoute` (user): checks `localStorage.token`, fetches `/users/profile` to verify
-- `CaptainProtectedRoute`: verifies `localStorage.captaintoken` via `/captains/profile`
+"View All Products" button removed when all products are loaded, for a better user experience.
 
-State (Zustand):
-- `useUserStore`: user auth, profile; persists `token` in `localStorage`
-- `useCaptainStore`: captain auth, `active` toggle, available/current/history rides
-- `useRideStore`: user ride booking, current ride, history, status
+Blur functionality added to product details.
 
-## Typical Flows
-- User login → token saved → access `/dashboard` → book ride → captain accepts → ride progresses to complete → appears in history
-- Captain login → token saved → set `active` → fetch available rides → accept/start/complete ride → history updates
+Mobile and cart buttons are always visible in mobile view.
 
-## Notes
-- Ports: Backend 5000, Frontend 5173
-- Ensure CORS is enabled in backend for the frontend origin
-- Update API base URL in frontend `.env` if backend port/host differs
+Double descriptions are now consolidated and taken directly from product details.
 
-## Troubleshooting
-- Backend not starting: check `.env` and MongoDB connection
-- 401 errors: verify `Authorization: Bearer <token>` header and token presence
-- Frontend cannot reach backend: confirm ports, CORS, and `VITE_API_BASE_URL`
+Banner and Collection Display:
 
+Fixed issues with banners over-displaying on internal pages.
 
-      - Backend README: `Backend/README.md`
-- Frontend README: `Uber-frontend/uberfrontend/README.md`
+Collection section is now centered (previously left-oriented).
 
+Collection size is consistently maintained according to the screen.
 
+Banner navigation arrows (e.g., Banner C) are now fully functional.
+
+Resolved unexpected movement of subsequent banners when buttons were pressed.
+
+Hero Banner Restrictions: Main heading text is now plain text only (no underline or bold), ensuring consistent visual appeal. Sub-headings are correctly visible.
+
+Header Behavior: Categories or collections not found will no longer appear in headers. Fixed an issue with an unnecessary arrow over the hero banner when the header was unsticky.
+
+Related Product Display: Product tags are now visible on the common drawer and product detail page.
+
+Reviews Section: Reviews on products are now dynamic.
+
+Live Viewership Count: A dynamic count of "how many people currently viewing" is now displayed on every product detail page.
+
+Search Bar Temporary Removal: Temporarily removed due to incomplete functionality.
+
+Common Drawer UI Changes: UI for "Add to Cart" button changed; icons and buttons in the common drawer and product detail page now adhere to the website's theme color.
+
+Featured Icons Theme: Featured icons now adhere to theme colors.
+
+Filter Functionality:
+
+An "Apply" button added to the pricing filter to prevent multiple API calls and improve performance.
+
+Fixed issues with attribute filters not working correctly.
+
+A new custom filter is now applied by default.
+
+Category, Sub-category, and Attribute sub-sections now use square boxes instead of round circles for selection.
+
+'Load More' Button Removed: Removed from collection, category, and all product pages once products are loaded, to avoid confusion.
+
+Static "About Us" / "Contact Us": Pages temporarily commented out as they are not ready.
+
+Collection Side Arrows: Side arrows have been added to the collection view.
+
+Order Detail Navigation (Mobile): On mobile, users can now see and click the complete "Order Details" text (instead of just an arrow), improving clarity for Order Details, Address, and My Profile sections.
+
+Order History Sort Order: Fixed an issue where recent orders sometimes did not appear at the top of the order history.
+
+V. Bug Fixes
+
+Login Flow Enhancements:
+
+Users must now check policy and notification checkboxes before logging in.
+
+Resolved incorrect OTP message when changing phone numbers during login.
+
+OTP timeout adjusted from 200 seconds to 30 seconds.
+
+Resend OTP function is now fully working.
+
+Order Details - Variant Display: Variant section is now hidden in order details if no product variants are present.
+
+'Buy Again' Functionality: Correctly redirects users to the product details page of the bought product.
+
+Address Section Management: Main address moved from "My Profile" to the dedicated "Address" section, reducing repetition.
+
+Attribute Problem Fix: Fixed issues with attribute filters.
+
+We encourage all teams to review these updates. Your feedback and support are invaluable as we continue to enhance our platform.
