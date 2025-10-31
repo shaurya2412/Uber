@@ -10,6 +10,7 @@ const rideRoutes = require("./routes/ride.routes")
 const Razorpayorders = require("./routes/payment.routes")
 const Verifypayment = require("./routes/verify.routes")
 const testEmailRoute = require("./routes/testEmail");
+const solanaRoutes = require("./routes/solana.routes");
 
 const connectTodb = require('./db/db');
 connectTodb();
@@ -32,7 +33,8 @@ app.use("/api", testEmailRoute);
 
 app.use("/create-orders",Razorpayorders)
 app.use("/verify",Verifypayment);
-
+app.use("/solana", solanaRoutes);
+ 
 
 
 module.exports= app;
