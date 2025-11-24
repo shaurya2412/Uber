@@ -4,11 +4,41 @@ const rideModel = require('../models/ride.model');
 const captainModel = require('../models/captain.model');
 
 /**
+ * Calculate average captain rating from completed rides
+ * @param {string} captainId - Captain ID
+ * @returns {Promise<number>} Average rating or default 4.5
+ */
+async function calculateCaptainRating(captainId) {
+  if (!captainId) return 4.5;
+  
+  try {
+    const completedRides = await rideModel.find({
+      captain: captainId,
+      status: 'completed',
+      captainRating: { $exists: true, $ne: null }
+    }).select('captainRating').lean();
+    
+    if (!completedRides || completedRides.length === 0) {
+      return 4.5; // Default rating
+    }
+    
+    const totalRating = completedRides.reduce((sum, ride) => sum + (ride.captainRating || 0), 0);
+    const averageRating = totalRating / completedRides.length;
+    
+    return Math.round(averageRating * 10) / 10; // Round to 1 decimal place
+  } catch (error) {
+    console.error('❌ Error calculating captain rating:', error);
+    return 4.5; // Default on error
+  }
+}
+
+/**
  * Safely format captain information for receipt
  * @param {Object} captain - Captain data from database
+ * @param {number} rating - Captain average rating
  * @returns {Object|null} Formatted captain info or null
  */
-function formatCaptainInfo(captain) {
+function formatCaptainInfo(captain, rating = 4.5) {
   if (!captain) {
     console.log('🚗 No captain data provided');
     return null;
@@ -17,10 +47,26 @@ function formatCaptainInfo(captain) {
   try {
     console.log('🚗 Raw captain data:', captain);
     
+    // Extract name from nested structure
+    const firstName = captain.fullname?.firstname || '';
+    const lastName = captain.fullname?.lastname || '';
+    const fullName = `${firstName} ${lastName}`.trim() || 'Driver';
+    
+    // Extract vehicle information
+    const vehiclePlate = captain.vehicle?.plate || 'N/A';
+    const vehicleColor = captain.vehicle?.color || '';
+    const vehicleModel = captain.vehicle?.vehiclemodel || '';
+    const vehicleInfo = vehicleColor && vehicleModel 
+      ? `${vehicleColor} ${vehicleModel}` 
+      : vehicleModel || 'Vehicle';
+    
     const formattedInfo = {
-      name: captain.fullname && typeof captain.fullname === 'string' && captain.fullname.trim() ? captain.fullname.trim() : null,
-      vehicleNumber: captain.vehicleNumber && typeof captain.vehicleNumber === 'string' && captain.vehicleNumber.trim() ? captain.vehicleNumber.trim() : null,
-      rating: typeof captain.rating === 'number' && captain.rating > 0 ? captain.rating : 4.5
+      name: fullName,
+      vehicleNumber: vehiclePlate,
+      vehicleInfo: vehicleInfo,
+      vehicleColor: vehicleColor,
+      vehicleModel: vehicleModel,
+      rating: typeof rating === 'number' && rating > 0 ? rating : 4.5
     };
     
     console.log('🚗 Formatted captain info:', formattedInfo);
@@ -41,7 +87,7 @@ async function sendRideReceipt(rideId, paymentId) {
     // Fetch complete ride data with populated user and captain
     const ride = await rideModel.findById(rideId)
       .populate('user', 'fullname email')
-      .populate('captain', 'fullname vehicleNumber rating')
+      .populate('captain', 'fullname vehicle')
       .lean();
 
     if (!ride) {
@@ -52,13 +98,27 @@ async function sendRideReceipt(rideId, paymentId) {
       throw new Error('User email not found');
     }
 
+    // Calculate captain rating from completed rides
+    const captainRating = ride.captain 
+      ? await calculateCaptainRating(ride.captain._id || ride.captain)
+      : 4.5;
+
     // Generate receipt number
     const receiptNo = `RCP${Date.now().toString().slice(-6)}`;
 
     // Debug logging
     console.log('📧 Preparing receipt data for ride:', rideId);
     console.log('👤 User data:', ride.user ? { name: ride.user.fullname, email: ride.user.email } : 'No user data');
-    console.log('🚗 Captain data:', ride.captain ? { name: ride.captain.fullname, vehicleNumber: ride.captain.vehicleNumber, rating: ride.captain.rating } : 'No captain data');
+    console.log('🚗 Captain data:', ride.captain ? { 
+      name: `${ride.captain.fullname?.firstname || ''} ${ride.captain.fullname?.lastname || ''}`.trim(),
+      vehiclePlate: ride.captain.vehicle?.plate,
+      rating: captainRating 
+    } : 'No captain data');
+
+    // Get vehicle type from captain's vehicle model
+    const vehicleInfo = ride.captain?.vehicle?.vehiclemodel 
+      ? `${ride.captain.vehicle.color || ''} ${ride.captain.vehicle.vehiclemodel}`.trim()
+      : getVehicleType(ride.captain?.vehicle?.plate);
 
     // Prepare trip data for receipt
     const tripData = {
@@ -72,13 +132,13 @@ async function sendRideReceipt(rideId, paymentId) {
       fare: ride.fare,
       distance: ride.distance || 0,
       duration: calculateDuration(ride.startedAt, ride.completedAt),
-      carType: getVehicleType(ride.captain?.vehicleNumber),
+      carType: vehicleInfo,
       paymentMethod: `Razorpay - **** ${paymentId.slice(-4)}`,
       receiptNo,
       mapUrl: generateMapUrl(ride.pickup.coordinates, ride.destination.coordinates),
       date: formatDate(ride.completedAt || new Date()),
       fareBreakdown: calculateFareBreakdown(ride.fare, ride.distance),
-      captainInfo: formatCaptainInfo(ride.captain)
+      captainInfo: formatCaptainInfo(ride.captain, captainRating)
     };
 
     // Send email
@@ -114,7 +174,7 @@ function calculateDuration(startTime, endTime) {
 }
 
 /**
- * Determine vehicle type from vehicle number
+ * Determine vehicle type from vehicle number (fallback)
  */
 function getVehicleType(vehicleNumber) {
   if (!vehicleNumber) return 'Vehicle';
@@ -197,10 +257,16 @@ async function sendTestReceipt() {
     }),
     fareBreakdown: calculateFareBreakdown(184.5, 12.4),
     captainInfo: formatCaptainInfo({
-      fullname: "John Doe",
-      vehicleNumber: "DL01AB1234",
-      rating: 4.8
-    })
+      fullname: {
+        firstname: "John",
+        lastname: "Doe"
+      },
+      vehicle: {
+        plate: "DL01AB1234",
+        color: "Black",
+        vehiclemodel: "Sedan"
+      }
+    }, 4.8)
   };
 
   try {

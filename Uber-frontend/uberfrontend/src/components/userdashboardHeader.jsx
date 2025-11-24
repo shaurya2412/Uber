@@ -53,11 +53,8 @@ const UserDashboardHeader = () => {
 
         {/* Navigation Links */}
         <nav className="flex items-center space-x-6 text-gray-600 font-medium">
-          <span className="text-black cursor-pointer">Dashboard</span>
           <span className="cursor-pointer hover:text-black">My Rides</span>
-          <span className="cursor-pointer bg-gray-100 px-3 py-1 rounded-md text-black">
-            Wallet
-          </span>
+          
         </nav>
       </div>
 

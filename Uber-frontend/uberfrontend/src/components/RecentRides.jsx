@@ -10,10 +10,8 @@ const RecentRides = () => {
     error,
   } = useRideStore();
 
-  // Hooks must be called unconditionally at the top level
   const navigate = useNavigate();
 
-  // Fetch history if empty
   useEffect(() => {
     if (!rideHistory || rideHistory.length === 0) {
       fetchRideHistory();
@@ -43,7 +41,7 @@ const RecentRides = () => {
       {/* Header */}
       <div className="flex items-center justify-between p-5 border-b border-gray-100">
         <h3 className="text-xl font-semibold text-gray-900">Recent Rides</h3>
-        <Link to="/rides" className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-white h-9 px-3 transition-colors">
+        <Link to="/rides" className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-black h-9 px-3 transition-colors">
           View All
         </Link>
       </div>
