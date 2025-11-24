@@ -5,8 +5,9 @@ import axios from 'axios';
 const API_BASE = 'http://localhost:5000';
 
 export const useRideStore = create((set) => ({
-  rideStatus: 'idle',
   currentRide: null,
+    rideOtp: null, // <-- ADD THIS
+
   token: localStorage.getItem('captaintoken') || null,
   rideHistory: [],
   isLoading: false,
@@ -24,8 +25,9 @@ export const useRideStore = create((set) => ({
       const response = await axios.post(`${API_BASE}/rides/book`, rideData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      set({
+     set({
         currentRide: response.data.data,
+        rideOtp: response.data.otp, // <-- SAVE OTP HERE
         rideStatus: 'searching',
         isLoading: false,
       });
@@ -119,25 +121,26 @@ export const useRideStore = create((set) => ({
   clearError: () => set({ error: null }),
 
   // Captain functions
-  StartRide: async (rideId) => {
-    set({ isLoading: true, error: null });
-    try {
-      const token = localStorage.getItem('captaintoken');
-      const response = await axios.post(
-        `${API_BASE}/rides/${rideId}/start`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      set({ isLoading: false });
-      return response.data;
-    } catch (error) {
-      set({
-        isLoading: false,
-        error: error.response?.data?.message || 'Failed to start ride',
-      });
-      throw error;
-    }
-  },
+StartRide: async (rideId, otp) => {
+  set({ isLoading: true, error: null });
+  try {
+    const token = localStorage.getItem('captaintoken');
+    const response = await axios.post(
+      `${API_BASE}/rides/${rideId}/start`,
+      { otp },   // ✅ SEND OTP HERE
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    set({ isLoading: false });
+    return response.data;
+  } catch (error) {
+    set({
+      isLoading: false,
+      error: error.response?.data?.message || 'Failed to start ride',
+    });
+    throw error;
+  }
+},
 
   finishRide: async (rideId) => {
     set({ isLoading: true, error: null });
@@ -159,13 +162,13 @@ export const useRideStore = create((set) => ({
     }
   },
 
-  finishRideuser: async (rideId) => {
+  finishRideuser: async (rideId, otp) => {
     set({ isLoading: true, error: null });
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
         `${API_BASE}/rides/${rideId}/completeuser`,
-        {},
+        { otp },  // Send OTP for verification
         { headers: { Authorization: `Bearer ${token}` } }
       );
       set({ currentRide: null, rideStatus: 'completed', isLoading: false });

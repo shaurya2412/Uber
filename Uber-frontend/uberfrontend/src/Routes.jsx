@@ -9,6 +9,7 @@ import LaunchPage from "./components/Launchpage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CaptainProtectedRoute from "./components/CaptainProtectedRoute";
 import AllRides from "./components/AllRides";
+import OrderConfirmation from "./components/OrderConfirmation";
 const AllRoutes = () => {
   return (
     <Routes>
@@ -31,6 +32,11 @@ const AllRoutes = () => {
       <Route path="/userdashboardHeader" element={<userdashboardHeader/>}/>
       <Route path="/captainlogin" element={<CaptainLogin/>}/>
       <Route path="/captainRegister" element={<CaptainRegister/>}/>
+      <Route path="/order-confirmation" element={
+        <ProtectedRoute>
+          <OrderConfirmation />
+        </ProtectedRoute>
+      }/>
       <Route path="*" element={<div>404 - Page Not Found</div>}
 
       />

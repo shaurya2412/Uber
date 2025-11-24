@@ -9,12 +9,20 @@ import { MdHistory } from "react-icons/md";
 import { useRideStore } from "../zustand/useRideStore";
 import { useUserStore } from "../Zustand/useUserStore";
 
+// ✅ Solana wallet imports
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import "@solana/wallet-adapter-react-ui/styles.css";
+
 const UserDashboardHeader = () => {
   const { currentRide } = useRideStore();
-  const {logout, isAuthenticated,fetchProfile } = useUserStore();
+  const { logout, isAuthenticated, fetchProfile } = useUserStore();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  // ✅ Solana wallet hook
+  const { publicKey } = useWallet();
 
   // ✅ Close dropdown when clicked outside
   useEffect(() => {
@@ -26,6 +34,10 @@ const UserDashboardHeader = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // ✅ Shorten wallet address for display
+  const shortenAddress = (address) =>
+    address ? `${address.slice(0, 4)}...${address.slice(-4)}` : "";
 
   return (
     <header className="w-full flex justify-between items-center px-8 py-3 bg-white shadow-sm">
@@ -49,8 +61,18 @@ const UserDashboardHeader = () => {
         </nav>
       </div>
 
-      {/* Right Section: Notifications + Profile */}
+      {/* Right Section: Wallet + Notifications + Profile */}
       <div className="flex items-center space-x-6 relative">
+        {/* ✅ Solana Wallet Connect Button */}
+        <div className="flex items-center gap-2">
+          <WalletMultiButton className="!bg-purple-600 hover:!bg-purple-700 !text-white !px-4 !py-2 !rounded-lg !text-sm !font-medium" />
+          {publicKey && (
+            <span className="text-xs text-gray-600 font-medium">
+              {shortenAddress(publicKey.toBase58())}
+            </span>
+          )}
+        </div>
+
         {/* Notification Icon */}
         <div className="relative">
           <IoNotificationsOutline
@@ -80,19 +102,13 @@ const UserDashboardHeader = () => {
           {/* Dropdown Menu */}
           {isDropdownOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden transition-all duration-150 ease-out">
-              <button
-                className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700"
-              >
+              <button className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700">
                 <CgProfile size={16} /> Profile
               </button>
-              <button
-                className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700"
-              >
+              <button className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700">
                 <MdHistory size={16} /> My Rides
               </button>
-              <button
-                className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700"
-              >
+              <button className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700">
                 <BsWallet2 size={16} /> Wallet
               </button>
               <hr className="my-1 border-gray-100" />

@@ -85,6 +85,12 @@ const rideSchema = new mongoose.Schema({
   },
   paidAt: {
     type: Date
+  },
+  startOtp: {
+    type: String
+  },
+  otpExpiresAt: {
+    type: Date
   }
 }, { timestamps: true }); 
 const Ride = mongoose.model('Ride', rideSchema);

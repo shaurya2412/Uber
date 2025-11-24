@@ -185,7 +185,7 @@ useEffect(() => {
           className="mt-4 bg-gray-800 text-white px-4 py-3 rounded-xl hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full"
           disabled={isCalculating || isBooking || !pickup || !destination}
         >
-          {isCalculating ? "Calculating..." : "Calculate Fare"}
+          {isCalculating ? "Calculating..." : "Look for the cab drivers"}
         </button>
 
         {/* Book Ride Button */}

@@ -78,41 +78,79 @@ module.exports.acceptRide = async (req, res, next) => {
 module.exports.startRide = async (req, res, next) => {
     try {
         const { rideId } = req.params;
+        const { otp } = req.body;  // driver enters this OTP
         const captainId = req.captain._id;
 
-        const ride = await rideModel.findOneAndUpdate(
-            { 
-                _id: rideId, 
-                captain: captainId,
-                status: 'accepted' 
-            },
-            {
-                status: 'in_progress',
-                startedAt: new Date()
-            },
-            { new: true }
-        ).populate('user', 'fullname email');
+        // 1️⃣ Find ride first
+        const ride = await rideModel.findOne({
+            _id: rideId,
+            captain: captainId,
+            status: "accepted",
+        });
 
         if (!ride) {
             return res.status(404).json({
                 success: false,
-                message: "Ride not found or cannot be started"
+                message: "Ride not found or cannot be started",
             });
         }
+
+        console.log(`🔍 Starting ride ${rideId} - OTP exists: ${!!ride.startOtp}, OTP value: "${ride.startOtp}"`);
+
+        // 2️⃣ OTP validation
+        if (!otp) {
+            return res.status(400).json({
+                success: false,
+                message: "OTP is required",
+            });
+        }
+
+        // 3️⃣ OTP match? (normalize both to strings and trim whitespace)
+        const storedOtp = String(ride.startOtp || '').trim();
+        const enteredOtp = String(otp || '').trim();
+        
+        if (!ride.startOtp) {
+            return res.status(400).json({
+                success: false,
+                message: "No OTP found for this ride. Please contact support.",
+            });
+        }
+
+        if (storedOtp !== enteredOtp) {
+            console.log(`OTP mismatch - Stored: "${storedOtp}" (type: ${typeof storedOtp}), Entered: "${enteredOtp}" (type: ${typeof enteredOtp})`);
+            return res.status(400).json({
+                success: false,
+                message: "Invalid OTP. Please check and try again.",
+            });
+        }
+
+        // 4️⃣ OTP expired?
+        if (ride.otpExpiresAt && new Date(ride.otpExpiresAt) < new Date()) {
+            return res.status(400).json({
+                success: false,
+                message: "OTP has expired. Please request a new ride.",
+            });
+        }
+
+        // 5️⃣ Mark ride started
+        ride.status = "in_progress";
+        ride.startedAt = new Date();
+        await ride.save();
 
         res.status(200).json({
             success: true,
             message: "Ride started successfully",
-            data: ride
+            data: ride,
         });
     } catch (error) {
         res.status(500).json({
             success: false,
             message: "Error starting ride",
-            error: error.message
+            error: error.message,
         });
     }
 };
+
 
 module.exports.completeRide = async (req, res, next) => {
     try {
@@ -156,20 +194,15 @@ module.exports.completeRide = async (req, res, next) => {
 module.exports.usercompleteRide = async (req, res, next) => {
     try {
         const { rideId } = req.params;
+        const { otp } = req.body;  // User enters this OTP
         const userId = req.user._id;
 
-        const ride = await rideModel.findOneAndUpdate(
-            { 
-                _id: rideId, 
-                user: userId,
-                status: 'in_progress' 
-            },
-            {
-                status: 'completed',
-                completedAt: new Date()
-            },
-            { new: true }
-        ).populate('captain', 'fullname email');
+        // 1️⃣ Find ride first
+        const ride = await rideModel.findOne({
+            _id: rideId,
+            user: userId,
+            status: 'in_progress'
+        });
 
         if (!ride) {
             return res.status(404).json({
@@ -178,10 +211,55 @@ module.exports.usercompleteRide = async (req, res, next) => {
             });
         }
 
+        // 2️⃣ OTP validation
+        if (!otp) {
+            return res.status(400).json({
+                success: false,
+                message: "OTP is required to complete the ride"
+            });
+        }
+
+        // 3️⃣ OTP match? (normalize both to strings and trim whitespace)
+        const storedOtp = String(ride.startOtp || '').trim();
+        const enteredOtp = String(otp || '').trim();
+        
+        if (!ride.startOtp) {
+            return res.status(400).json({
+                success: false,
+                message: "No OTP found for this ride. Please contact support."
+            });
+        }
+
+        if (storedOtp !== enteredOtp) {
+            console.log(`OTP mismatch - Stored: "${storedOtp}" (type: ${typeof storedOtp}), Entered: "${enteredOtp}" (type: ${typeof enteredOtp})`);
+            return res.status(400).json({
+                success: false,
+                message: "Invalid OTP. Please enter the correct OTP."
+            });
+        }
+
+        // 4️⃣ OTP expired?
+        if (ride.otpExpiresAt && new Date(ride.otpExpiresAt) < new Date()) {
+            return res.status(400).json({
+                success: false,
+                message: "OTP has expired. Please contact support."
+            });
+        }
+
+        // 5️⃣ Mark ride completed
+        const updatedRide = await rideModel.findByIdAndUpdate(
+            rideId,
+            {
+                status: 'completed',
+                completedAt: new Date()
+            },
+            { new: true }
+        ).populate('captain', 'fullname email');
+
         res.status(200).json({
             success: true,
             message: "Ride completed successfully",
-            data: ride
+            data: updatedRide
         });
     } catch (error) {
         res.status(500).json({
@@ -301,25 +379,37 @@ module.exports.updateRideLocation = async (req, res, next) => {
     }
 };
 
+const generateOtp = () => {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+};
+
 module.exports.bookRide = async (req, res, next) => {
     try {
         const { pickup, destination, fare } = req.body;
         const userId = req.user._id;
+
+        const otp = generateOtp();
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins from now
 
         const ride = await rideModel.create({
             user: userId,
             pickup,
             destination,
             fare,
-            status: 'pending'
+            status: "pending",
+            startOtp: otp,
+            otpExpiresAt: otpExpiry
         });
 
-        const populatedRide = await ride.populate('user', 'fullname email');
+        console.log(`✅ Ride ${ride._id} created with OTP: "${otp}"`);
+
+        const populatedRide = await ride.populate("user", "fullname email");
 
         res.status(201).json({
             success: true,
             message: "Ride booked successfully",
-            data: populatedRide
+            data: populatedRide,
+            otp: otp // send to rider only
         });
     } catch (error) {
         res.status(500).json({
@@ -329,6 +419,7 @@ module.exports.bookRide = async (req, res, next) => {
         });
     }
 };
+
 
 module.exports.getUserCurrentRide = async (req, res, next) => {
     try {
