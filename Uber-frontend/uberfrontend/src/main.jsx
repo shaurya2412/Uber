@@ -12,8 +12,12 @@ import "@solana/wallet-adapter-react-ui/styles.css";
 import App from "./App.jsx";
 import "./index.css";
 
-const clientId =
-  "1032264499994-dbalpc6ivfq34mcg14gkg6taks95vm4p.apps.googleusercontent.com";
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+console.log(clientId);
+
+if (!clientId) {
+  console.error("OOGLE_CLIENT_ID is not set in environment variables!");
+}
 
 const endpoint = "https://api.devnet.solana.com";
 const wallets = [new PhantomWalletAdapter()];

@@ -27,7 +27,9 @@ const AllRoutes = () => {
         </ProtectedRoute>
       } />
       <Route path="/capdashboard" element={
+                <ProtectedRoute>
           <Captaindashboard />
+                  </ProtectedRoute>
       }/>
       <Route path="/userdashboardHeader" element={<userdashboardHeader/>}/>
       <Route path="/captainlogin" element={<CaptainLogin/>}/>
@@ -38,7 +40,6 @@ const AllRoutes = () => {
         </ProtectedRoute>
       }/>
       <Route path="*" element={<div>404 - Page Not Found</div>}
-
       />
     </Routes>
   );  

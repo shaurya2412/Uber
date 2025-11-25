@@ -4,9 +4,9 @@ import axios from 'axios';
 
 const API_BASE = 'http://localhost:5000';
 
-export const useRideStore = create((set) => ({
+export const useRideStore = create((set, get) => ({
   currentRide: null,
-    rideOtp: null, // <-- ADD THIS
+    rideOtp: localStorage.getItem('rideOtp') || null,
 
   token: localStorage.getItem('captaintoken') || null,
   rideHistory: [],
@@ -25,9 +25,13 @@ export const useRideStore = create((set) => ({
       const response = await axios.post(`${API_BASE}/rides/book`, rideData, {
         headers: { Authorization: `Bearer ${token}` },
       });
+     const otpValue = response.data.otp || null;
+     if (otpValue) {
+       localStorage.setItem('rideOtp', otpValue);
+     }
      set({
         currentRide: response.data.data,
-        rideOtp: response.data.otp, // <-- SAVE OTP HERE
+        rideOtp: otpValue,
         rideStatus: 'searching',
         isLoading: false,
       });
@@ -105,7 +109,8 @@ export const useRideStore = create((set) => ({
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      set({ currentRide: null, rideStatus: "idle", isLoading: false });
+      localStorage.removeItem('rideOtp');
+      set({ currentRide: null, rideStatus: "idle", isLoading: false, rideOtp: null });
     } catch (error) {
       set({
         isLoading: false,
@@ -166,12 +171,14 @@ StartRide: async (rideId, otp) => {
     set({ isLoading: true, error: null });
     try {
       const token = localStorage.getItem('token');
+      const finalOtp = otp || get().rideOtp || undefined;
       const response = await axios.post(
         `${API_BASE}/rides/${rideId}/completeuser`,
-        { otp },  // Send OTP for verification
+        finalOtp ? { otp: finalOtp } : {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      set({ currentRide: null, rideStatus: 'completed', isLoading: false });
+      localStorage.removeItem('rideOtp');
+      set({ currentRide: null, rideStatus: 'completed', isLoading: false, rideOtp: null });
       return response.data;
     } catch (error) {
       set({

@@ -31,7 +31,6 @@ const Currentride = () => {
   const [fare, setFare] = useState(0);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
-  const [otp, setOtp] = useState("");
 
   // Helper to fetch coordinates
   const getCoordinates = async (place) => {
@@ -435,41 +434,12 @@ const Currentride = () => {
                 </div>
               </div>
 
-              {/* OTP Input - Only show when ride is in progress */}
-              {currentRide.status === "in_progress" && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Enter OTP to Complete Ride
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={4}
-                    placeholder="Enter 4-digit OTP"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    className="w-full rounded-lg border-2 border-blue-300 bg-white text-gray-900 placeholder:text-gray-400 py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-lg font-semibold tracking-widest"
-                  />
-                  <p className="text-xs text-gray-600 mt-2">
-                    Enter the OTP you received when booking this ride
-                  </p>
-                </div>
-              )}
-
               {/* Payment Buttons */}
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={async () => {
                     try {
-                      // Validate OTP first if ride is in_progress
-                      if (currentRide.status === "in_progress") {
-                        if (!otp || otp.length !== 4) {
-                          alert("Please enter a valid 4-digit OTP");
-                          return;
-                        }
-                        await finishRideuser(currentRide._id, otp);
-                      } else {
-                        await finishRideuser(currentRide._id);
-                      }
+                      await finishRideuser(currentRide._id);
                       await fetchRideHistory();
                       await fetchCurrentRide();
                       await openRazorpayPayment(currentRide.fare);
@@ -479,7 +449,6 @@ const Currentride = () => {
                     }
                   }}
                   className="bg-green-600 text-white rounded-lg py-2.5 px-4 font-medium hover:bg-green-700 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={currentRide.status === "in_progress" && (!otp || otp.length !== 4)}
                 >
                   Pay ₹{currentRide.fare} (Razorpay)
                 </button>
@@ -487,16 +456,7 @@ const Currentride = () => {
                 <button
                   onClick={async () => {
                     try {
-                      // Validate OTP first if ride is in_progress
-                      if (currentRide.status === "in_progress") {
-                        if (!otp || otp.length !== 4) {
-                          alert("Please enter a valid 4-digit OTP");
-                          return;
-                        }
-                        await finishRideuser(currentRide._id, otp);
-                      } else {
-                        await finishRideuser(currentRide._id);
-                      }
+                      await finishRideuser(currentRide._id);
                       await handleSolanaPayment(currentRide.fare);
                       await fetchRideHistory();
                       await fetchCurrentRide();
@@ -506,7 +466,6 @@ const Currentride = () => {
                     }
                   }}
                   className="bg-purple-600 text-white rounded-lg py-2.5 px-4 font-medium hover:bg-purple-700 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={currentRide.status === "in_progress" && (!otp || otp.length !== 4)}
                 >
                   Pay with Solana
                 </button>

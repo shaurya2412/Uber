@@ -21,7 +21,7 @@ const RecentRides = () => {
   if (isLoading) {
     return (
       <div className="rounded-2xl m-4 bg-white p-6 text-center text-gray-500">
-        Loading recent rides...
+        No Recent Rides found
       </div>
     );
   }

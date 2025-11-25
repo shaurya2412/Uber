@@ -12,23 +12,23 @@ const LaunchPage = () => {
       
       {/* PREMIUM NAVBAR */}
       <header className="sticky top-0 z-50 border-b border-gray-200/60 bg-white/95 backdrop-blur-xl shadow-sm">
-        <nav className="max-w-7xl mx-auto px-6 md:px-12 py-6 flex items-center justify-between">
+        <nav className="max-w-7xl mx-auto px-3 md:px-12 py-4 flex items-center justify-between">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-4"
           >
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center shadow-lg">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white">
-                <rect x="2" y="8" width="20" height="8" rx="2" fill="white" opacity="0.9" />
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-white">
+                <rect x="2" y="8" width="20" height="6" rx="2" fill="white" opacity="0.9" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+            <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
               WalletCab
             </h1>
           </motion.div>
 
-          <ul className="hidden lg:flex items-center gap-12 text-sm font-medium text-gray-700">
+          {/* <ul className="hidden lg:flex items-center gap-12 text-sm font-medium text-gray-700">
             {["Home", "About", "Features", "How It Works", "Testimonials", "Contact"].map((item, idx) => (
               <motion.li 
                 key={item}
@@ -41,12 +41,12 @@ const LaunchPage = () => {
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gray-900 group-hover:w-full transition-all duration-300"></span>
               </motion.li>
             ))}
-          </ul>
+          </ul> */}
 
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-4"
+            className="flex items-center gap-2"
           >
             <button
               onClick={() => navigate("/login")}
@@ -65,14 +65,14 @@ const LaunchPage = () => {
       </header>
 
       {/* PREMIUM HERO SECTION */}
-      <section className="relative max-w-7xl mx-auto px-6 md:px-12 pt-20 pb-32 md:pt-32 md:pb-40">
+      <section className="relative max-w-7xl mx-auto px-6 md:px-12 pt-4 pb-24 md:pt-16 md:pb-32">
         {/* Decorative background elements */}
         <div className="absolute inset-0 overflow-hidden -z-10">
-          <div className="absolute top-20 right-20 w-96 h-96 bg-gradient-to-br from-gray-100/50 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute top-12 right-20 w-96 h-96 bg-gradient-to-br from-gray-100/50 to-transparent rounded-full blur-3xl"></div>
           <div className="absolute bottom-20 left-20 w-96 h-96 bg-gradient-to-tr from-gray-100/50 to-transparent rounded-full blur-3xl"></div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
           
           {/* LEFT CONTENT */}
           <motion.div 
@@ -126,7 +126,7 @@ const LaunchPage = () => {
 
             {/* App Store Badges */}
             <div className="flex flex-wrap gap-4 pt-4">
-              <motion.button
+              {/* <motion.button
                 whileHover={{ scale: 1.05, y: -2 }}
                 className="flex items-center gap-3 px-6 py-3.5 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
@@ -135,12 +135,9 @@ const LaunchPage = () => {
                     <path d="M3 20.5v-17c0-.59.34-1.11.84-1.35L13.69 12l-9.85 9.85c-.5-.24-.84-.76-.84-1.35zm13.81-5.38L6.05 21.34l8.49-8.49 2.27 2.27zm-.96-3.66l2.27-2.27L21.95 2.66l-8.49 8.49z"/>
                   </svg>
                 </div>
-                <div className="text-left">
-                  <p className="text-[10px] uppercase tracking-widest opacity-90">Download on</p>
-                  <p className="text-sm font-bold">Google Play</p>
-                </div>
-              </motion.button>
-
+               
+              </motion.button> */}
+{/* 
               <motion.button
                 whileHover={{ scale: 1.05, y: -2 }}
                 className="flex items-center gap-3 px-6 py-3.5 bg-white border-2 border-gray-200 text-gray-900 rounded-xl shadow-lg hover:shadow-xl hover:border-gray-300 transition-all duration-300"
@@ -154,7 +151,7 @@ const LaunchPage = () => {
                   <p className="text-[10px] uppercase tracking-widest text-gray-600">Download on the</p>
                   <p className="text-sm font-bold">App Store</p>
                 </div>
-              </motion.button>
+              </motion.button> */}
             </div>
 
             {/* Scroll indicator */}
@@ -203,8 +200,8 @@ const LaunchPage = () => {
       </section>
 
       {/* PREMIUM STATS SECTION */}
-      <section className="max-w-7xl mx-auto px-6 md:px-12 py-20">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <section className="max-w-7xl mx-auto px-6 md:px-12 py-10 md:py-14">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
           {[
             { value: "10k+", label: "Expert Drivers", icon: "👨‍✈️" },
             { value: "100k+", label: "Happy Riders", icon: "😊" },
@@ -217,7 +214,7 @@ const LaunchPage = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.1 }}
-              className="bg-white rounded-2xl p-8 border border-gray-200/60 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              className="bg-white/95 rounded-2xl p-6 border border-gray-200/60 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
               <div className="text-3xl mb-3">{stat.icon}</div>
               <p className="text-4xl font-bold text-gray-900 mb-2">{stat.value}</p>
@@ -228,8 +225,8 @@ const LaunchPage = () => {
       </section>
 
       {/* PREMIUM ABOUT SECTION */}
-      <section className="max-w-7xl mx-auto px-6 md:px-12 py-24">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      <section className="max-w-7xl mx-auto px-6 md:px-12 py-16 md:py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -259,13 +256,13 @@ const LaunchPage = () => {
             <div className="inline-block bg-gray-100 px-4 py-2 rounded-full text-xs uppercase tracking-[0.2em] text-gray-600 font-semibold">
               About Us
             </div>
-            <h2 className="text-5xl font-bold text-gray-900 leading-tight">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
               Premium transportation,<br />redefined.
             </h2>
             <p className="text-lg text-gray-600 leading-relaxed">
               WalletCab brings together precision engineering, vetted professional drivers, and an intuitive interface designed for modern urban commuters. We prioritize safety, comfort, and seamless experiences in every journey.
             </p>
-            <div className="flex gap-8 pt-4">
+            <div className="flex gap-6 pt-2">
               <div>
                 <p className="text-3xl font-bold text-gray-900">58+</p>
                 <p className="text-sm text-gray-600 mt-1 uppercase tracking-wider">Cities</p>
@@ -280,8 +277,8 @@ const LaunchPage = () => {
       </section>
 
       {/* PREMIUM FEATURES SECTION */}
-      <section className="max-w-7xl mx-auto px-6 md:px-12 py-24">
-        <div className="text-center mb-16">
+      <section className="max-w-7xl mx-auto px-6 md:px-12 py-16 md:py-20">
+        <div className="text-center mb-10 md:mb-12">
           <div className="inline-block bg-gray-100 px-4 py-2 rounded-full text-xs uppercase tracking-[0.2em] text-gray-600 font-semibold mb-6">
             Why Choose Us
           </div>
@@ -293,7 +290,7 @@ const LaunchPage = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-7">
           {[
             {
               title: "Transparent Pricing",
@@ -333,8 +330,8 @@ const LaunchPage = () => {
       </section>
 
       {/* PREMIUM HOW IT WORKS */}
-      <section className="max-w-7xl mx-auto px-6 md:px-12 py-24">
-        <div className="text-center mb-16">
+      <section className="max-w-7xl mx-auto px-6 md:px-12 py-16 md:py-20">
+        <div className="text-center mb-10 md:mb-14">
           <div className="inline-block bg-gray-100 px-4 py-2 rounded-full text-xs uppercase tracking-[0.2em] text-gray-600 font-semibold mb-6">
             Simple Process
           </div>
@@ -343,7 +340,7 @@ const LaunchPage = () => {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-7">
           {[
             {
               step: "01",
@@ -367,7 +364,7 @@ const LaunchPage = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.15 }}
-              className="relative bg-white rounded-3xl p-10 border border-gray-200/60 shadow-xl"
+              className="relative bg-white rounded-3xl p-8 md:p-10 border border-gray-200/60 shadow-xl"
             >
               <div className="absolute top-6 right-6 text-7xl font-black text-gray-100">{item.step}</div>
               <h3 className="text-3xl font-bold text-gray-900 mb-4 relative z-10">{item.title}</h3>
@@ -378,8 +375,8 @@ const LaunchPage = () => {
       </section>
 
       {/* PREMIUM TESTIMONIALS */}
-      <section className="max-w-7xl mx-auto px-6 md:px-12 py-24">
-        <div className="text-center mb-16">
+      <section className="max-w-7xl mx-auto px-6 md:px-12 py-16 md:py-20">
+        <div className="text-center mb-10 md:mb-12">
           <div className="inline-block bg-gray-100 px-4 py-2 rounded-full text-xs uppercase tracking-[0.2em] text-gray-600 font-semibold mb-6">
             Testimonials
           </div>
@@ -388,7 +385,7 @@ const LaunchPage = () => {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-7">
           {[
             {
               quote: "WalletCab transformed my daily commute. The app is intuitive and every driver is professional.",
@@ -412,7 +409,7 @@ const LaunchPage = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.1 }}
-              className="bg-white rounded-2xl p-8 border border-gray-200/60 shadow-lg hover:shadow-xl transition-all duration-300"
+              className="bg-white rounded-2xl p-7 border border-gray-200/60 shadow-lg hover:shadow-xl transition-all duration-300"
             >
               <div className="text-yellow-400 text-xl mb-4">⭐⭐⭐⭐⭐</div>
               <p className="text-gray-700 leading-relaxed mb-6 text-lg">"{testimonial.quote}"</p>
@@ -426,15 +423,15 @@ const LaunchPage = () => {
       </section>
 
       {/* PREMIUM CTA */}
-      <section className="max-w-7xl mx-auto px-6 md:px-12 py-24">
+      <section className="max-w-7xl mx-auto px-6 md:px-12 py-16 md:py-20">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-12 md:p-16 overflow-hidden"
+          className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-10 md:p-14 overflow-hidden"
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_70%)]"></div>
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="text-white">
               <h3 className="text-4xl md:text-5xl font-bold mb-4">Ready to drive with us?</h3>
               <p className="text-xl text-gray-300 max-w-2xl">
@@ -454,56 +451,56 @@ const LaunchPage = () => {
       </section>
 
       {/* PREMIUM FOOTER */}
-      <footer className="bg-gray-50 border-t border-gray-200 py-16 mt-20">
+      <footer className="bg-gray-900 border-t border-gray-800 py-12 md:py-14 mt-12 text-gray-200">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-100 to-gray-400 flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="black">
                     <rect x="2" y="8" width="20" height="8" rx="2" />
                   </svg>
                 </div>
-                <span className="text-xl font-bold text-gray-900">WalletCab</span>
+                <span className="text-xl font-bold text-white">WalletCab</span>
               </div>
-              <p className="text-gray-600">Premium transportation redefined for modern cities.</p>
+              <p className="text-gray-400">Premium transportation redefined for modern cities.</p>
             </div>
 
             <div>
-              <h4 className="font-bold text-gray-900 mb-4">Company</h4>
-              <ul className="space-y-2 text-gray-600">
-                <li><a href="#" className="hover:text-gray-900 transition">About Us</a></li>
-                <li><a href="#" className="hover:text-gray-900 transition">Careers</a></li>
-                <li><a href="#" className="hover:text-gray-900 transition">Press</a></li>
+              <h4 className="font-bold text-white mb-4">Company</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition">About Us</a></li>
+                <li><a href="#" className="hover:text-white transition">Careers</a></li>
+                <li><a href="#" className="hover:text-white transition">Press</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-bold text-gray-900 mb-4">Support</h4>
-              <ul className="space-y-2 text-gray-600">
-                <li><a href="#" className="hover:text-gray-900 transition">Help Center</a></li>
-                <li><a href="#" className="hover:text-gray-900 transition">Safety</a></li>
-                <li><a href="#" className="hover:text-gray-900 transition">Contact</a></li>
+              <h4 className="font-bold text-white mb-4">Support</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition">Help Center</a></li>
+                <li><a href="#" className="hover:text-white transition">Safety</a></li>
+                <li><a href="#" className="hover:text-white transition">Contact</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-bold text-gray-900 mb-4">Legal</h4>
-              <ul className="space-y-2 text-gray-600">
-                <li><a href="#" className="hover:text-gray-900 transition">Terms</a></li>
-                <li><a href="#" className="hover:text-gray-900 transition">Privacy</a></li>
-                <li><a href="#" className="hover:text-gray-900 transition">Cookies</a></li>
+              <h4 className="font-bold text-white mb-4">Legal</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition">Terms</a></li>
+                <li><a href="#" className="hover:text-white transition">Privacy</a></li>
+                <li><a href="#" className="hover:text-white transition">Cookies</a></li>
               </ul>
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-600 text-sm">© 2025 WalletCab. All rights reserved.</p>
-            <div className="flex gap-6">
-              <a href="#" className="text-gray-600 hover:text-gray-900 transition">Twitter</a>
-              <a href="#" className="text-gray-600 hover:text-gray-900 transition">Facebook</a>
-              <a href="#" className="text-gray-600 hover:text-gray-900 transition">LinkedIn</a>
-              <a href="#" className="text-gray-600 hover:text-gray-900 transition">Instagram</a>
+          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-gray-400 text-sm">© 2025 WalletCab. All rights reserved.</p>
+            <div className="flex gap-6 text-gray-400">
+              <a href="#" className="hover:text-white transition">Twitter</a>
+              <a href="#" className="hover:text-white transition">Facebook</a>
+              <a href="#" className="hover:text-white transition">LinkedIn</a>
+              <a href="#" className="hover:text-white transition">Instagram</a>
             </div>
           </div>
         </div>
