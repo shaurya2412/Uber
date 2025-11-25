@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useCaptainStore } from "../Zustand/useCaptainStore";
 import axios from "axios";
+import { API_BASE_URL } from "../config";
+
+const API_BASE = API_BASE_URL;
 
 const CaptainProtectedRoute = ({ children }) => {
   const { isAuthenticated, logout, } = useCaptainStore();
@@ -17,7 +20,7 @@ const CaptainProtectedRoute = ({ children }) => {
       }
 
       try {
-        const res = await axios.get("http://localhost:5000/captains/profile", {
+        const res = await axios.get(`${API_BASE}/captains/profile`, {
           headers: { Authorization: `Bearer ${storedToken}` },
         });
 

@@ -1,8 +1,9 @@
 // useRideStore.js
 import { create } from 'zustand';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = API_BASE_URL;
 
 export const useRideStore = create((set, get) => ({
   currentRide: null,

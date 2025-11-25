@@ -6,6 +6,9 @@ import { motion } from "framer-motion";
 import { FiEye, FiEyeOff, FiMapPin, FiStar, FiTruck } from "react-icons/fi";
 import { useUserStore } from "../zustand/useUserstore"; 
 import toast, { Toaster } from "react-hot-toast";
+import { API_BASE_URL } from "../config";
+
+const API_BASE = API_BASE_URL;
 
 const Login = () => {
   const navigate = useNavigate();
@@ -33,7 +36,7 @@ const Login = () => {
   // ✅ GOOGLE LOGIN SUCCESS
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const response = await axios.post("http://localhost:5000/auth/google", {
+      const response = await axios.post(`${API_BASE}/auth/google`, {
         credential: credentialResponse.credential,
       });
 
@@ -69,7 +72,7 @@ const Login = () => {
     if (!allValid) return;
     try {
       setIsSubmitting(true);
-      const res = await axios.post("http://localhost:5000/users/login", {
+      const res = await axios.post(`${API_BASE}/users/login`, {
         email,
         password,
       });

@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from "framer-motion";
 import { FiEye, FiEyeOff, FiMapPin, FiStar, FiTruck, FiClock, FiShield } from "react-icons/fi";
+import { API_BASE_URL } from "../config";
+
+const API_BASE = API_BASE_URL;
 
 const CaptainRegister = () => {
   const navigate = useNavigate();
@@ -77,7 +80,7 @@ const CaptainRegister = () => {
 
     try {
       setIsSubmitting(true);
-      const res = await axios.post("http://localhost:5000/captains/register", requestData);
+      const res = await axios.post(`${API_BASE}/captains/register`, requestData);
       alert("Registration successful! Redirecting to login...");
       navigate('/captainlogin');
     } catch (error) {

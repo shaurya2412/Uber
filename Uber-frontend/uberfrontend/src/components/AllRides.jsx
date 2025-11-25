@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import { useRideStore } from "../zustand/useRideStore";
+import { API_BASE_URL } from "../config";
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = API_BASE_URL;
 
 const AllRides = () => {
   const { rideHistory, fetchRideHistory, isLoading, error } = useRideStore();

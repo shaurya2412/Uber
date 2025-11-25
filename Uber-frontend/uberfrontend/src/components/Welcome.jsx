@@ -6,6 +6,9 @@ import { motion } from "framer-motion";
 import { FiTruck, FiMapPin, FiStar, FiEye, FiEyeOff } from "react-icons/fi";
 import { useUserStore } from "../Zustand/useUserStore";
 import toast, { Toaster } from "react-hot-toast";
+import { API_BASE_URL } from "../config";
+
+const API_BASE = API_BASE_URL;
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -47,7 +50,7 @@ const Welcome = () => {
     try {
       console.log("Google Credential:", credentialResponse);
       
-      const response = await axios.post("http://localhost:5000/auth/google", {
+      const response = await axios.post(`${API_BASE}/auth/google`, {
         credential: credentialResponse.credential
       });
 
@@ -88,7 +91,7 @@ const Welcome = () => {
 
     try {
       setIsSubmitting(true);
-      const res = await axios.post("http://localhost:5000/users/register", {
+      const res = await axios.post(`${API_BASE}/users/register`, {
         fullname: {
           firstname,
           lastname,

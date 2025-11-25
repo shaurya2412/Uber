@@ -8,6 +8,9 @@ import { Connection, PublicKey, SystemProgram, Transaction } from "@solana/web3.
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { motion } from "framer-motion";
 import { FiMapPin, FiNavigation, FiClock, FiDollarSign, FiX } from "react-icons/fi";
+import { API_BASE_URL } from "../config";
+
+const API_BASE = API_BASE_URL;
 
 const Currentride = () => {
   const navigate = useNavigate();
@@ -155,7 +158,7 @@ const Currentride = () => {
       console.log("Initiating Razorpay payment for fare:", fare);
 
       // Step 1: Create Razorpay order
-      const { data } = await axios.post("http://localhost:5000/create-orders/create-order", {
+      const { data } = await axios.post(`${API_BASE}/create-orders/create-order`, {
         amount: fare,
       });
 
@@ -178,7 +181,7 @@ const Currentride = () => {
           try {
             console.log("Verifying payment:", response.razorpay_payment_id);
 
-            const verifyRes = await axios.post("http://localhost:5000/verify/verify-payment", {
+            const verifyRes = await axios.post(`${API_BASE}/verify/verify-payment`, {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
@@ -242,7 +245,7 @@ const Currentride = () => {
       console.log("Creating Solana payment intent...");
 
       // Step 1: Create payment intent on backend
-      const { data } = await axios.post("http://localhost:5000/solana/initiate", {
+      const { data } = await axios.post(`${API_BASE}/solana/initiate`, {
         amount: fare,
         rideId: currentRide._id,
         userId: userId,
@@ -272,7 +275,7 @@ const Currentride = () => {
       console.log("Transaction confirmed:", signature);
 
       // Step 3: Verify payment on backend
-      const verifyRes = await axios.post("http://localhost:5000/solana/verify", {
+      const verifyRes = await axios.post(`${API_BASE}/solana/verify`, {
         rideId: currentRide._id,
         reference: payment.reference,
         txSignature: signature,

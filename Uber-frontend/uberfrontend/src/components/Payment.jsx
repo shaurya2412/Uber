@@ -1,5 +1,8 @@
 import React from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../config";
+
+const API_BASE = API_BASE_URL;
 
 const Payment = () => {
 
@@ -7,7 +10,7 @@ const Payment = () => {
     try {
       console.log("🔄 Initiating test payment for ₹500");
       
-      const { data } = await axios.post("http://localhost:5000/create-orders/create-order", {
+      const { data } = await axios.post(`${API_BASE}/create-orders/create-order`, {
         amount: 500, // ₹500
       });
 
@@ -29,7 +32,7 @@ const Payment = () => {
           try {
             console.log("🔄 Verifying payment:", response.razorpay_payment_id);
             
-            const res = await axios.post("http://localhost:5000/verify/verify-payment", {
+            const res = await axios.post(`${API_BASE}/verify/verify-payment`, {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,

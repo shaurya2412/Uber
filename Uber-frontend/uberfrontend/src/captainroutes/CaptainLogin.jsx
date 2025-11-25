@@ -4,6 +4,9 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { FiEye, FiEyeOff, FiMapPin, FiStar, FiTruck } from "react-icons/fi";
+import { API_BASE_URL } from "../config";
+
+const API_BASE = API_BASE_URL;
 
 const CaptainLogin = () => {
   const navigate = useNavigate();
@@ -39,7 +42,7 @@ const CaptainLogin = () => {
     setErrorMessage(null); 
 
     try {
-      const res = await axios.post("http://localhost:5000/captains/login", {
+      const res = await axios.post(`${API_BASE}/captains/login`, {
         email,
         password,
       });
