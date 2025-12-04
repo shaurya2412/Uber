@@ -18,10 +18,9 @@ const AllRoutes = () => {
       <Route path="/" element={<LaunchPage/>}/>
       <Route path="/dashboard" element={
         <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/rides" element={
+          <Dashboard /></ProtectedRoute>
+      } />  
+      <Route path="/rides" element= {
         <ProtectedRoute>
           <AllRides />
         </ProtectedRoute>

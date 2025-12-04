@@ -48,7 +48,7 @@ const UserDashboardHeader = () => {
           <div className="bg-black text-white p-2 rounded-lg">
             <FaCar size={18} />
           </div>
-          <span className="text-sm text-black font-semibold">RideGo</span>
+          <span className="text-sm text-black font-semibold">Nexus</span>
         </div>
 
         {/* Navigation Links */}

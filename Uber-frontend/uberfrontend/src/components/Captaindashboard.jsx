@@ -13,9 +13,10 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recha
 import { useCaptainStore } from "../Zustand/useCaptainStore";
 import { useRideStore } from "../zustand/useRideStore";
 import CaptainDashboardHeader from "./captaindashboardHeader";
+
 // Card wrapper
-const Card = ({ children }) => (
-  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+const Card = ({ children, className = "" }) => (
+  <div className={`bg-white rounded-2xl border border-gray-200 p-5 ${className}`}>
     {children}
   </div>
 );
@@ -117,19 +118,79 @@ const CaptainDashboard = () => {
   }, [isAuthenticated, active, fetchCurrentRide, fetchAvailableRides]);
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen text-gray-900">
       <CaptainDashboardHeader />
-      <div className="p-6">
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
+
+        {/* HERO STATS ROW */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Earnings - monochrome hero card */}
+          <div className="col-span-2 bg-white rounded-3xl p-5 md:p-6 shadow-lg border border-gray-200">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                Today's Earnings
+              </span>
+              <DollarSign className="w-5 h-5 text-gray-400" />
+            </div>
+            <p className="text-3xl md:text-4xl font-semibold text-gray-900 tracking-tight">
+              ₹{totalEarnings}
+            </p>
+            <p className="mt-1 text-sm text-gray-500">
+              Across {tripCount} trip{tripCount === 1 ? "" : "s"}
+            </p>
+          </div>
+
+          {/* Rating - monochrome hero card */}
+          <div className="bg-white rounded-3xl p-5 shadow-lg border border-gray-200">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                Rating
+              </span>
+              <Star className="w-5 h-5 text-gray-400" />
+            </div>
+            <p className="text-3xl font-semibold text-gray-900 tracking-tight">
+              {averageRating}
+            </p>
+            <p className="mt-1 text-sm text-gray-500">
+              Based on {tripCount} trip{tripCount === 1 ? "" : "s"}
+            </p>
+          </div>
+
+          {/* Online status - monochrome card, colored dot only */}
+          <div className="bg-white rounded-3xl p-5 shadow-lg border border-gray-200 flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                Status
+              </span>
+              <Clock className="w-4 h-4 text-gray-400" />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Availability</span>
+              <div
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border border-gray-300 bg-white"
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    active ? "bg-green-500" : "bg-red-500"
+                  }`}
+                />
+                <span className="text-gray-800">
+                  {active ? "Online" : "Offline"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
 
       {/* Available Rides */}
       <div className="mb-8">
         {!dataLoaded ? (
-          <div className="flex items-center justify-center h-64 bg-gray-100 rounded-2xl">
-            <div className="text-gray-500">Loading dashboard data...</div>
+          <div className="flex items-center justify-center h-64 bg-white rounded-2xl border border-gray-200">
+            <div className="text-gray-500 text-sm">Loading dashboard data...</div>
           </div>
         ) : (
-          <Card>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+          <Card className="shadow-lg">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 tracking-tight">
               Available Rides
             </h2>
 
@@ -147,10 +208,10 @@ const CaptainDashboard = () => {
                 ).map((ride, idx) => (
                   <div
                     key={ride?._id || idx}
-                    className="p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition"
+                    className="p-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <p className="font-medium text-gray-800">
+                      <p className="font-medium text-gray-900">
                         {ride?.user?.fullname
                           ? `${ride.user.fullname.firstname || ""} ${
                               ride.user.fullname.lastname || ""
@@ -162,21 +223,21 @@ const CaptainDashboard = () => {
                       </span>
                     </div>
 
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-700">
                       <strong>Pickup:</strong>{" "}
                       {ride?.pickup?.address || "—"}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-700">
                       <strong>Destination:</strong>{" "}
                       {ride?.destination?.address || "—"}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-700">
                       <strong>Fare:</strong> ₹
                       {Number(ride?.fare || 0).toFixed(2)}
                     </p>
 
                     <button
-                      className="mt-2 w-full py-1.5 rounded bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-50"
+                      className="mt-3 w-full py-2 rounded-xl bg-gray-900 text-white text-sm font-semibold shadow-lg hover:bg-black disabled:opacity-60 transition-all"
                       onClick={async () => {
                         try {
                           await acceptRide(ride._id);
@@ -203,7 +264,7 @@ const CaptainDashboard = () => {
                   onClick={() =>
                     setShowAllAvailableRides(!showAllAvailableRides)
                   }
-                  className="mt-3 w-full py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
+                  className="mt-3 w-full py-2 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100 text-sm transition-colors"
                 >
                   {showAllAvailableRides
                     ? "See Less"
@@ -220,9 +281,25 @@ const CaptainDashboard = () => {
         <div className="col-span-8 space-y-6">
           <Card>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">Current Ride</h2>
-              <span className={`px-3 py-1 text-xs rounded-full ${currentRide ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-600"}`}>
-                {currentRide ? (currentRide.status || rideStatus || "In Progress") : "No Active Ride"}
+              <h2 className="text-lg font-semibold text-gray-900 tracking-tight">
+                Current Ride
+              </h2>
+              <span className="px-3 py-1 text-xs rounded-full border border-gray-200 bg-gray-100 text-gray-900">
+                <span
+                  className={
+                    currentRide &&
+                    (currentRide.status || rideStatus) === "accepted"
+                      ? "text-green-600"
+                      : currentRide &&
+                        (currentRide.status || rideStatus) === "cancelled"
+                      ? "text-red-600"
+                      : ""
+                  }
+                >
+                  {currentRide
+                    ? currentRide.status || rideStatus || "In Progress"
+                    : "No Active Ride"}
+                </span>
               </span>
             </div>
             {currentRide ? (
@@ -233,25 +310,38 @@ const CaptainDashboard = () => {
                   className="w-12 h-12 rounded-full"
                 />
                 <div>
-                  <h3 className="text-gray-800 font-medium">{currentRide.user.fullname.firstname || "Rider"}</h3>
-                  <p className="text-sm text-gray-500">Ride ID: {currentRide?._id || currentRide?.id || "—"}</p>
+                  <h3 className="text-gray-900 font-medium">
+                    {currentRide.user.fullname.firstname || "Rider"}
+                  </h3>
+                  <p className="text-sm text-gray-900">
+                    Ride ID: {currentRide?._id || currentRide?.id || "—"}
+                  </p>
                 </div>
               </div>
             ) : null}
             {currentRide ? (
               <div className="space-y-3 mb-4">
                 <div className="flex items-center space-x-2">
-                  <MapPin className="w-4 h-4 text-green-500" />
-                  <p className="text-sm text-gray-700">{currentRide?.pickup?.address || currentRide?.pickupAddress || "Pickup not set"}</p>
+                  <MapPin className="w-4 h-4 text-gray-400" />
+                  <p className="text-sm text-gray-900">
+                    {currentRide?.pickup?.address ||
+                      currentRide?.pickupAddress ||
+                      "Pickup not set"}
+                  </p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Navigation className="w-4 h-4 text-red-500" />
-                  <p className="text-sm text-gray-700">{currentRide?.dropoff?.address || currentRide?.destination?.address || currentRide?.dropoffAddress || "Dropoff not set"}</p>
+                  <Navigation className="w-4 h-4 text-gray-400" />
+                  <p className="text-sm text-gray-900">
+                    {currentRide?.dropoff?.address ||
+                      currentRide?.destination?.address ||
+                      currentRide?.dropoffAddress ||
+                      "Dropoff not set"}
+                  </p>
                 </div>
               </div>
             ) : null}
             {currentRide ? (
-              <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
+              <div className="flex items-center justify-between text-sm text-gray-900 mb-4">
                 {/* <span className="flex items-center space-x-1">
                   <Navigation className="w-4 h-4" /> <p>{currentRide?.distance || currentRide?.estimatedDistance || "—"} km</p>
                 </span>
@@ -259,12 +349,19 @@ const CaptainDashboard = () => {
                   <Clock className="w-4 h-4" /> <p>{Date.now() || "—"} min</p>
                 </span> */}
                 <span className="flex items-center space-x-1">
-                  <DollarSign className="w-4 h-4" /> <p>{Number(currentRide?.fare || currentRide?.estimatedFare || 0).toFixed(2)}</p>
+                  <DollarSign className="w-4 h-4 text-gray-400" />{" "}
+                  <p>
+                    {Number(
+                      currentRide?.fare ||
+                        currentRide?.estimatedFare ||
+                        0
+                    ).toFixed(2)}
+                  </p>
                 </span>
               </div>
             ) : null}
             {rideError && (
-              <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
                 {rideError}
               </div>
             )}
@@ -272,14 +369,14 @@ const CaptainDashboard = () => {
 
               {currentRide && currentRide.status === "accepted" && (
   <div className="mb-2">
-    <label className="text-sm font-medium">Enter Ride OTP</label>
+    <label className="text-sm font-medium text-gray-900">Enter Ride OTP</label>
     <input
       type="text"
       maxLength={4}
       placeholder="1234"
       value={otp}
       onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-      className="w-full p-2 mt-1 border rounded-lg"
+      className="w-full p-2 mt-1 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
     />
   </div>
 )}
@@ -306,7 +403,7 @@ const CaptainDashboard = () => {
       }
     }}
     disabled={rideLoading}
-    className="p-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+    className="px-4 py-2 rounded-md border border-gray-900 text-gray-900 text-sm font-semibold hover:bg-gray-900 hover:text-white disabled:opacity-60 transition-colors"
   >
     {rideLoading ? "Starting..." : "Start Ride"}
   </button>
@@ -349,7 +446,7 @@ const CaptainDashboard = () => {
         }
       }}
       disabled={rideLoading}
-      className="p-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+      className="px-4 py-2 rounded-md border border-gray-900 text-gray-900 text-sm font-semibold hover:bg-gray-900 hover:text-white disabled:opacity-60 transition-colors"
     >
       {rideLoading ? 'Finishing...' : 'Finish Ride'}
     </button>
@@ -373,7 +470,7 @@ const CaptainDashboard = () => {
         }
       }}
       disabled={rideLoading}
-      className="p-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+      className="px-4 py-2 rounded-md border border-red-500 text-red-600 text-sm font-semibold hover:bg-red-50 disabled:opacity-60 transition-colors"
     >
       {rideLoading ? 'Canceling...' : 'Cancel Ride'}
     </button>
@@ -383,7 +480,9 @@ const CaptainDashboard = () => {
           </Card>
 
           <Card>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Recent Trips</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 tracking-tight">
+              Recent Trips
+            </h2>
             <div className="space-y-4">
               {(!rideHistory || rideHistory.length === 0) && (
                 <div className="text-sm text-gray-500">No trips yet.</div>
@@ -393,12 +492,12 @@ const CaptainDashboard = () => {
                 return (
                   <div
                     key={trip?._id || idx}
-                    className="flex items-center justify-between hover:bg-gray-50 p-2 rounded-lg"
+                    className="flex items-center justify-between hover:bg-gray-50 p-2 rounded-lg transition-colors"
                   >
                     <div className="flex items-center space-x-3">
                       <User className="w-8 h-8 text-gray-400" />
                       <div>
-                        <p className="font-medium text-gray-800">{
+                        <p className="font-medium text-gray-900">{
                           trip?.rider?.name ||
                           trip?.user?.name ||
                           (trip?.user?.fullname ? `${trip.user.fullname.firstname || ""} ${trip.user.fullname.lastname || ""}`.trim() : null) ||
@@ -410,8 +509,10 @@ const CaptainDashboard = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-gray-800 font-medium">₹{Number(trip?.fare || 0).toFixed(2)}</p>
-                      <p className="text-sm text-green-600 flex items-center justify-end">
+                      <p className="text-gray-900 font-medium">
+                        ₹{Number(trip?.fare || 0).toFixed(2)}
+                      </p>
+                      <p className="text-sm text-gray-600 flex items-center justify-end">
                         <Star className="w-4 h-4 mr-1" /> {trip?.rating || "—"}
                       </p>
                     </div>
@@ -423,23 +524,35 @@ const CaptainDashboard = () => {
         </div>
 
         <div className="col-span-4 space-y-6">
-         <Card>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Today's Summary</h2>
+         <Card className="shadow-lg">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 tracking-tight">
+              Today's Summary
+            </h2>
             <div className="grid grid-cols-2 gap-4 text-center">
               <div>
-                <p className="text-2xl font-bold text-green-600">₹{Number((rideHistory || []).reduce((s, t) => s + (Number(t?.fare) || 0), 0)).toFixed(2)}</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  ₹
+                  {Number(
+                    (rideHistory || []).reduce(
+                      (s, t) => s + (Number(t?.fare) || 0),
+                      0
+                    )
+                  ).toFixed(2)}
+                </p>
                 <p className="text-sm text-gray-500">Earnings</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-800">{(rideHistory || []).length}</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {(rideHistory || []).length}
+                </p>
                 <p className="text-sm text-gray-500">Trips</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-800">6.5h</p>
+                <p className="text-2xl font-semibold text-gray-900">6.5h</p>
                 <p className="text-sm text-gray-500">Online</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-800">{(() => {
+                <p className="text-2xl font-semibold text-gray-900">{(() => {
                   const trips = rideHistory || [];
                   if (!trips.length) return 0;
                   const total = trips.reduce((s, t) => s + (Number(t?.rating) || 0), 0);
@@ -451,7 +564,9 @@ const CaptainDashboard = () => {
           </Card>
 
           <Card>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Weekly Earnings</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 tracking-tight">
+              Weekly Earnings
+            </h2>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={(rideHistory && rideHistory.length) ? (() => {
                 const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -471,28 +586,33 @@ const CaptainDashboard = () => {
                 { day: "Sat", earnings: 0 },
                 { day: "Sun", earnings: 0 },
               ]}>
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="earnings" fill="#10B981" radius={[6, 6, 0, 0]} />
+                <XAxis
+                  dataKey="day"
+                  stroke="#9ca3af"
+                  tick={{ fill: "#6b7280", fontSize: 12 }}
+                />
+                <YAxis
+                  stroke="#9ca3af"
+                  tick={{ fill: "#6b7280", fontSize: 12 }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#ffffff",
+                    borderColor: "#e5e7eb",
+                    borderRadius: 10,
+                    color: "#111827",
+                  }}
+                />
+                <Bar
+                  dataKey="earnings"
+                  fill="#111827"
+                  radius={[8, 8, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </Card>
 
-          <Card>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
-            <div className="space-y-3">
-              <button className="w-full py-2 border border-gray-300 rounded-lg hover:bg-gray-100">
-                Go to Popular Area
-              </button>
-              <button className="w-full py-2 border border-gray-300 rounded-lg hover:bg-gray-100">
-                Break Time
-              </button>
-              <button className="w-full py-2 border border-gray-300 rounded-lg hover:bg-gray-100">
-                View Analytics
-              </button>
-            </div>
-          </Card>
+        {/*    */}
         </div>
       </div>
       </div>

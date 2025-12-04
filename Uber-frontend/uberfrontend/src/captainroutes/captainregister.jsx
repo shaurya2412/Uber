@@ -127,7 +127,7 @@ const CaptainRegister = () => {
                       <rect x="2" y="8" width="20" height="8" rx="2" fill="white" />
                     </svg>
                   </div>
-                  <h1 className="text-4xl font-bold text-white tracking-tight">WalletCab</h1>
+                  <h1 className="text-4xl font-bold text-white tracking-tight">Nexus</h1>
                 </div>
                 <h2 className="text-3xl font-bold text-white mb-3">Drive with Confidence</h2>
                 <p className="text-lg text-gray-300 leading-relaxed">

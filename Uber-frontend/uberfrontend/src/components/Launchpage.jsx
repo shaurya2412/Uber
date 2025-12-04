@@ -3,6 +3,10 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import uber_india from "../assets/uber_india.png";
+import nexuslogo from "../assets/nexuslogo.png";
+import nexus from "../assets/nexus.png";
+
+
 
 const LaunchPage = () => {
   const navigate = useNavigate();
@@ -16,15 +20,15 @@ const LaunchPage = () => {
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-4"
+            className="flex items-center gap-3"
           >
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center shadow-lg">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-white">
-                <rect x="2" y="8" width="20" height="6" rx="2" fill="white" opacity="0.9" />
-              </svg>
-            </div>
-            <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-              WalletCab
+            <img 
+              src={nexuslogo} 
+              alt="Nexus Ride Logo" 
+              className="h-10 w-auto object-contain"
+            />
+            <h1 className="text-xl font-light text-gray-900 tracking-tight">
+              Nexus
             </h1>
           </motion.div>
 
@@ -50,13 +54,13 @@ const LaunchPage = () => {
           >
             <button
               onClick={() => navigate("/login")}
-              className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+              className="text-sm font-light text-gray-700 hover:text-gray-900 transition-colors duration-200"
             >
               Sign in
             </button>
             <button
               onClick={() => navigate("/Welcome")}
-              className="px-6 py-2.5 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl text-sm font-semibold shadow-lg shadow-gray-900/20 hover:shadow-xl hover:shadow-gray-900/30 transition-all duration-300 hover:-translate-y-0.5"
+              className="px-6 py-2.5 bg-gray-950 text-white rounded-xl text-sm font-semibold border border-gray-800 shadow-[0_14px_35px_rgba(15,23,42,0.55)] hover:shadow-[0_18px_45px_rgba(15,23,42,0.75)] hover:border-gray-600 transition-all duration-300 hover:-translate-y-0.5"
             >
               Get Started
             </button>
@@ -110,7 +114,7 @@ const LaunchPage = () => {
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => navigate("/login")}
-                className="px-8 py-4 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl font-semibold shadow-xl shadow-gray-900/25 hover:shadow-2xl hover:shadow-gray-900/35 transition-all duration-300 text-base"
+                className="px-8 py-4 bg-gray-950 text-white rounded-xl font-semibold border border-gray-800 shadow-[0_18px_45px_rgba(15,23,42,0.7)] hover:shadow-[0_22px_55px_rgba(15,23,42,0.85)] hover:border-gray-600 transition-all duration-300 text-base"
               >
                 Book Your Ride
               </motion.button>
@@ -118,7 +122,7 @@ const LaunchPage = () => {
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => navigate("/Welcome")}
-                className="px-8 py-4 bg-white border-2 border-gray-300 text-gray-900 rounded-xl font-semibold shadow-lg hover:border-gray-400 hover:shadow-xl transition-all duration-300 text-base"
+                className="px-8 py-4 bg-neutral-950 text-gray-100 border border-gray-700/80 rounded-xl font-medium shadow-[0_14px_35px_rgba(15,23,42,0.65)] hover:border-gray-500 hover:shadow-[0_18px_45px_rgba(15,23,42,0.85)] transition-all duration-300 text-base"
               >
                 Join as Member
               </motion.button>
@@ -174,27 +178,30 @@ const LaunchPage = () => {
 
           {/* RIGHT - PHONE MOCKUP */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            initial={{ opacity: 0, scale: 0.9, rotate: -8 }}
+            animate={{ opacity: 1, scale: 1, rotate: -4 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative flex justify-center items-center lg:justify-end"
+            className="relative flex justify-center items-center lg:justify-end perspective-[1600px]"
           >
             {/* Background layers for depth */}
-            <div className="absolute w-[400px] h-[600px] bg-gradient-to-br from-gray-200/50 to-gray-100/30 rounded-[56px] -right-8 top-8 shadow-2xl blur-xl"></div>
-            <div className="absolute w-[420px] h-[620px] bg-white/60 rounded-[56px] -right-4 top-4 shadow-2xl"></div>
+            <div className="absolute w-[420px] h-[580px] bg-gradient-to-br from-slate-900/80 via-slate-800/40 to-slate-900/0 rounded-[56px] -right-10 top-10 shadow-[0_40px_90px_rgba(15,23,42,0.8)] blur-3xl"></div>
+            <div className="absolute w-[420px] h-[580px] bg-gradient-to-br from-slate-900/70 via-slate-800/40 to-slate-700/0 rounded-[56px] -right-6 top-6 border border-slate-700/40"></div>
             
-            {/* Main phone */}
-            <div className="relative w-[440px] h-[640px] rounded-[56px] overflow-hidden shadow-2xl border-8 border-gray-900 bg-gradient-to-b from-gray-900 to-gray-800">
-              <div className="absolute top-0 left-0 right-0 h-12 bg-gray-900 rounded-t-[48px] flex items-center justify-center">
-                <div className="w-32 h-1 bg-gray-700 rounded-full"></div>
+            {/* Main angled phone */}
+            <motion.div
+              whileHover={{ rotateY: -6, rotateX: 4, y: -6 }}
+              className="relative w-[420px] h-[620px] rounded-[56px] overflow-hidden border border-slate-700/70 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 shadow-[0_28px_70px_rgba(15,23,42,0.95)] origin-bottom-right transform rotate-[10deg]"
+            >
+              <div className="absolute top-0 left-0 right-0 h-12 bg-black/60 backdrop-blur-md rounded-t-[48px] flex items-center justify-center">
+                <div className="w-28 h-1.5 bg-slate-600/80 rounded-full"></div>
               </div>
               <img
-                src={uber_india}
-                className="w-full h-full object-cover mt-12"
-                alt="WalletCab app preview"
+                src={nexus}
+                className="w-full h-full object-cover mt-10 opacity-[0.98]"
+                alt="Nexus app preview"
               />
-              <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-gray-900 to-transparent"></div>
-            </div>
+              <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -214,11 +221,11 @@ const LaunchPage = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.1 }}
-              className="bg-white/95 rounded-2xl p-6 border border-gray-200/60 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              className="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 rounded-2xl p-6 border border-slate-800/80 shadow-[0_18px_45px_rgba(15,23,42,0.9)] hover:shadow-[0_22px_55px_rgba(15,23,42,1)] transition-all duration-300 hover:-translate-y-1"
             >
               <div className="text-3xl mb-3">{stat.icon}</div>
-              <p className="text-4xl font-bold text-gray-900 mb-2">{stat.value}</p>
-              <p className="text-sm text-gray-600 font-medium">{stat.label}</p>
+              <p className="text-4xl font-semibold text-white mb-2">{stat.value}</p>
+              <p className="text-sm text-gray-400 font-light">{stat.label}</p>
             </motion.div>
           ))}
         </div>
@@ -237,10 +244,8 @@ const LaunchPage = () => {
             <div className="relative w-full h-96 rounded-3xl bg-gradient-to-br from-gray-100 to-white border border-gray-200/60 shadow-2xl flex items-center justify-center overflow-hidden">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.03),transparent_70%)]"></div>
               <div className="text-center space-y-4">
-                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-gray-900 to-gray-700 rounded-2xl flex items-center justify-center shadow-xl">
-                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                  </svg>
+                <div className="w-80 h-80 mx-auto bg-gradient-to-br from-gray-900 to-gray-700 rounded-2xl flex items-center justify-center shadow-xl">
+                  <img src={nexuslogo}/>
                 </div>
                 <p className="text-sm uppercase tracking-[0.3em] text-gray-500 font-semibold">Since 2024</p>
               </div>
@@ -256,20 +261,20 @@ const LaunchPage = () => {
             <div className="inline-block bg-gray-100 px-4 py-2 rounded-full text-xs uppercase tracking-[0.2em] text-gray-600 font-semibold">
               About Us
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
+            <h2 className="text-4xl md:text-5xl font-extralight text-gray-900 leading-tight tracking-tight">
               Premium transportation,<br />redefined.
             </h2>
             <p className="text-lg text-gray-600 leading-relaxed">
-              WalletCab brings together precision engineering, vetted professional drivers, and an intuitive interface designed for modern urban commuters. We prioritize safety, comfort, and seamless experiences in every journey.
+              Nexus brings together precision engineering, vetted professional drivers, and an intuitive interface designed for modern urban commuters. We prioritize safety, comfort, and seamless experiences in every journey.
             </p>
             <div className="flex gap-6 pt-2">
               <div>
-                <p className="text-3xl font-bold text-gray-900">58+</p>
-                <p className="text-sm text-gray-600 mt-1 uppercase tracking-wider">Cities</p>
+                <p className="text-3xl font-semibold text-gray-900">58+</p>
+                <p className="text-sm text-gray-600 mt-1 uppercase tracking-wider font-light">Cities</p>
               </div>
               <div>
-                <p className="text-3xl font-bold text-gray-900">3min</p>
-                <p className="text-sm text-gray-600 mt-1 uppercase tracking-wider">Avg Wait</p>
+                <p className="text-3xl font-semibold text-gray-900">3min</p>
+                <p className="text-sm text-gray-600 mt-1 uppercase tracking-wider font-light">Avg Wait</p>
               </div>
             </div>
           </motion.div>
@@ -282,7 +287,7 @@ const LaunchPage = () => {
           <div className="inline-block bg-gray-100 px-4 py-2 rounded-full text-xs uppercase tracking-[0.2em] text-gray-600 font-semibold mb-6">
             Why Choose Us
           </div>
-          <h2 className="text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-5xl font-extralight text-gray-900 mb-6 tracking-tight">
             Experience the difference
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -319,11 +324,11 @@ const LaunchPage = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.1 }}
-              className="group bg-white rounded-2xl p-8 border border-gray-200/60 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
+              className="group bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 rounded-2xl p-8 border border-slate-800/80 shadow-[0_18px_45px_rgba(15,23,42,0.85)] hover:shadow-[0_22px_55px_rgba(15,23,42,1)] transition-all duration-300 hover:-translate-y-1"
             >
               <div className="text-4xl mb-4">{feature.icon}</div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-              <p className="text-gray-600 leading-relaxed">{feature.desc}</p>
+              <h3 className="text-2xl font-light text-white mb-3 tracking-wide">{feature.title}</h3>
+              <p className="text-gray-300 leading-relaxed">{feature.desc}</p>
             </motion.div>
           ))}
         </div>
@@ -335,7 +340,7 @@ const LaunchPage = () => {
           <div className="inline-block bg-gray-100 px-4 py-2 rounded-full text-xs uppercase tracking-[0.2em] text-gray-600 font-semibold mb-6">
             Simple Process
           </div>
-          <h2 className="text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-5xl font-extralight text-gray-900 mb-6 tracking-tight">
             Three steps to your destination
           </h2>
         </div>
@@ -367,7 +372,7 @@ const LaunchPage = () => {
               className="relative bg-white rounded-3xl p-8 md:p-10 border border-gray-200/60 shadow-xl"
             >
               <div className="absolute top-6 right-6 text-7xl font-black text-gray-100">{item.step}</div>
-              <h3 className="text-3xl font-bold text-gray-900 mb-4 relative z-10">{item.title}</h3>
+              <h3 className="text-3xl font-light text-gray-900 mb-4 relative z-10 tracking-wide">{item.title}</h3>
               <p className="text-gray-600 leading-relaxed relative z-10">{item.desc}</p>
             </motion.div>
           ))}
@@ -380,7 +385,7 @@ const LaunchPage = () => {
           <div className="inline-block bg-gray-100 px-4 py-2 rounded-full text-xs uppercase tracking-[0.2em] text-gray-600 font-semibold mb-6">
             Testimonials
           </div>
-          <h2 className="text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-5xl font-extralight text-gray-900 mb-6 tracking-tight">
             Loved by thousands
           </h2>
         </div>
@@ -388,7 +393,7 @@ const LaunchPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-7">
           {[
             {
-              quote: "WalletCab transformed my daily commute. The app is intuitive and every driver is professional.",
+              quote: "Nexus transformed my daily commute. The app is intuitive and every driver is professional.",
               author: "Sarah Chen",
               role: "Product Manager"
             },
@@ -409,13 +414,13 @@ const LaunchPage = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.1 }}
-              className="bg-white rounded-2xl p-7 border border-gray-200/60 shadow-lg hover:shadow-xl transition-all duration-300"
+              className="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 rounded-2xl p-7 border border-slate-800/80 shadow-[0_18px_45px_rgba(15,23,42,0.85)] hover:shadow-[0_22px_55px_rgba(15,23,42,1)] transition-all duration-300"
             >
               <div className="text-yellow-400 text-xl mb-4">⭐⭐⭐⭐⭐</div>
-              <p className="text-gray-700 leading-relaxed mb-6 text-lg">"{testimonial.quote}"</p>
+              <p className="text-gray-200 leading-relaxed mb-6 text-lg">"{testimonial.quote}"</p>
               <div>
-                <p className="font-bold text-gray-900">{testimonial.author}</p>
-                <p className="text-sm text-gray-600">{testimonial.role}</p>
+                <p className="font-light text-white tracking-wide">{testimonial.author}</p>
+                <p className="text-sm text-gray-400">{testimonial.role}</p>
               </div>
             </motion.div>
           ))}
@@ -428,21 +433,21 @@ const LaunchPage = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-10 md:p-14 overflow-hidden"
+          className="relative bg-gradient-to-br from-black via-slate-950 to-slate-900 rounded-3xl p-10 md:p-14 overflow-hidden"
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_70%)]"></div>
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="text-white">
-              <h3 className="text-4xl md:text-5xl font-bold mb-4">Ready to drive with us?</h3>
+              <h3 className="text-4xl md:text-5xl font-extralight mb-4 tracking-tight">Ready to drive with us?</h3>
               <p className="text-xl text-gray-300 max-w-2xl">
-                Join our network of premium drivers and start earning with WalletCab today.
+                Join our network of premium drivers and start earning with Nexus today.
               </p>
             </div>
             <motion.button
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate("/captainRegister")}
-              className="px-10 py-5 bg-white text-gray-900 rounded-xl font-bold text-lg shadow-2xl hover:shadow-white/20 transition-all duration-300"
+              className="px-10 py-5 bg-white text-gray-900 rounded-xl font-semibold text-lg border border-white/60 shadow-[0_22px_55px_rgba(15,23,42,0.95)] hover:shadow-[0_26px_65px_rgba(15,23,42,1)] transition-all duration-300"
             >
               Become a Driver
             </motion.button>
@@ -451,56 +456,56 @@ const LaunchPage = () => {
       </section>
 
       {/* PREMIUM FOOTER */}
-      <footer className="bg-gray-900 border-t border-gray-800 py-12 md:py-14 mt-12 text-gray-200">
+      <footer className="bg-gradient-to-br from-black via-slate-950 to-slate-900 border-t border-gray-800/80 py-12 md:py-14 mt-12 text-gray-200">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-100 to-gray-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-slate-400 flex items-center justify-center shadow-[0_14px_35px_rgba(15,23,42,0.9)]">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="black">
                     <rect x="2" y="8" width="20" height="8" rx="2" />
                   </svg>
                 </div>
-                <span className="text-xl font-bold text-white">WalletCab</span>
+                <span className="text-xl font-light text-white tracking-tight">Nexus</span>
               </div>
               <p className="text-gray-400">Premium transportation redefined for modern cities.</p>
             </div>
 
             <div>
-              <h4 className="font-bold text-white mb-4">Company</h4>
+              <h4 className="font-light text-white mb-4 tracking-wide">Company</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition">Press</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Press</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-bold text-white mb-4">Support</h4>
+              <h4 className="font-light text-white mb-4 tracking-wide">Support</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition">Safety</a></li>
-                <li><a href="#" className="hover:text-white transition">Contact</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Safety</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-bold text-white mb-4">Legal</h4>
+              <h4 className="font-light text-white mb-4 tracking-wide">Legal</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition">Terms</a></li>
-                <li><a href="#" className="hover:text-white transition">Privacy</a></li>
-                <li><a href="#" className="hover:text-white transition">Cookies</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Cookies</a></li>
               </ul>
             </div>
           </div>
 
-          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-400 text-sm">© 2025 WalletCab. All rights reserved.</p>
+          <div className="border-t border-gray-800/80 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-gray-500 text-sm">© 2025 Nexus. All rights reserved.</p>
             <div className="flex gap-6 text-gray-400">
-              <a href="#" className="hover:text-white transition">Twitter</a>
-              <a href="#" className="hover:text-white transition">Facebook</a>
-              <a href="#" className="hover:text-white transition">LinkedIn</a>
-              <a href="#" className="hover:text-white transition">Instagram</a>
+              <a href="#" className="hover:text-white transition-colors">Twitter</a>
+              <a href="#" className="hover:text-white transition-colors">Facebook</a>
+              <a href="#" className="hover:text-white transition-colors">LinkedIn</a>
+              <a href="#" className="hover:text-white transition-colors">Instagram</a>
             </div>
           </div>
         </div>

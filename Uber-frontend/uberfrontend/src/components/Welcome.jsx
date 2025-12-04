@@ -7,6 +7,7 @@ import { FiTruck, FiMapPin, FiStar, FiEye, FiEyeOff } from "react-icons/fi";
 import { useUserStore } from "../Zustand/useUserStore";
 import toast, { Toaster } from "react-hot-toast";
 import { API_BASE_URL } from "../config";
+import nexuslogo from "../assets/nexuslogo.png";
 
 const API_BASE = API_BASE_URL;
 
@@ -133,14 +134,16 @@ toast.success("new user registered");
             <div className="absolute inset-y-0 right-0 w-52 bg-gradient-to-l from-white/5 to-transparent opacity-40" />
 
             <div className="relative z-10 space-y-8">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center shadow-inner shadow-black/40">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                    <rect x="2" y="8" width="20" height="8" rx="2" fill="white" opacity="0.9" />
-                  </svg>
-                </div>
+              <div className="flex items-center gap-3">
+                <img 
+                  src={nexuslogo} 
+                  alt="Nexus Ride Logo" 
+                  className="h-10 w-auto object-contain"
+                />
                 <div>
-                  <p className="text-sm uppercase tracking-[0.35em] text-white/70">WalletCab</p>
+                  <p className="text-sm uppercase tracking-[0.35em] text-white/70">
+                    Nexus
+                  </p>
                   <h1 className="text-3xl font-semibold tracking-tight">Ride Better</h1>
                 </div>
               </div>
@@ -197,8 +200,8 @@ toast.success("new user registered");
             <div className="w-full max-w-md bg-white rounded-[28px] p-8 sm:p-9">
               <div className="mb-6">
                 <p className="text-xs uppercase tracking-[0.4em] text-gray-500 font-semibold">Create account</p>
-                <h2 className="text-3xl font-bold text-gray-900 mt-2">Join WalletCab</h2>
-                <p className="text-gray-500 mt-1">Unlock premium rides and seamless payments.</p>
+                <h2 className="text-3xl font-bold text-gray-900 mt-2">Join Nexus</h2>
+                <p className="text-gray-500 mt-1">Complete your user profile and start rides.</p>
               </div>
 
               <form onSubmit={handleRegister} className="space-y-4" noValidate>

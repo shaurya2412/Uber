@@ -207,8 +207,8 @@ const Login = () => {
             className="order-2 lg:order-1 bg-gradient-to-b from-black via-gray-900 to-black text-gray-100 rounded-2xl p-8 flex items-center"
           >
             <div className="max-w-md">
-              <h1 className="text-4xl font-extrabold tracking-tight">Ride</h1>
-              <h2 className="text-xl font-medium text-gray-300 mt-3">Go anywhere with Ride</h2>
+              <h1 className="text-4xl font-extrabold tracking-tight">Nexus</h1>
+              <h2 className="text-xl font-medium text-gray-300 mt-3">Go anywhere with Nexus</h2>
               <p className="mt-5 text-gray-300">
                 Your ride, ready when you are. Book, track, and arrive — safely and effortlessly.
               </p>
