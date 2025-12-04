@@ -124,7 +124,7 @@ const LaunchPage = () => {
                 onClick={() => navigate("/Welcome")}
                 className="px-8 py-4 bg-neutral-950 text-gray-100 border border-gray-700/80 rounded-xl font-medium shadow-[0_14px_35px_rgba(15,23,42,0.65)] hover:border-gray-500 hover:shadow-[0_18px_45px_rgba(15,23,42,0.85)] transition-all duration-300 text-base"
               >
-                Join as Member
+                Sign up
               </motion.button>
             </div>
 
