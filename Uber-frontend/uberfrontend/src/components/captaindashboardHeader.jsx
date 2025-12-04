@@ -79,14 +79,10 @@ const CaptainDashboardHeader = () => {
           </div>
         </div>
 
-        <nav className="flex items-center gap-6 text-sm text-gray-600 font-medium">
-          <span className="text-black cursor-default">Dashboard</span>
-          <span className="cursor-pointer hover:text-black">My Rides</span>
-          <span className="cursor-pointer hover:text-black">Earnings</span>
-        </nav>
-
+     
         <div className="flex items-center gap-4 flex-wrap justify-end">
           <div className="flex items-center gap-2">
+
             <span className="text-sm text-gray-600">Status</span>
             <button
               onClick={handleToggleActive}

@@ -142,38 +142,45 @@ useEffect(() => {
   };
 
   const renderRideForm = () => (
-    <div className="bg-white/95 backdrop-blur p-5 mt-4 rounded-2xl shadow-sm hover:shadow-md transition-shadow w-full max-w-xl">
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+    <div className="bg-white p-5 mt-4 rounded-2xl shadow-sm hover:shadow-md border border-gray-200 transition-shadow w-full max-w-xl">
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-xl font-semibold text-gray-900 flex items-center gap-2 tracking-tight">
           <span className="text-2xl">🚗</span>
           Book a new ride
         </div>
       </div>
 
-      <div className="flex flex-col">
-        <input
-          className="mt-4 w-full rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          type="text"
-          placeholder="Starting ride from"
-          value={pickup}
-          onChange={(e) => setPickup(e.target.value)}
-        />
-
-        <p className="text-sm text-gray-600 flex flex-col mt-4">
-          Destination
+      <div className="flex flex-col space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Pickup location
+          </label>
           <input
-            className="mt-2 w-full rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
             type="text"
-            placeholder="Final Destination"
+            placeholder="Where should we pick you up?"
+            value={pickup}
+            onChange={(e) => setPickup(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Destination
+          </label>
+          <input
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+            type="text"
+            placeholder="Where are you heading?"
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
           />
-        </p>
+        </div>
 
         {/* Fare Display */}
         {fare > 0 && (
-          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl">
-            <p className="text-sm text-green-800">
+          <div className="mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl">
+            <p className="text-sm text-gray-900">
               <strong>Estimated Fare: ₹{fare}</strong>
             </p>
           </div>
@@ -182,15 +189,15 @@ useEffect(() => {
         {/* Calculate Fare Button */}
         <button
           onClick={handleCalculateFare}
-          className="mt-4 bg-gray-800 text-white px-4 py-3 rounded-xl hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full"
+          className="mt-2 bg-gray-900 text-white px-4 py-3 rounded-xl hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full"
           disabled={isCalculating || isBooking || !pickup || !destination}
         >
-          {isCalculating ? "Calculating..." : "Look for the cab drivers"}
+          {isCalculating ? "Calculating..." : "Look for nearby drivers"}
         </button>
 
         {/* Book Ride Button */}
         <button
-          className="mt-3 bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full"
+          className="bg-black text-white py-3 px-4 rounded-xl hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full"
           onClick={handleBookRide}
           disabled={isBooking || isCalculating || fare === 0 || !pickup || !destination}
         >
@@ -202,9 +209,8 @@ useEffect(() => {
 
   // metrics are fetched in useEffect and stored in `stats`
   return (
-
     <div className="bg-gray-50 min-h-screen">
-     <UserdashboardHeader/>
+      <UserdashboardHeader />
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -234,15 +240,11 @@ useEffect(() => {
         {/* Map + Ride Info */}
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           <div className="col-span-1 space-y-6">
-          {!currentRide
-  ? renderRideForm()
-  : <Currentride />}
-
-            
+            {!currentRide ? renderRideForm() : <Currentride />}
           </div>
 
-          <div className="ml-24">
-            <div className="p-4 h-[520px] w-[120vh] rounded-2xl overflow-hidden shadow-sm ring-1 ring-gray-100 bg-white">
+          <div className="lg:col-span-2">
+            <div className="p-4 h-[520px] w-full rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-white">
               <OSMMap
                 center={
                   currentRide
