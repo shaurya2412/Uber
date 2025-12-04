@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useRideStore } from "../zustand/useRideStore";
+import { useRideStore } from "../Zustand/useRideStore";
 
 const RecentRides = () => {
   const {

@@ -4,7 +4,7 @@ import axios from 'axios';
 import { GoogleLogin } from "@react-oauth/google";
 import { motion } from "framer-motion";
 import { FiTruck, FiMapPin, FiStar, FiEye, FiEyeOff } from "react-icons/fi";
-import { useUserStore } from "../Zustand/useUserStore";
+import { useUserStore } from "../Zustand/useUserstore";
 import toast, { Toaster } from "react-hot-toast";
 import { API_BASE_URL } from "../config";
 import nexuslogo from "../assets/nexuslogo.png";

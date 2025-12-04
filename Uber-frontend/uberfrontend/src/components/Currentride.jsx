@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useRideStore } from "../zustand/useRideStore";
-import { useUserStore } from "../Zustand/useUserStore";
+import { useRideStore } from "../Zustand/useRideStore";
+import { useUserStore } from "../Zustand/useUserstore";
 import axios from "axios";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Connection, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";

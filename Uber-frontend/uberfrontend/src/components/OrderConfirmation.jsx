@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { useRideStore } from "../zustand/useRideStore";
-import { useUserStore } from "../Zustand/useUserStore";
+import { useRideStore } from "../Zustand/useRideStore";
+import { useUserStore } from "../Zustand/useUserstore";
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();

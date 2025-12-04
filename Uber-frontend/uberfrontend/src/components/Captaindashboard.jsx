@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useCaptainStore } from "../Zustand/useCaptainStore";
-import { useRideStore } from "../zustand/useRideStore";
+import { useRideStore } from "../Zustand/useRideStore";
 import CaptainDashboardHeader from "./captaindashboardHeader";
 
 // Card wrapper

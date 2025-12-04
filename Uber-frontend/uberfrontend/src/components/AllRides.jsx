@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useRideStore } from "../zustand/useRideStore";
+import { useRideStore } from "../Zustand/useRideStore";
 import { API_BASE_URL } from "../config";
 
 const API_BASE = API_BASE_URL;
