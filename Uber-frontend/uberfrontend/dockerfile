@@ -1,8 +1,6 @@
-# ---------- Build Stage ----------
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Install required build tools for node-gyp and kernel headers for native modules
 RUN apk add --no-cache python3 make g++ linux-headers libusb-dev eudev-dev
 
 COPY package*.json ./
@@ -11,7 +9,6 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# ---------- Serve Stage ----------
 FROM node:20-alpine
 WORKDIR /app
 
@@ -21,3 +18,4 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 CMD ["serve", "-s", "dist", "-l", "3000"]
+ 

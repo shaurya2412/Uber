@@ -81,7 +81,6 @@ useEffect(() => {
 
       if (result?.fare || result?.estimatedFare) {
         setFare(result.fare || result.estimatedFare);
-        console.log("✅ Fare calculated:", result.fare || result.estimatedFare);
       } else {
         alert("Failed to calculate fare");
       }
@@ -93,9 +92,7 @@ useEffect(() => {
     }
   };
 
-  console.log("ride history:", rideHistory);
 
-  // 🔹 Book Ride
   const handleBookRide = async () => {
     if (!pickup || !destination) {
       alert("Please enter pickup and destination");
