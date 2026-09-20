@@ -9,11 +9,15 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { motion } from "framer-motion";
 import { FiMapPin, FiNavigation, FiClock, FiDollarSign, FiX } from "react-icons/fi";
 import { API_BASE_URL } from "../config";
+import ChatWidget from "./ChatWidget";
+import { useSocket } from "../context/SocketContext";
+import { routeService } from "../services/routeService";
 
 const API_BASE = API_BASE_URL;
 
 const Currentride = () => {
   const navigate = useNavigate();
+  const socket = useSocket();
   const {
     currentRide,
     calculatetheprice,
@@ -34,6 +38,7 @@ const Currentride = () => {
   const [fare, setFare] = useState(0);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
+  const [liveEta, setLiveEta] = useState(null);
 
   // Helper to fetch coordinates
   const getCoordinates = async (place) => {
@@ -299,17 +304,52 @@ const Currentride = () => {
     }
   };
 
-  // Fetch latest ride data for authenticated users
+  // Fetch latest ride data for authenticated users and join room
   useEffect(() => {
     if (isAuthenticated && !currentRide) {
       fetchCurrentRide();
     }
   }, [isAuthenticated, fetchCurrentRide, currentRide]);
 
+  // Feature 8 & 13: Room joining & live ETA updates
+  useEffect(() => {
+    if (!socket || !currentRide?._id) return;
+
+    socket.emit("join_ride", currentRide._id);
+
+    const handleLocationUpdate = async (data) => {
+      if (currentRide?.pickup?.coordinates) {
+        const eta = await routeService.calculateETA(
+          [data.lat, data.lng],
+          [currentRide.pickup.coordinates.lat, currentRide.pickup.coordinates.lng]
+        );
+        if (eta) setLiveEta(eta);
+      }
+    };
+
+    const handleStatusChanged = () => {
+      fetchCurrentRide();
+      fetchRideHistory();
+    };
+
+    socket.on("driver:location_updated", handleLocationUpdate);
+    socket.on("ride:status_changed", handleStatusChanged);
+    socket.on("ride:updated", handleStatusChanged);
+
+    return () => {
+      socket.off("driver:location_updated", handleLocationUpdate);
+      socket.off("ride:status_changed", handleStatusChanged);
+      socket.off("ride:updated", handleStatusChanged);
+      socket.emit("leave_ride", currentRide._id);
+    };
+  }, [socket, currentRide?._id, fetchCurrentRide, fetchRideHistory]);
+
   const getStatusColor = (status) => {
     const statusLower = status?.toLowerCase();
-    if (statusLower === 'pending') return 'bg-yellow-100 text-yellow-800';
-    if (statusLower === 'confirmed') return 'bg-blue-100 text-blue-800';
+    if (statusLower === 'pending' || statusLower === 'requested') return 'bg-yellow-100 text-yellow-800';
+    if (statusLower === 'accepted' || statusLower === 'driver_en_route') return 'bg-blue-100 text-blue-800';
+    if (statusLower === 'arrived') return 'bg-purple-100 text-purple-800';
+    if (statusLower === 'in_ride' || statusLower === 'in_progress') return 'bg-indigo-100 text-indigo-800';
     if (statusLower === 'completed') return 'bg-green-100 text-green-800';
     if (statusLower === 'cancelled') return 'bg-red-100 text-red-800';
     return 'bg-gray-100 text-gray-800';
@@ -384,13 +424,26 @@ const Currentride = () => {
     </span>
   </div>
 
-  {/* Display ride OTP when pending */}
-  {currentRide?.status === "pending" && (
+  {/* Feature 13: Live ETA badge */}
+  {liveEta && (
+    <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 mx-6 mt-4 flex items-center justify-between shadow-sm">
+      <div className="flex items-center gap-2">
+        <FiClock className="w-5 h-5 text-teal-700" />
+        <span className="text-sm font-semibold text-teal-900">Live Driver ETA</span>
+      </div>
+      <span className="text-base font-bold text-teal-700">
+        ~{liveEta.minutes} min ({liveEta.distanceKm} km away)
+      </span>
+    </div>
+  )}
+
+  {/* Display ride OTP when pending/requested */}
+  {(currentRide?.status === "pending" || currentRide?.status === "requested" || currentRide?.status === "accepted" || currentRide?.status === "driver_en_route" || currentRide?.status === "arrived") && (
     <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4 mx-6 mt-4">
       <p className="text-sm text-yellow-800 font-medium">
         Your Ride OTP:
         <span className="text-lg font-bold ml-2">
-          {useRideStore.getState().rideOtp}
+          {useRideStore.getState().rideOtp || currentRide.startOtp || "—"}
         </span>
       </p>
       <p className="text-xs text-yellow-600 mt-1">
@@ -485,6 +538,7 @@ const Currentride = () => {
           </div>
         )}
       </div>
+      <ChatWidget />
     </div>
   );
 };

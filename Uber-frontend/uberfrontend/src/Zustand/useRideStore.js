@@ -126,7 +126,46 @@ export const useRideStore = create((set, get) => ({
 
   clearError: () => set({ error: null }),
 
-  // Captain functions
+  setDriverEnRoute: async (rideId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = localStorage.getItem('captaintoken');
+      const response = await axios.post(
+        `${API_BASE}/rides/${rideId}/en-route`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      set({ currentRide: response.data.data, isLoading: false });
+      return response.data;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.message || 'Failed to update status',
+      });
+      throw error;
+    }
+  },
+
+  setDriverArrived: async (rideId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = localStorage.getItem('captaintoken');
+      const response = await axios.post(
+        `${API_BASE}/rides/${rideId}/arrived`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      set({ currentRide: response.data.data, isLoading: false });
+      return response.data;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.message || 'Failed to update status',
+      });
+      throw error;
+    }
+  },
+
 StartRide: async (rideId, otp) => {
   set({ isLoading: true, error: null });
   try {

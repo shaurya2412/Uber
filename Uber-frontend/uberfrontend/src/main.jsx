@@ -11,6 +11,7 @@ import "@solana/wallet-adapter-react-ui/styles.css";
 
 import App from "./App.jsx";
 import "./index.css";
+import { SocketProvider } from "./context/SocketContext.jsx";
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 console.log(clientId);
@@ -28,7 +29,9 @@ createRoot(document.getElementById("root")).render(
       <ConnectionProvider endpoint={endpoint}>
         <WalletProvider wallets={wallets} autoConnect>
           <WalletModalProvider>
-            <App />
+            <SocketProvider>
+              <App />
+            </SocketProvider>
           </WalletModalProvider>
         </WalletProvider>
       </ConnectionProvider>

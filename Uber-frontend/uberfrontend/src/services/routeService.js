@@ -65,6 +65,27 @@ export const routeService = {
         error: error.message
       };
     }
+  },
+
+  // Feature 13: Live ETA calculation updating as driver moves
+  calculateETA: async (start, end) => {
+    try {
+      if (!start || !end || !start[0] || !end[0]) return null;
+      const res = await routeService.calculateRoute(start, end);
+      if (res.success) {
+        return {
+          minutes: Math.max(1, Math.ceil(res.duration)),
+          distanceKm: Number(res.distance.toFixed(1))
+        };
+      }
+      const dist = calculateDistance(start, end);
+      return {
+        minutes: Math.max(1, Math.ceil(dist * 2.5)),
+        distanceKm: Number(dist.toFixed(1))
+      };
+    } catch (e) {
+      return null;
+    }
   }
 };
 
