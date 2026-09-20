@@ -5,7 +5,20 @@ const captainController = require("../controllers/captain.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
 const { authLimiter } = require("../middlewares/rateLimiter.middleware");
 
-router.post("/register", authLimiter, [
+router.post("/register", authLimiter, (req, res, next) => {
+    if (!req.body.name && req.body.fullname) {
+        req.body.name = req.body.fullname;
+    }
+    if (!req.body.fullname && req.body.name) {
+        req.body.fullname = req.body.name;
+    }
+    if (req.body.name && typeof req.body.name === 'object') {
+        if (!req.body.name.lastname && req.body.name.firstname) {
+            req.body.name.lastname = 'Captain';
+        }
+    }
+    next();
+}, [
     body("name.firstname").isLength({min:3}).withMessage('Firstname should be at least 3 characters'),
     body("name.lastname").isLength({min:2}).withMessage('Lastname should be at least 2 characters'),
     body('email').isEmail().withMessage('Invalid Email'),

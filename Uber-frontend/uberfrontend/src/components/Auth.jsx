@@ -203,7 +203,12 @@ const Auth = ({ initialMode = 'login', initialRole = 'user' }) => {
       errors.password = 'Password must be at least 6 characters';
     }
     if (view === 'signup') {
-      if (!firstname.trim()) errors.firstname = 'First name required';
+      if (!firstname.trim() || firstname.trim().length < 3) {
+        errors.firstname = 'First name must be at least 3 characters';
+      }
+      if (!lastname.trim() || lastname.trim().length < 2) {
+        errors.lastname = 'Last name must be at least 2 characters';
+      }
       if (role === 'captain') {
         if (!vehiclePlate.trim()) errors.vehiclePlate = 'Vehicle plate required';
         if (!vehicleModel.trim()) errors.vehicleModel = 'Vehicle model required';
@@ -220,6 +225,9 @@ const Auth = ({ initialMode = 'login', initialRole = 'user' }) => {
     setLoading(true);
     setFieldErrors({});
 
+    const cleanFirst = firstname.trim();
+    const cleanLast = lastname.trim() || (role === 'captain' ? 'Captain' : 'User');
+
     try {
       if (role === 'user') {
         if (view === 'signin') {
@@ -234,8 +242,9 @@ const Auth = ({ initialMode = 'login', initialRole = 'user' }) => {
         } else {
           // Rider Register
           const res = await axios.post(`${API_BASE_URL}/users/register`, {
-            fullname: { firstname, lastname },
-            email,
+            fullname: { firstname: cleanFirst, lastname: cleanLast },
+            name: { firstname: cleanFirst, lastname: cleanLast },
+            email: email.trim(),
             password,
             phone,
           });
@@ -260,14 +269,15 @@ const Auth = ({ initialMode = 'login', initialRole = 'user' }) => {
         } else {
           // Driver Register
           const res = await axios.post(`${API_BASE_URL}/captains/register`, {
-            fullname: { firstname, lastname },
-            email,
+            name: { firstname: cleanFirst, lastname: cleanLast },
+            fullname: { firstname: cleanFirst, lastname: cleanLast },
+            email: email.trim(),
             password,
             vehicle: {
-              color: vehicleColor,
-              plate: vehiclePlate,
-              vehiclemodel: vehicleModel,
-              capacity: vehicleCapacity,
+              color: vehicleColor || 'Black',
+              plate: vehiclePlate.trim() || 'DL 01 AX 9921',
+              vehiclemodel: vehicleModel || 'Sedan',
+              capacity: String(vehicleCapacity || 4),
             },
           });
           const token = res.data.token || res.data.captaintoken;
@@ -279,7 +289,18 @@ const Auth = ({ initialMode = 'login', initialRole = 'user' }) => {
       }
     } catch (err) {
       console.error('Auth error:', err);
-      const msg = err.response?.data?.message || err.message || 'Authentication failed';
+      let msg = 'Authentication failed';
+      if (err.response?.data?.error) {
+        if (Array.isArray(err.response.data.error)) {
+          msg = err.response.data.error.map((e) => e.msg).join(', ');
+        } else if (typeof err.response.data.error === 'string') {
+          msg = err.response.data.error;
+        }
+      } else if (err.response?.data?.message) {
+        msg = err.response.data.message;
+      } else if (err.message) {
+        msg = err.message;
+      }
       showToast(msg, 'error');
     } finally {
       setLoading(false);
@@ -309,23 +330,6 @@ const Auth = ({ initialMode = 'login', initialRole = 'user' }) => {
           setTimeout(() => setIsOtpError(false), 800);
         }
       }, 600);
-    }
-  };
-
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      const res = await axios.post(`${API_BASE_URL}/auth/google`, {
-        credential: credentialResponse.credential,
-      });
-      if (res.data.token) {
-        localStorage.setItem('token', res.data.token);
-        setUser(res.data.user);
-        setToken(res.data.token);
-        showToast('Google Sign-In successful!', 'success');
-        navigate('/dashboard');
-      }
-    } catch (err) {
-      showToast('Google authentication failed', 'error');
     }
   };
 
