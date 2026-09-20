@@ -2,15 +2,34 @@ const rideModel = require("../models/ride.model");
 const captainModel = require("../models/captain.model");
 const { validationResult } = require('express-validator');
 
+const redisClient = require("../db/redis");
+const { getIo, emitRideStatus } = require("../services/socket.service");
+const { findNearestCaptains } = require("../services/captain.service");
+const { scheduleRideTimeout, cancelRideTimeout } = require("../services/rideTimeout.service");
+const { processRideRefund } = require("../services/refund.service");
+const { calculateSurgeMultiplier } = require("../services/surge.service");
+
 module.exports.getAvailableRides = async (req, res, next) => {
     try {
+        const cachedRides = await redisClient.get("available_rides");
+        if (cachedRides) {
+            return res.status(200).json({
+                success: true,
+                data: JSON.parse(cachedRides)
+            });
+        }
+
         const rides = await rideModel.find({ 
-            status: 'pending' 
+            status: { $in: ['pending', 'requested'] }
         })
         .populate('user', 'fullname email')
         .sort({ createdAt: -1 })
         .limit(20);
   
+        await redisClient.set("available_rides", JSON.stringify(rides), {
+            EX: 15 // Cache for 15 seconds to avoid stale data while improving performance
+        });
+
         res.status(200).json({
             success: true,
             data: rides
@@ -31,7 +50,7 @@ module.exports.acceptRide = async (req, res, next) => {
 
         const activeRide = await rideModel.findOne({
             captain: captainId,
-            status: { $in: ['accepted', 'in_progress'] }
+            status: { $in: ['accepted', 'driver_en_route', 'arrived', 'in_ride', 'in_progress'] }
         });
 
         if (activeRide) {
@@ -44,7 +63,7 @@ module.exports.acceptRide = async (req, res, next) => {
         const ride = await rideModel.findOneAndUpdate(
             { 
                 _id: rideId, 
-                status: 'pending' 
+                status: { $in: ['pending', 'requested'] }
             },
             {
                 captain: captainId,
@@ -52,7 +71,7 @@ module.exports.acceptRide = async (req, res, next) => {
                 acceptedAt: new Date()
             },
             { new: true }
-        ).populate('user', 'fullname email');
+        ).populate('user', 'fullname email').populate('captain', 'fullname vehicle');
 
         if (!ride) {
             return res.status(404).json({
@@ -60,6 +79,13 @@ module.exports.acceptRide = async (req, res, next) => {
                 message: "Ride not found or already accepted"
             });
         }
+
+        // Cancel 60-second auto-cancel background job
+        cancelRideTimeout(rideId);
+
+        await redisClient.del("available_rides");
+        emitRideStatus(rideId, "ride:accepted", ride);
+        emitRideStatus(rideId, "ride:status_changed", ride);
 
         res.status(200).json({
             success: true,
@@ -75,6 +101,54 @@ module.exports.acceptRide = async (req, res, next) => {
     }
 };
 
+module.exports.setDriverEnRoute = async (req, res, next) => {
+    try {
+        const { rideId } = req.params;
+        const captainId = req.captain._id;
+
+        const ride = await rideModel.findOneAndUpdate(
+            { _id: rideId, captain: captainId, status: 'accepted' },
+            { status: 'driver_en_route', driverEnRouteAt: new Date() },
+            { new: true }
+        ).populate('user', 'fullname email').populate('captain', 'fullname vehicle');
+
+        if (!ride) {
+            return res.status(404).json({ success: false, message: "Ride not found or invalid transition" });
+        }
+
+        emitRideStatus(rideId, "ride:status_changed", ride);
+        emitRideStatus(rideId, "ride:updated", ride);
+
+        res.status(200).json({ success: true, message: "Driver is en route to pickup", data: ride });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error updating status", error: error.message });
+    }
+};
+
+module.exports.setDriverArrived = async (req, res, next) => {
+    try {
+        const { rideId } = req.params;
+        const captainId = req.captain._id;
+
+        const ride = await rideModel.findOneAndUpdate(
+            { _id: rideId, captain: captainId, status: { $in: ['accepted', 'driver_en_route'] } },
+            { status: 'arrived', arrivedAt: new Date() },
+            { new: true }
+        ).populate('user', 'fullname email').populate('captain', 'fullname vehicle');
+
+        if (!ride) {
+            return res.status(404).json({ success: false, message: "Ride not found or invalid transition" });
+        }
+
+        emitRideStatus(rideId, "ride:status_changed", ride);
+        emitRideStatus(rideId, "ride:updated", ride);
+
+        res.status(200).json({ success: true, message: "Driver has arrived at pickup location", data: ride });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error updating status", error: error.message });
+    }
+};
+
 module.exports.startRide = async (req, res, next) => {
     try {
         const { rideId } = req.params;
@@ -85,7 +159,7 @@ module.exports.startRide = async (req, res, next) => {
         const ride = await rideModel.findOne({
             _id: rideId,
             captain: captainId,
-            status: "accepted",
+            status: { $in: ["accepted", "driver_en_route", "arrived"] }
         });
 
         if (!ride) {
@@ -95,7 +169,14 @@ module.exports.startRide = async (req, res, next) => {
             });
         }
 
-        console.log(`🔍 Starting ride ${rideId} - OTP exists: ${!!ride.startOtp}, OTP value: "${ride.startOtp}"`);
+        // Check if OTP verification is currently locked due to 3 failed attempts
+        if (ride.otpBlockedUntil && new Date(ride.otpBlockedUntil) > new Date()) {
+            const remainingMins = Math.ceil((new Date(ride.otpBlockedUntil) - new Date()) / 60000);
+            return res.status(429).json({
+                success: false,
+                message: `Too many failed attempts. Verification locked for ${remainingMins} more minute(s).`
+            });
+        }
 
         // 2️⃣ OTP validation
         if (!otp) {
@@ -105,7 +186,7 @@ module.exports.startRide = async (req, res, next) => {
             });
         }
 
-        // 3️⃣ OTP match? (normalize both to strings and trim whitespace)
+        // 3️⃣ OTP match?
         const storedOtp = String(ride.startOtp || '').trim();
         const enteredOtp = String(otp || '').trim();
         
@@ -117,10 +198,20 @@ module.exports.startRide = async (req, res, next) => {
         }
 
         if (storedOtp !== enteredOtp) {
-            console.log(`OTP mismatch - Stored: "${storedOtp}" (type: ${typeof storedOtp}), Entered: "${enteredOtp}" (type: ${typeof enteredOtp})`);
+            ride.otpAttempts = (ride.otpAttempts || 0) + 1;
+            if (ride.otpAttempts >= 3) {
+                ride.otpBlockedUntil = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes lock
+                await ride.save();
+                return res.status(429).json({
+                    success: false,
+                    message: "Maximum OTP attempts exceeded (3). Locked for 10 minutes.",
+                    blockedUntil: ride.otpBlockedUntil
+                });
+            }
+            await ride.save();
             return res.status(400).json({
                 success: false,
-                message: "Invalid OTP. Please check and try again.",
+                message: `Invalid OTP. ${3 - ride.otpAttempts} attempt(s) remaining before lockout.`
             });
         }
 
@@ -133,14 +224,20 @@ module.exports.startRide = async (req, res, next) => {
         }
 
         // 5️⃣ Mark ride started
-        ride.status = "in_progress";
+        ride.otpAttempts = 0;
+        ride.otpBlockedUntil = null;
+        ride.status = "in_ride";
         ride.startedAt = new Date();
         await ride.save();
+
+        const populatedRide = await rideModel.findById(rideId).populate('user', 'fullname email').populate('captain', 'fullname vehicle');
+        emitRideStatus(rideId, "ride:status_changed", populatedRide);
+        emitRideStatus(rideId, "ride:updated", populatedRide);
 
         res.status(200).json({
             success: true,
             message: "Ride started successfully",
-            data: ride,
+            data: populatedRide,
         });
     } catch (error) {
         res.status(500).json({
@@ -161,14 +258,14 @@ module.exports.completeRide = async (req, res, next) => {
             { 
                 _id: rideId, 
                 captain: captainId,
-                status: 'in_progress' 
+                status: { $in: ['in_progress', 'in_ride'] } 
             },
             {
                 status: 'completed',
                 completedAt: new Date()
             },
             { new: true }
-        ).populate('user', 'fullname email');
+        ).populate('user', 'fullname email').populate('captain', 'fullname vehicle');
 
         if (!ride) {
             return res.status(404).json({
@@ -176,6 +273,9 @@ module.exports.completeRide = async (req, res, next) => {
                 message: "Ride not found or cannot be completed"
             });
         }
+
+        emitRideStatus(rideId, "ride:status_changed", ride);
+        emitRideStatus(rideId, "ride:updated", ride);
 
         res.status(200).json({
             success: true,
@@ -201,7 +301,7 @@ module.exports.usercompleteRide = async (req, res, next) => {
         const ride = await rideModel.findOne({
             _id: rideId,
             user: userId,
-            status: 'in_progress'
+            status: { $in: ['in_progress', 'in_ride'] }
         });
 
         if (!ride) {
@@ -219,7 +319,7 @@ module.exports.usercompleteRide = async (req, res, next) => {
             });
         }
 
-        // 3️⃣ OTP match? (normalize both to strings and trim whitespace)
+        // 3️⃣ OTP match?
         const storedOtp = String(ride.startOtp || '').trim();
         const enteredOtp = String(otp || '').trim();
         
@@ -231,7 +331,6 @@ module.exports.usercompleteRide = async (req, res, next) => {
         }
 
         if (storedOtp !== enteredOtp) {
-            console.log(`OTP mismatch - Stored: "${storedOtp}" (type: ${typeof storedOtp}), Entered: "${enteredOtp}" (type: ${typeof enteredOtp})`);
             return res.status(400).json({
                 success: false,
                 message: "Invalid OTP. Please enter the correct OTP."
@@ -254,7 +353,10 @@ module.exports.usercompleteRide = async (req, res, next) => {
                 completedAt: new Date()
             },
             { new: true }
-        ).populate('captain', 'fullname email');
+        ).populate('user', 'fullname email').populate('captain', 'fullname vehicle');
+
+        emitRideStatus(rideId, "ride:status_changed", updatedRide);
+        emitRideStatus(rideId, "ride:updated", updatedRide);
 
         res.status(200).json({
             success: true,
@@ -385,30 +487,66 @@ const generateOtp = () => {
 
 module.exports.bookRide = async (req, res, next) => {
     try {
-        const { pickup, destination, fare } = req.body;
+        const { pickup, destination, fare, surgeMultiplier } = req.body;
         const userId = req.user._id;
 
         const otp = generateOtp();
         const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins from now
 
+        // Calculate dynamic surge multiplier if not provided in body
+        const computedSurge = surgeMultiplier || await calculateSurgeMultiplier({
+            lat: pickup.coordinates.lat,
+            lng: pickup.coordinates.lng
+        });
+
+        const finalFare = fare ? Number(fare) : 50;
+
         const ride = await rideModel.create({
             user: userId,
             pickup,
             destination,
-            fare,
-            status: "pending",
+            fare: finalFare,
+            surgeMultiplier: computedSurge,
+            status: "requested",
             startOtp: otp,
             otpExpiresAt: otpExpiry
         });
 
-        console.log(`✅ Ride ${ride._id} created with OTP: "${otp}"`);
+        console.log(`✅ Ride ${ride._id} created with OTP: "${otp}" and surge: ${computedSurge}x`);
 
         const populatedRide = await ride.populate("user", "fullname email");
+        await redisClient.del("available_rides");
+
+        // 1. Geospatial Nearest Driver Matching: find captains within 5000 meters using $nearSphere
+        const nearbyCaptains = await findNearestCaptains({
+            lng: pickup.coordinates.lng,
+            lat: pickup.coordinates.lat,
+            maxDistanceMeters: 5000
+        });
+
+        console.log(`📍 Found ${nearbyCaptains.length} nearby captain(s) within 5km.`);
+
+        // Notify nearby captains in their personal socket rooms
+        if (nearbyCaptains.length > 0) {
+            nearbyCaptains.forEach(captain => {
+                getIo().to(captain._id.toString()).emit("ride:created", populatedRide);
+            });
+        } else {
+            // If no immediate drivers found via $nearSphere, emit to available captains
+            getIo().emit("ride:created", populatedRide);
+        }
+
+        // Notify rider in personal room and ride room
+        getIo().to(userId.toString()).emit("ride:created", populatedRide);
+
+        // 2. Schedule Auto-Cancel background timer (60 seconds)
+        scheduleRideTimeout(ride._id, 60000);
 
         res.status(201).json({
             success: true,
             message: "Ride booked successfully",
             data: populatedRide,
+            surgeMultiplier: computedSurge,
             otp: otp // send to rider only
         });
     } catch (error) {
@@ -557,7 +695,7 @@ module.exports.cancelUserRide = async (req, res, next) => {
         const ride = await rideModel.findOne({
             _id: rideId,
             user: userId,
-            status: { $in: ['pending', 'accepted'] } // Only allow cancellation of pending or accepted rides
+            status: { $in: ['pending', 'requested', 'accepted', 'driver_en_route', 'arrived'] }
         });
 
         if (!ride) {
@@ -567,20 +705,29 @@ module.exports.cancelUserRide = async (req, res, next) => {
             });
         }
 
+        // Cancel timeout if any
+        cancelRideTimeout(rideId);
+
+        // Process automatic refund if ride was paid
+        let refundInfo = null;
+        if (ride.paymentStatus === 'paid') {
+            refundInfo = await processRideRefund(ride);
+        }
+
         // Update ride status to cancelled
-        const updatedRide = await rideModel.findByIdAndUpdate(
-            rideId,
-            {
-                status: 'cancelled',
-                cancelledAt: new Date()
-            },
-            { new: true }
-        );
+        ride.status = 'cancelled';
+        ride.cancelledAt = new Date();
+        await ride.save();
+
+        const populatedRide = await rideModel.findById(rideId).populate('user', 'fullname email').populate('captain', 'fullname vehicle');
+        emitRideStatus(rideId, "ride:cancelled", populatedRide);
+        emitRideStatus(rideId, "ride:status_changed", populatedRide);
 
         res.status(200).json({
             success: true,
-            message: "Ride cancelled successfully",
-            data: updatedRide
+            message: "Ride cancelled successfully" + (refundInfo?.success ? " and refund processed" : ""),
+            data: populatedRide,
+            refund: refundInfo
         });
     } catch (error) {
         res.status(500).json({
@@ -590,6 +737,7 @@ module.exports.cancelUserRide = async (req, res, next) => {
         });
     }
 }; 
+
 module.exports.cancelcaptainRide = async (req, res, next) => {
     try {
         const { rideId } = req.params;
@@ -598,7 +746,7 @@ module.exports.cancelcaptainRide = async (req, res, next) => {
         const ride = await rideModel.findOne({
             _id: rideId,
             captain: captainId,
-            status: { $in: ['pending', 'accepted','in_progress'] } // Only allow cancellation of pending or accepted rides
+            status: { $in: ['pending', 'requested', 'accepted', 'driver_en_route', 'arrived', 'in_progress', 'in_ride'] }
         });
 
         if (!ride) {
@@ -608,20 +756,29 @@ module.exports.cancelcaptainRide = async (req, res, next) => {
             });
         }
 
+        // Cancel timeout if any
+        cancelRideTimeout(rideId);
+
+        // Process automatic refund if ride was paid
+        let refundInfo = null;
+        if (ride.paymentStatus === 'paid') {
+            refundInfo = await processRideRefund(ride);
+        }
+
         // Update ride status to cancelled
-        const updatedRide = await rideModel.findByIdAndUpdate(
-            rideId,
-            {
-                status: 'cancelled',
-                cancelledAt: new Date()
-            },
-            { new: true }
-        );
+        ride.status = 'cancelled';
+        ride.cancelledAt = new Date();
+        await ride.save();
+
+        const populatedRide = await rideModel.findById(rideId).populate('user', 'fullname email').populate('captain', 'fullname vehicle');
+        emitRideStatus(rideId, "ride:cancelled", populatedRide);
+        emitRideStatus(rideId, "ride:status_changed", populatedRide);
 
         res.status(200).json({
             success: true,
-            message: "Ride cancelled successfully",
-            data: updatedRide
+            message: "Ride cancelled successfully" + (refundInfo?.success ? " and refund processed" : ""),
+            data: populatedRide,
+            refund: refundInfo
         });
     } catch (error) {
         res.status(500).json({
@@ -630,7 +787,7 @@ module.exports.cancelcaptainRide = async (req, res, next) => {
             error: error.message
         });
     }
-}; 
+};
 
 module.exports.getUserDashboardStats = async (req, res, next) => {
   try {

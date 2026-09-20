@@ -34,11 +34,30 @@ const userSchema = new mongoose.Schema({
     authProvider: { type: String, enum: ["local", "google"], default: "local" },
     sockerId: {
         type: String
+    },
+    role: {
+        type: String,
+        enum: ["user", "captain", "admin"],
+        default: "user"
     }
 });
 
 userSchema.methods.generateAuthToken = function () {
-    return jwt.sign({ _id: this._id }, process.env.JWT_SECRET);
+    return jwt.sign({ _id: this._id, role: this.role || 'user' }, process.env.JWT_SECRET, { expiresIn: '24h' });
+};
+
+userSchema.methods.generateAuthTokens = function () {
+    const accessToken = jwt.sign(
+        { _id: this._id, role: this.role || 'user' },
+        process.env.JWT_SECRET,
+        { expiresIn: '15m' }
+    );
+    const refreshToken = jwt.sign(
+        { _id: this._id, role: this.role || 'user' },
+        process.env.JWT_REFRESH_SECRET || (process.env.JWT_SECRET + '_refresh'),
+        { expiresIn: '7d' }
+    );
+    return { accessToken, refreshToken };
 };
 
 userSchema.methods.comparePassword = async function (password) {

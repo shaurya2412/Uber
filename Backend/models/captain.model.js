@@ -33,6 +33,15 @@ const captainSchema = new mongoose.Schema({
         enum: ['active', 'inactive'],
         default: 'active',
     },
+    approvalStatus: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected', 'suspended'],
+        default: 'approved',
+    },
+    role: {
+        type: String,
+        default: 'captain'
+    },
     active: {
         type: Boolean,
         default: false,
@@ -58,24 +67,41 @@ const captainSchema = new mongoose.Schema({
             type: String,
             required: true,
             minlength: [1, "The capacity of the vehicle should be more than 1"]
+        }
+    },
+    location: {
+        type: {
+            type: String,
+            enum: ['Point'],
+            default: 'Point'
         },
-
-        location: {
-            lat:{
-                type: Number,
-            },
-            lng:{
-                type: Number
-            }
+        coordinates: {
+            type: [Number], // [longitude, latitude]
+            default: [0, 0]
         }
     }
 });
 
+captainSchema.index({ location: '2dsphere' });
+
 captainSchema.methods.generateAuthToken = function(){
-      
     try {
-        const token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET);
+        const token = jwt.sign({ _id: this._id, role: 'captain' }, process.env.JWT_SECRET, { expiresIn: '24h' });
         return token;
+    } catch (error) {
+        throw error;
+    }
+};
+
+captainSchema.methods.generateAuthTokens = function(){
+    try {
+        const accessToken = jwt.sign({ _id: this._id, role: 'captain' }, process.env.JWT_SECRET, { expiresIn: '15m' });
+        const refreshToken = jwt.sign(
+            { _id: this._id, role: 'captain' },
+            process.env.JWT_REFRESH_SECRET || (process.env.JWT_SECRET + '_refresh'),
+            { expiresIn: '7d' }
+        );
+        return { accessToken, refreshToken };
     } catch (error) {
         throw error;
     }

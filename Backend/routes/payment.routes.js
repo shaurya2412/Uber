@@ -1,10 +1,13 @@
 const express = require("express");
 const Razorpay = require("razorpay");
 const router = express.Router();
+const { authUser } = require("../middlewares/auth.middleware");
 
-router.post("/create-order", async (req, res) => {
+const rideModel = require("../models/ride.model");
+
+router.post("/create-order", authUser, async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { amount, rideId } = req.body;
 
     // Check if Razorpay credentials are configured
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_SECRET) {

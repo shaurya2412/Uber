@@ -44,3 +44,27 @@ module.exports.createCaptain = async ({
         throw error;
     }
 }
+
+module.exports.findNearestCaptains = async ({ lng, lat, maxDistanceMeters = 5000 }) => {
+    try {
+        const captains = await captainModel.find({
+            active: true,
+            status: 'active',
+            approvalStatus: { $ne: 'suspended' },
+            location: {
+                $nearSphere: {
+                    $geometry: {
+                        type: 'Point',
+                        coordinates: [parseFloat(lng), parseFloat(lat)]
+                    },
+                    $maxDistance: maxDistanceMeters
+                }
+            }
+        }).limit(10);
+        return captains;
+    } catch (error) {
+        console.error('Error finding nearest captains via $nearSphere:', error.message);
+        // Fallback in case of index initialising or mock locations
+        return await captainModel.find({ active: true, status: 'active' }).limit(10);
+    }
+};

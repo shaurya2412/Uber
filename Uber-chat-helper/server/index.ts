@@ -9,7 +9,7 @@
   app.use(cors());
   app.use(express.json())
 
-  const client = new MongoClient(process.env.MONGODB_ATLAS_URL as string)
+  const client = new MongoClient(process.env.MONGODB_ATLAS_URI as string)
 
   async function startServer(){
     try{
@@ -26,8 +26,8 @@
         const threadId = Date.now().toString()
         console.log(initialMessage)
         try{
-             const Response = await callAgent(client,initialMessage,threadId)
-             res.json({threadId,Response})
+             const response = await callAgent(client,initialMessage,threadId)
+             res.json({threadId,response})
         }catch(error){
 console.error("there is a error", error);
 res.status(500).json({error: 'Internal server error'})
@@ -39,8 +39,8 @@ res.status(500).json({error: 'Internal server error'})
         const {message} = req.body
 
         try{
-            const res = await callAgent(client, message,threadId)
-            res.json({res})
+            const response = await callAgent(client, message,threadId)
+            res.json({threadId, response})
         }catch(error){
             console.error(error)
             res.status(500).json({error: "Internal server error"})

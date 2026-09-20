@@ -36,14 +36,18 @@ const rideSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['pending', 'accepted', 'in_progress', 'completed', 'cancelled'],
-    default: 'pending',
+    enum: ['requested', 'pending', 'accepted', 'driver_en_route', 'arrived', 'in_ride', 'in_progress', 'completed', 'cancelled'],
+    default: 'requested',
     required: true
   },
 
   fare: {
     type: Number,
     required: true
+  },
+  surgeMultiplier: {
+    type: Number,
+    default: 1.0
   },
   distance: {
     type: Number 
@@ -55,6 +59,12 @@ const rideSchema = new mongoose.Schema({
   },
   acceptedAt: {
     type: Date 
+  },
+  driverEnRouteAt: {
+    type: Date
+  },
+  arrivedAt: {
+    type: Date
   },
   startedAt: {
     type: Date
@@ -77,10 +87,23 @@ const rideSchema = new mongoose.Schema({
   },
   paymentStatus: {
     type: String,
-    enum: ['pending', 'paid', 'failed'],
+    enum: ['pending', 'paid', 'refunded', 'failed'],
     default: 'pending'
   },
   paymentId: {
+    type: String
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['razorpay', 'solana', 'cash', 'none'],
+    default: 'none'
+  },
+  refundStatus: {
+    type: String,
+    enum: ['none', 'pending', 'refunded', 'failed'],
+    default: 'none'
+  },
+  refundId: {
     type: String
   },
   paidAt: {
@@ -91,6 +114,19 @@ const rideSchema = new mongoose.Schema({
   },
   otpExpiresAt: {
     type: Date
+  },
+  otpAttempts: {
+    type: Number,
+    default: 0
+  },
+  otpBlockedUntil: {
+    type: Date,
+    default: null
+  },
+  currentLocation: {
+    lat: { type: Number },
+    lng: { type: Number },
+    updatedAt: { type: Date }
   }
 }, { timestamps: true }); 
 const Ride = mongoose.model('Ride', rideSchema);

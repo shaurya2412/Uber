@@ -18,7 +18,9 @@ function getDistanceInKm(coord1, coord2) {
   return R * c;
 }
 
-router.post("/calculate", (req, res) => {
+const { calculateSurgeMultiplier } = require("../services/surge.service");
+
+router.post("/calculate", async (req, res) => {
   try {
     const { pickup, destination } = req.body;
 
@@ -31,13 +33,29 @@ router.post("/calculate", (req, res) => {
     const distanceKm = getDistanceInKm(pickup, destination);
     const baseFare = 50;
     const perKmRate = 12;
-    const fare = baseFare + distanceKm * perKmRate;
+    const standardFare = baseFare + distanceKm * perKmRate;
+
+    // Calculate surge multiplier dynamically based on active requests vs online drivers
+    const surgeMultiplier = await calculateSurgeMultiplier({
+      lat: pickup.lat,
+      lng: pickup.lng
+    });
+
+    const finalFare = Number((standardFare * surgeMultiplier).toFixed(2));
 
     res.json({
       success: true,
-      distanceKm: distanceKm.toFixed(2),
-      fare: fare.toFixed(2),
+      distanceKm: Number(distanceKm.toFixed(2)),
+      baseFare,
+      standardFare: Number(standardFare.toFixed(2)),
+      surgeMultiplier,
+      fare: finalFare,
       currency: "INR",
+      breakdown: {
+        base: baseFare,
+        distanceCharge: Number((distanceKm * perKmRate).toFixed(2)),
+        surgeMultiplier: surgeMultiplier
+      }
     });
   } catch (err) {
     console.error("Fare calculation error:", err);

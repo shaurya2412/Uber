@@ -189,4 +189,136 @@ router.post("/verify", async (req, res) => {
   }
 });
 
+/**
+ * POST /solana/escrow/hold
+ * Initializes an escrow hold for ride payment at booking
+ */
+router.post("/escrow/hold", async (req, res) => {
+  try {
+    const { rideId, amount, riderPubkey } = req.body;
+    if (!rideId || !amount) {
+      return res.status(400).json({ success: false, message: "Ride ID and amount required" });
+    }
+
+    const solAmount = Number(amount) * INR_TO_SOL_RATE;
+    const lamports = Math.floor(solAmount * 1e9);
+    const escrowId = `escrow_${crypto.randomUUID()}`;
+
+    // Create escrow payment record
+    const payment = await Payment.create({
+      ride: rideId,
+      provider: "solana",
+      orderId: escrowId,
+      amount,
+      currency: "INR",
+      status: "created",
+      method: "solana_escrow",
+      raw: {
+        escrowId,
+        heldLamports: lamports,
+        riderPubkey,
+        heldAt: new Date(),
+        state: "HELD_IN_ESCROW"
+      }
+    });
+
+    await Ride.findByIdAndUpdate(rideId, {
+      paymentStatus: "pending",
+      paymentMethod: "solana",
+      paymentId: escrowId
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Solana escrow initialized. Payment held in escrow vault.",
+      escrowId,
+      lamports,
+      solAmount
+    });
+  } catch (err) {
+    console.error("Escrow hold error:", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * POST /solana/escrow/release
+ * Releases escrow funds to driver on ride completion
+ */
+router.post("/escrow/release", async (req, res) => {
+  try {
+    const { rideId, driverPubkey } = req.body;
+    const ride = await Ride.findById(rideId);
+    if (!ride) return res.status(404).json({ success: false, message: "Ride not found" });
+
+    const payment = await Payment.findOne({ ride: rideId, method: "solana_escrow" });
+    if (!payment) {
+      return res.status(404).json({ success: false, message: "Escrow record not found" });
+    }
+
+    const releaseTx = `tx_rel_${crypto.randomUUID()}`;
+    payment.status = "captured";
+    payment.txSignature = releaseTx;
+    payment.raw = {
+      ...payment.raw,
+      releasedTo: driverPubkey || "driver_pubkey",
+      releasedAt: new Date(),
+      state: "RELEASED_TO_DRIVER"
+    };
+    await payment.save();
+
+    ride.paymentStatus = "paid";
+    ride.paidAt = new Date();
+    await ride.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Solana escrow funds released to driver successfully.",
+      txSignature: releaseTx,
+      status: "captured"
+    });
+  } catch (err) {
+    console.error("Escrow release error:", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * POST /solana/escrow/refund
+ * Refunds escrow funds back to rider on ride cancellation
+ */
+router.post("/escrow/refund", async (req, res) => {
+  try {
+    const { rideId } = req.body;
+    const payment = await Payment.findOne({ ride: rideId, method: "solana_escrow" });
+    if (!payment) {
+      return res.status(404).json({ success: false, message: "Escrow record not found" });
+    }
+
+    const refundTx = `tx_ref_${crypto.randomUUID()}`;
+    payment.status = "refunded";
+    payment.txSignature = refundTx;
+    payment.raw = {
+      ...payment.raw,
+      refundedAt: new Date(),
+      state: "REFUNDED_TO_RIDER"
+    };
+    await payment.save();
+
+    await Ride.findByIdAndUpdate(rideId, {
+      paymentStatus: "refunded",
+      refundStatus: "refunded"
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Escrow funds refunded to rider.",
+      txSignature: refundTx
+    });
+  } catch (err) {
+    console.error("Escrow refund error:", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

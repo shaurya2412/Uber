@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const {body} = require("express-validator");
+const { body } = require("express-validator");
 const captainController = require("../controllers/captain.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
+const { authLimiter } = require("../middlewares/rateLimiter.middleware");
 
-router.post("/register", [
+router.post("/register", authLimiter, [
     body("name.firstname").isLength({min:3}).withMessage('Firstname should be at least 3 characters'),
     body("name.lastname").isLength({min:2}).withMessage('Lastname should be at least 2 characters'),
     body('email').isEmail().withMessage('Invalid Email'),
@@ -18,11 +19,13 @@ router.post("/register", [
         .withMessage("Vehicle capacity is required"),
 ], captainController.registerCaptain);
 
-router.post("/login", [
+router.post("/login", authLimiter, [
     body('email').isEmail().withMessage('Invalid Email'),
     body('password').isLength({min:3}).withMessage('Password should be at least 3 characters')
 ], captainController.loginCaptain);
 
+router.post("/refresh-token", captainController.refreshCaptainToken);
+router.post("/logout", authMiddleware.authCaptain, captainController.logoutCaptain);
 router.get('/profile', authMiddleware.authCaptain, captainController.getCaptainProfile);
 router.put('/status', authMiddleware.authCaptain, captainController.updateCaptainStatus);
 

@@ -3,12 +3,15 @@ const router = express.Router();
 const { body } = require('express-validator');
 const rideController = require('../controllers/ride.controller');
 const authMiddleware = require('../middlewares/auth.middleware');
+const { bookingLimiter, otpLimiter } = require('../middlewares/rateLimiter.middleware');
 
 router.get('/available', authMiddleware.authCaptain, rideController.getAvailableRides);
 router.post('/:rideId/accept', authMiddleware.authCaptain, rideController.acceptRide);
-router.post('/:rideId/start', authMiddleware.authCaptain, rideController.startRide);
+router.post('/:rideId/en-route', authMiddleware.authCaptain, rideController.setDriverEnRoute);
+router.post('/:rideId/arrived', authMiddleware.authCaptain, rideController.setDriverArrived);
+router.post('/:rideId/start', authMiddleware.authCaptain, otpLimiter, rideController.startRide);
 router.post('/:rideId/complete', authMiddleware.authCaptain, rideController.completeRide);
-router.post('/:rideId/completeuser',authMiddleware.authUser, rideController.usercompleteRide);
+router.post('/:rideId/completeuser', authMiddleware.authUser, otpLimiter, rideController.usercompleteRide);
 
 router.get('/current', authMiddleware.authCaptain, rideController.getCurrentRide);
 router.get('/history', authMiddleware.authCaptain, rideController.getRideHistory);
@@ -23,6 +26,7 @@ router.put('/:rideId/location',
 
 router.post('/book', 
     authMiddleware.authUser,
+    bookingLimiter,
     [
         body('pickup.address').notEmpty().withMessage('Pickup address is required'),
         body('pickup.coordinates.lat').isNumeric().withMessage('Pickup latitude is required'),
@@ -39,6 +43,6 @@ router.get('/user-history', authMiddleware.authUser, rideController.getUserRideH
 router.get('/:rideId/receipt', authMiddleware.authUser, rideController.getRideReceiptPdf);
 router.post('/:rideId/cancel', authMiddleware.authUser, rideController.cancelUserRide);
 router.post('/:rideId/captain-cancel', authMiddleware.authCaptain, rideController.cancelcaptainRide);
-router.get("/dashboard-stats",authMiddleware.authUser, rideController.getUserDashboardStats);
+router.get("/dashboard-stats", authMiddleware.authUser, rideController.getUserDashboardStats);
 
 module.exports = router;

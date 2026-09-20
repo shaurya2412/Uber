@@ -14,7 +14,8 @@ const rideRoutes = require("./routes/ride.routes");
 const Razorpayorders = require("./routes/payment.routes");
 const Verifypayment = require("./routes/verify.routes");
 const testEmailRoute = require("./routes/testEmail");
-const solanaRoutes = require("./routes/solana.routes");
+const adminRoutes = require("./routes/admin.routes");
+const { apiLimiter } = require("./middlewares/rateLimiter.middleware");
 
 const connectTodb = require("./db/db");
 connectTodb();
@@ -25,6 +26,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
+app.use(apiLimiter);
 
 // ---------------- API ROUTES (FIRST) ----------------
 app.use("/users", userRoutes);
@@ -36,6 +38,8 @@ app.use("/api", testEmailRoute);
 app.use("/create-orders", Razorpayorders);
 app.use("/verify", Verifypayment);
 app.use("/solana", solanaRoutes);
+app.use("/admin", adminRoutes);
+app.use("/api/admin", adminRoutes);
 
 // ---------------- FRONTEND (LAST) ----------------
 app.use(express.static(path.join(__dirname, "dist")));
