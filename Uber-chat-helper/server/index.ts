@@ -12,15 +12,17 @@
   const client = new MongoClient(process.env.MONGODB_ATLAS_URI as string)
 
   async function startServer(){
-    try{
-
+    try {
         await client.connect();
         await client.db("admin").command({ping:1})
         console.log("you successfully connected to mongodb!")
+    } catch(error: any) {
+        console.warn("MongoDB connection notice in chat helper:", error.message || error);
+    }
 
-        app.get("/", (req: Request, res: Response)=>{
-            res.send('Langchain Agent Server')
-        })
+    app.get("/", (req: Request, res: Response)=>{
+        res.send('Langchain Agent Server')
+    })
        app.post('/chat', async (req: Request, res: Response)=>{
         const initialMessage = req.body.message
         const threadId = Date.now().toString()
@@ -52,10 +54,5 @@ res.status(500).json({error: 'Internal server error'})
        app.listen(PORT, ()=>{
         console.log("listening to the port", PORT);
        })
-
-    }catch(error){
-        console.log("there is a issue connecting to mongodb!", error)
-
-    }
   }
   startServer();    

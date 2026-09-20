@@ -14,6 +14,7 @@ const rideRoutes = require("./routes/ride.routes");
 const Razorpayorders = require("./routes/payment.routes");
 const Verifypayment = require("./routes/verify.routes");
 const testEmailRoute = require("./routes/testEmail");
+const solanaRoutes = require("./routes/solana.routes");
 const adminRoutes = require("./routes/admin.routes");
 const { apiLimiter } = require("./middlewares/rateLimiter.middleware");
 
