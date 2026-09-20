@@ -545,6 +545,21 @@ module.exports.getRideHistory = async (req, res, next) => {
         const captainId = req.captain._id;
         const { page = 1, limit = 10 } = req.query;
 
+        if (rideModel.db.readyState !== 1) {
+            const completed = Array.from(inMemoryRides.values()).filter(
+                r => (r.captain?._id === captainId || r.captain === captainId) && r.status === 'completed'
+            );
+            return res.status(200).json({
+                success: true,
+                data: completed,
+                pagination: {
+                    currentPage: parseInt(page) || 1,
+                    totalPages: Math.ceil(completed.length / limit) || 1,
+                    totalRides: completed.length
+                }
+            });
+        }
+
         const rides = await rideModel.find({
             captain: captainId,
             status: 'completed'
@@ -582,6 +597,18 @@ module.exports.updateRideLocation = async (req, res, next) => {
         const { rideId } = req.params;
         const { lat, lng } = req.body;
         const captainId = req.captain._id;
+
+        if (rideModel.db.readyState !== 1) {
+            const ride = inMemoryRides.get(rideId);
+            if (ride) {
+                ride.currentLocation = { lat, lng, updatedAt: new Date() };
+                inMemoryRides.set(rideId, ride);
+            }
+            return res.status(200).json({
+                success: true,
+                message: "Location updated successfully"
+            });
+        }
 
         const ride = await rideModel.findOneAndUpdate(
             { 
@@ -782,16 +809,23 @@ module.exports.getUserCurrentRide = async (req, res, next) => {
 
 module.exports.getUserRideHistory = async (req, res, next) => {
     try {
-        if (rideModel.db.readyState !== 1) {
-            return res.status(200).json({
-                success: true,
-                data: [],
-                pagination: { currentPage: 1, totalPages: 1, totalRides: 0 }
-            });
-        }
-
         const userId = req.user._id;
         const { page = 1, limit = 10 } = req.query;
+
+        if (rideModel.db.readyState !== 1) {
+            const completed = Array.from(inMemoryRides.values()).filter(
+                r => (r.user?._id === userId || r.user === userId) && r.status === 'completed'
+            );
+            return res.status(200).json({
+                success: true,
+                data: completed,
+                pagination: {
+                    currentPage: parseInt(page) || 1,
+                    totalPages: Math.ceil(completed.length / limit) || 1,
+                    totalRides: completed.length
+                }
+            });
+        }
 
         const rides = await rideModel.find({
             user: userId,
