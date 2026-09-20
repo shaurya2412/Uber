@@ -106,7 +106,8 @@ export const useCaptainStore = create((set,get) => ({
         password
       });
       
-      const { token, captain } = response.data;
+      const token = response.data.token || response.data.captaintoken || response.data.accessToken;
+      const captain = response.data.captain;
       
       localStorage.setItem('captaintoken', token);
       
@@ -184,7 +185,7 @@ set({
     set({ isLoading: true, error: null });
     
     try {
-      const token = localStorage.getItem('captaintoken');
+      const token = get().token || localStorage.getItem('captaintoken');
       const response = await axios.get(`${API_BASE}/rides/available`, {
         headers: { Authorization: `Bearer ${token}` }
       });

@@ -17,6 +17,10 @@ async function calculateSurgeMultiplier({ lat, lng, radiusMeters = 5000 }) {
       return 1.0;
     }
 
+    if (rideModel.db.readyState !== 1 || captainModel.db.readyState !== 1) {
+      return 1.0;
+    }
+
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
     // Approximate bounding box for query speed (~0.045 deg is ~5km)

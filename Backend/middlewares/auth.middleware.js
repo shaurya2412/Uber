@@ -15,11 +15,13 @@ async function isTokenBlacklisted(token) {
     } catch (e) {
         console.warn('Redis blacklist check error:', e.message);
     }
-    // Fallback check in MongoDB
-    try {
-        const doc = await BlacklistToken.findOne({ token });
-        if (doc) return true;
-    } catch (e) {}
+    // Fallback check in MongoDB if connected
+    if (BlacklistToken.db?.readyState === 1) {
+        try {
+            const doc = await BlacklistToken.findOne({ token });
+            if (doc) return true;
+        } catch (e) {}
+    }
     return false;
 }
 
@@ -37,6 +39,16 @@ module.exports.authUser = async (req, res, next) => {
 
         const secret = config.JWT_SECRET || process.env.JWT_SECRET;
         const decoded = jwt.verify(token, secret);
+
+        if (userModel.db.readyState !== 1) {
+            req.user = {
+                _id: decoded._id || "user_offline_id",
+                email: decoded.email || "rider@nexus.ai",
+                fullname: { firstname: "Nexus", lastname: "Rider" },
+                role: decoded.role || "user"
+            };
+            return next();
+        }
         
         const user = await userModel.findById(decoded._id);
         if (!user) {
@@ -64,6 +76,19 @@ module.exports.authCaptain = async (req, res, next) => {
 
         const secret = config.JWT_SECRET || process.env.JWT_SECRET;
         const decoded = jwt.verify(token, secret);
+
+        if (captainModel.db.readyState !== 1) {
+            req.captain = {
+                _id: decoded._id || "captain_offline_id",
+                email: decoded.email || "captain@nexus.ai",
+                fullname: { firstname: "Nexus", lastname: "Captain" },
+                name: { firstname: "Nexus", lastname: "Captain" },
+                vehicle: { color: "Black", plate: "DL 01 AX 9921", vehiclemodel: "Tesla Model 3", capacity: 4 },
+                role: decoded.role || "captain",
+                active: true
+            };
+            return next();
+        }
         
         const captain = await captainModel.findById(decoded._id);
         if (!captain) {

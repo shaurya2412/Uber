@@ -14,7 +14,13 @@ export const SocketProvider = ({ children }) => {
   const captainToken = useCaptainStore((state) => state.token);
 
   useEffect(() => {
-    const token = userToken || captainToken;
+    const isCaptainPage = typeof window !== 'undefined' && window.location.pathname.includes('captain');
+    const storedCaptainToken = typeof window !== 'undefined' ? localStorage.getItem('captaintoken') : null;
+    const storedUserToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+    const token = isCaptainPage
+      ? (captainToken || storedCaptainToken || userToken || storedUserToken)
+      : (userToken || storedUserToken || captainToken || storedCaptainToken);
     
     if (token) {
       const newSocket = io(API_BASE_URL.replace('/api', ''), {
@@ -25,6 +31,9 @@ export const SocketProvider = ({ children }) => {
 
       newSocket.on('connect', () => {
         console.log('Socket connected:', newSocket.id);
+        if (isCaptainPage || storedCaptainToken) {
+          newSocket.emit('join_captains');
+        }
       });
 
       newSocket.on('connect_error', (err) => {

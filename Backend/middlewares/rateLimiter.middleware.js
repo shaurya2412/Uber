@@ -26,35 +26,44 @@ try {
     };
 }
 
+const isLocalhost = (req) => {
+    const ip = req.ip || req.connection?.remoteAddress || '';
+    return ip === '127.0.0.1' || ip === '::1' || ip.includes('127.0.0.1') || ip === '::ffff:127.0.0.1';
+};
+
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 mins
-    max: 150,
+    max: 5000,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: isLocalhost,
     message: { success: false, message: "Too many requests from this IP, please try again later." }
 });
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 mins
-    max: 10,
+    max: 200,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: isLocalhost,
     message: { success: false, message: "Too many login attempts. Please try again after 15 minutes." }
 });
 
 const bookingLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 min
-    max: 10,
+    max: 100,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: isLocalhost,
     message: { success: false, message: "Too many ride requests. Please wait a moment." }
 });
 
 const otpLimiter = rateLimit({
     windowMs: 5 * 60 * 1000, // 5 mins
-    max: 10,
+    max: 50,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: isLocalhost,
     message: { success: false, message: "Too many OTP verification attempts. Please wait 5 minutes." }
 });
 

@@ -34,7 +34,17 @@ function initializeSocket(server) {
     if (socket.user && socket.user._id) {
         socket.join(socket.user._id.toString());
         console.log(`User ${socket.user._id} joined their personal room.`);
+
+        if (socket.user.role === 'captain' || socket.user.role === 'driver') {
+            socket.join("captains");
+            console.log(`Captain ${socket.user._id} joined captains room.`);
+        }
     }
+
+    socket.on("join_captains", () => {
+        socket.join("captains");
+        console.log(`Socket ${socket.id} explicitly joined captains room.`);
+    });
 
     // Driver updating their live location every 3-5s
     socket.on("location:update", async (data) => {
@@ -112,7 +122,9 @@ function emitToUser(userId, event, data) {
 // Broadcast ride status to both rider & driver and the ride room
 function emitRideStatus(rideId, eventName, payload) {
   if (io && rideId) {
+    io.emit(eventName, payload);
     io.to(rideId.toString()).emit(eventName, payload);
+    io.to("captains").emit(eventName, payload);
     if (payload?.user?._id || payload?.user) {
       const uId = payload.user._id || payload.user;
       io.to(uId.toString()).emit(eventName, payload);

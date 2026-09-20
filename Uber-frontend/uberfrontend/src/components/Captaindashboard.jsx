@@ -109,8 +109,10 @@ const CaptainDashboard = () => {
   useEffect(() => {
     if (!active || !socket) return;
 
+    socket.emit("join_captains");
+
     const handleRideCreated = (rideData) => {
-      // Trigger full-screen incoming ride modal
+      console.log("Incoming ride dispatched via socket:", rideData);
       setIncomingRide(rideData);
       fetchAvailableRides();
     };
@@ -121,16 +123,33 @@ const CaptainDashboard = () => {
       fetchAvailableRides();
     };
 
+    const handleRideAccepted = () => {
+      fetchAvailableRides();
+      fetchCurrentRide();
+    };
+
     socket.on("ride:created", handleRideCreated);
     socket.on("ride:cancelled", handleRideCancelled);
+    socket.on("ride:accepted", handleRideAccepted);
     socket.on("ride:updated", fetchCurrentRide);
 
     return () => {
       socket.off("ride:created", handleRideCreated);
       socket.off("ride:cancelled", handleRideCancelled);
+      socket.off("ride:accepted", handleRideAccepted);
       socket.off("ride:updated", fetchCurrentRide);
     };
   }, [active, socket, fetchAvailableRides, fetchCurrentRide]);
+
+  // Periodic polling for available rides while driver is active/online
+  useEffect(() => {
+    if (!active) return;
+    fetchAvailableRides();
+    const interval = setInterval(() => {
+      fetchAvailableRides();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [active, fetchAvailableRides]);
 
   // Join current ride room
   useEffect(() => {

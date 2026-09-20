@@ -47,6 +47,10 @@ module.exports.createCaptain = async ({
 
 module.exports.findNearestCaptains = async ({ lng, lat, maxDistanceMeters = 5000 }) => {
     try {
+        if (captainModel.db.readyState !== 1) {
+            return [];
+        }
+
         const captains = await captainModel.find({
             active: true,
             status: 'active',
