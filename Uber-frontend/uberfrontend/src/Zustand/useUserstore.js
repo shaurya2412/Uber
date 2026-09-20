@@ -14,8 +14,8 @@ export const useUserStore = create((set) => ({
 
   
 
-    setUser: (user) => set({ user }),
-    setToken: (token) => set({ token }),
+    setUser: (user) => set({ user, isAuthenticated: !!user }),
+    setToken: (token) => set({ token, isAuthenticated: !!token }),
 
     login: async (email, password) => {
       set({ isLoading: true, error: null });

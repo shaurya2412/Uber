@@ -138,6 +138,62 @@ const Auth = ({ initialMode = 'login', initialRole = 'user' }) => {
     setToastState({ isVisible: true, message, type });
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setLoading(true);
+      const res = await axios.post(`${API_BASE_URL}/auth/google`, {
+        credential: credentialResponse.credential,
+      });
+      const data = res.data;
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+          setUser(data.user);
+        }
+        setToken(data.token);
+        showToast('Google Sign-In successful! Welcome to Nexus.', 'success');
+        setTimeout(() => navigate('/dashboard'), 500);
+      } else {
+        showToast(data.message || 'Google authentication failed', 'error');
+      }
+    } catch (err) {
+      console.error('Google login error:', err);
+      showToast(err.response?.data?.message || 'Google authentication error. Try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    showToast('Google login was cancelled or not authorized on this origin.', 'error');
+  };
+
+  const handleDemoGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.post(`${API_BASE_URL}/auth/google`, {
+        credential: 'test_google_credential',
+      });
+      const data = res.data;
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+          setUser(data.user);
+        }
+        setToken(data.token);
+        showToast('Google Login Verified: Welcome!', 'success');
+        setTimeout(() => navigate('/dashboard'), 500);
+      }
+    } catch (err) {
+      console.error('Demo Google login error:', err);
+      showToast('Could not complete demo login.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const validateForm = () => {
     const errors = {};
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
@@ -499,6 +555,42 @@ const Auth = ({ initialMode = 'login', initialRole = 'user' }) => {
                   </>
                 )}
               </motion.button>
+
+              {/* Or continue with Google */}
+              {role === 'user' && (
+                <div className="pt-3 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-[#1E1E2E]" />
+                    <span className="text-[11px] uppercase tracking-wider font-semibold text-[#475569]">
+                      or continue with
+                    </span>
+                    <div className="h-px flex-1 bg-[#1E1E2E]" />
+                  </div>
+
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-full flex justify-center overflow-hidden rounded-xl bg-[#0A0A0F] border border-[#2D2D3F] p-1.5 hover:border-[#7C3AED]/50 transition-colors shadow-sm">
+                      <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={handleGoogleError}
+                        useOneTap={false}
+                        theme="filled_black"
+                        shape="rectangular"
+                        text="continue_with"
+                        width="100%"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleDemoGoogleLogin}
+                      className="text-[11px] text-[#94A3B8] hover:text-[#06B6D4] transition-colors flex items-center gap-1 cursor-pointer py-1"
+                    >
+                      <Sparkles className="w-3 h-3 text-[#06B6D4]" />
+                      <span>Test / Demo Google Sign-In</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </form>
 
             {/* Mode Switcher Footer */}

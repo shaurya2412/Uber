@@ -13,12 +13,9 @@ import App from "./App.jsx";
 import "./index.css";
 import { SocketProvider } from "./context/SocketContext.jsx";
 
-const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-console.log(clientId);
-
-if (!clientId) {
-  console.error("OOGLE_CLIENT_ID is not set in environment variables!");
-}
+const clientId =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+  "847766407074-2dbvej5askqhrjg1dskldisqclrjd9cn.apps.googleusercontent.com";
 
 const endpoint = "https://api.devnet.solana.com";
 const wallets = [new PhantomWalletAdapter()];
