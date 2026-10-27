@@ -20,6 +20,7 @@ import {
   SlidersHorizontal,
   ChevronRight,
   Search,
+  Star,
 } from "lucide-react";
 import {
   AreaChart,
@@ -84,7 +85,7 @@ const AdminDashboard = () => {
       setLiveRides(ridesRes.data.data || []);
     } catch (err) {
       console.error("Admin data fetch error:", err);
-      showToast("Telemetry metrics refreshed with fallback cached data", "info");
+      showToast("Showing recent cached city operations data", "info");
     } finally {
       setLoading(false);
     }
@@ -113,7 +114,7 @@ const AdminDashboard = () => {
     }
   };
 
-  // Mock 7-day revenue trend for AreaChart
+  // 7-day revenue trend for AreaChart
   const sevenDayRevenue = [
     { day: "Mon", revenue: 18400, rides: 240 },
     { day: "Tue", revenue: 22600, rides: 290 },
@@ -136,7 +137,7 @@ const AdminDashboard = () => {
   });
 
   return (
-    <div className="flex h-screen bg-[#0A0A0F] text-[#F8FAFC] overflow-hidden selection:bg-[#7C3AED] selection:text-white">
+    <div className="flex h-screen bg-[#09090B] text-[#FAFAFA] overflow-hidden selection:bg-[#10B981] selection:text-[#09090B]">
       <Toast
         isVisible={toast.isVisible}
         message={toast.message}
@@ -145,18 +146,19 @@ const AdminDashboard = () => {
       />
 
       {/* FIXED DARK SIDEBAR (240px) */}
-      <aside className="w-60 bg-[#0A0A0F] border-r border-[#1E1E2E] flex flex-col justify-between p-5 z-20 shrink-0">
+      <aside className="w-60 bg-[#09090B] border-r border-[#1F1F26] flex flex-col justify-between p-5 z-20 shrink-0">
         <div className="space-y-8">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 px-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#7C3AED] to-[#06B6D4] p-0.5 shadow-[0_0_15px_rgba(124,58,237,0.3)]">
-              <div className="w-full h-full bg-[#0A0A0F] rounded-[10px] flex items-center justify-center">
-                <Compass className="w-4 h-4 text-[#7C3AED]" />
-              </div>
+            <div className="w-8 h-8 rounded-lg bg-[#FAFAFA] text-[#09090B] flex items-center justify-center font-extrabold text-sm">
+              N
             </div>
-            <div>
-              <span className="text-lg font-black tracking-tight text-[#F8FAFC]">
-                Nexus <span className="text-[#7C3AED]">Ops</span>
+            <div className="flex items-center gap-2">
+              <span className="text-base font-extrabold tracking-tight text-[#FAFAFA]">
+                Nexus
+              </span>
+              <span className="text-[10px] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded bg-[#18181C] border border-[#27272F] text-[#A1A1AA]">
+                Ops
               </span>
             </div>
           </Link>
@@ -165,62 +167,62 @@ const AdminDashboard = () => {
           <nav className="space-y-1.5">
             <button
               onClick={() => setActiveTab("overview")}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "overview"
-                  ? "bg-[#7C3AED] text-white shadow-[0_0_20px_rgba(124,58,237,0.3)]"
-                  : "text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#111118]"
+                  ? "bg-[#FAFAFA] text-[#09090B]"
+                  : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#121215]"
               }`}
             >
               <LayoutDashboard className="w-4 h-4" />
-              <span>Overview Analytics</span>
+              <span>City Overview</span>
             </button>
 
             <Link
               to="/admin/live-map"
-              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-[#94A3B8] hover:text-[#06B6D4] hover:bg-[#111118] transition-all"
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-[#A1A1AA] hover:text-[#10B981] hover:bg-[#121215] transition-all"
             >
-              <MapPin className="w-4 h-4 text-[#06B6D4]" />
+              <MapPin className="w-4 h-4 text-[#10B981]" />
               <span>City Live Map</span>
             </Link>
 
             <button
               onClick={() => setActiveTab("drivers")}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "drivers"
-                  ? "bg-[#7C3AED] text-white shadow-[0_0_20px_rgba(124,58,237,0.3)]"
-                  : "text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#111118]"
+                  ? "bg-[#FAFAFA] text-[#09090B]"
+                  : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#121215]"
               }`}
             >
               <Users className="w-4 h-4" />
-              <span>Driver Fleet</span>
+              <span>Driver Partners</span>
             </button>
 
             <button
               onClick={() => setActiveTab("rides")}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "rides"
-                  ? "bg-[#7C3AED] text-white shadow-[0_0_20px_rgba(124,58,237,0.3)]"
-                  : "text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#111118]"
+                  ? "bg-[#FAFAFA] text-[#09090B]"
+                  : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#121215]"
               }`}
             >
               <Car className="w-4 h-4" />
-              <span>Active Dispatches</span>
+              <span>Active Trips</span>
             </button>
           </nav>
         </div>
 
         {/* Bottom Section */}
-        <div className="pt-4 border-t border-[#1E1E2E] space-y-3">
-          <div className="px-3 py-2 rounded-xl bg-[#111118] border border-[#1E1E2E]">
-            <p className="text-[10px] uppercase font-bold text-[#94A3B8]">Security Level</p>
+        <div className="pt-4 border-t border-[#1F1F26] space-y-3">
+          <div className="px-3 py-2 rounded-xl bg-[#121215] border border-[#1F1F26]">
+            <p className="text-[10px] uppercase font-bold text-[#71717A]">Operations Desk</p>
             <p className="text-xs font-bold text-[#10B981] flex items-center gap-1.5 mt-0.5">
-              <ShieldCheck className="w-3.5 h-3.5" /> Root Admin Active
+              <ShieldCheck className="w-3.5 h-3.5" /> Fleet Admin
             </p>
           </div>
 
           <button
             onClick={() => navigate("/login")}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#EF4444] hover:bg-red-500/10 transition-colors"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#EF4444] hover:bg-red-500/10 transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span>Sign Out</span>
@@ -229,53 +231,53 @@ const AdminDashboard = () => {
       </aside>
 
       {/* MAIN CONTENT SCROLLABLE AREA */}
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto bg-[#0A0A0F]">
+      <main className="flex-1 flex flex-col h-screen overflow-y-auto bg-[#09090B]">
         {/* Top Navbar */}
-        <header className="px-8 py-4 border-b border-[#1E1E2E] bg-[#0A0A0F]/80 backdrop-blur-xl sticky top-0 z-10 flex items-center justify-between">
+        <header className="px-8 py-4 border-b border-[#1F1F26] bg-[#09090B]/90 backdrop-blur-xl sticky top-0 z-10 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-extrabold tracking-tight text-[#F8FAFC]">
-              {activeTab === "overview" && "Executive Command Center"}
-              {activeTab === "drivers" && "Driver Verification & Fleet Ops"}
-              {activeTab === "rides" && "Live Fleet Dispatch Telemetry"}
+            <h1 className="text-xl font-extrabold tracking-tight text-[#FAFAFA]">
+              {activeTab === "overview" && "City Operations & Revenue"}
+              {activeTab === "drivers" && "Driver Onboarding & Fleet Checks"}
+              {activeTab === "rides" && "Active Trips in Progress"}
             </h1>
-            <p className="text-xs text-[#94A3B8]">
-              Automated geospatial routing, surge telemetry, and platform gross volume.
+            <p className="text-xs text-[#A1A1AA]">
+              Daily trip volume, hourly demand, and driver verification across active cities.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={fetchDashboardData}
-              className="p-2 rounded-xl bg-[#111118] border border-[#2D2D3F] hover:border-[#7C3AED] text-[#F8FAFC] text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-[#121215] border border-[#27272F] hover:border-[#3F3F46] text-[#FAFAFA] text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-[#7C3AED]" : ""}`} />
-              <span className="hidden sm:inline">Refresh Telemetry</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-[#10B981]" : ""}`} />
+              <span className="hidden sm:inline">Refresh Data</span>
             </button>
           </div>
         </header>
 
         <div className="p-8 space-y-8 max-w-7xl">
-          {/* STATS ROW (4 GLASSCARD PRIMITIVES WITH TRENDS) */}
+          {/* STATS ROW */}
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <StatCard
               icon={Car}
-              label="Total Rides"
+              label="Total Trips"
               value={revenueData?.totalTrips || 1284}
               trend={18}
               trendLabel="this week"
-              accentColor="#7C3AED"
+              accentColor="#10B981"
             />
             <StatCard
               icon={Clock}
-              label="Active Now"
+              label="Active Trips"
               value={revenueData?.activeRidesCount || liveRides.length || 6}
               trend={5}
-              trendLabel="on roads"
-              accentColor="#06B6D4"
+              trendLabel="on road"
+              accentColor="#FAFAFA"
             />
             <StatCard
               icon={DollarSign}
-              label="Revenue Today"
+              label="Today's Gross"
               value={Number(revenueData?.todayEarnings || 4280)}
               prefix="₹"
               trend={24}
@@ -294,174 +296,197 @@ const AdminDashboard = () => {
           </section>
 
           {/* OVERVIEW SECTION: CHARTS */}
-          {activeTab === "overview" && (
-            <>
-              {/* CHARTS SECTION: 7-Day Revenue AreaChart + 24-Hour Peak Hours BarChart */}
-              <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* 1. 7-Day Revenue AreaChart (Col 7) */}
-                <div className="lg:col-span-7 glass-card rounded-3xl p-6 border border-[#1E1E2E] space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-bold text-base text-[#F8FAFC]">7-Day Gross Revenue Volume</h3>
-                      <p className="text-xs text-[#94A3B8]">Completed ride volume & payment settlements</p>
+          <AnimatePresence mode="wait">
+            {activeTab === "overview" && (
+              <motion.div
+                key="overview"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-8"
+              >
+                {/* CHARTS SECTION: 7-Day Revenue AreaChart + 24-Hour Peak Hours BarChart */}
+                <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* 1. 7-Day Revenue AreaChart (Col 7) */}
+                  <div className="lg:col-span-7 bg-[#121215] rounded-2xl p-6 border border-[#1F1F26] space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-base text-[#FAFAFA]">7-Day Gross Bookings</h3>
+                        <p className="text-xs text-[#A1A1AA]">Completed trips and driver payouts</p>
+                      </div>
+                      <span className="text-xs font-mono font-bold text-[#10B981]">
+                        ₹{(revenueData?.totalEarnings || 212400).toLocaleString()} Total
+                      </span>
                     </div>
-                    <span className="text-xs font-mono font-bold text-[#10B981]">
-                      ₹{(revenueData?.totalEarnings || 212400).toLocaleString()} Gross
-                    </span>
-                  </div>
 
-                  <div className="h-64 w-full pt-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={sevenDayRevenue}>
-                        <defs>
-                          <linearGradient id="purpleArea" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.4} />
-                            <stop offset="95%" stopColor="#7C3AED" stopOpacity={0.0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1E1E2E" />
-                        <XAxis dataKey="day" stroke="#475569" tick={{ fontSize: 11 }} />
-                        <YAxis stroke="#475569" tick={{ fontSize: 11 }} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "#111118",
-                            border: "1px solid #2D2D3F",
-                            borderRadius: "12px",
-                            color: "#F8FAFC",
-                            fontSize: "12px",
-                          }}
-                          formatter={(val) => [`₹${Number(val).toLocaleString()}`, "Revenue"]}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="revenue"
-                          stroke="#7C3AED"
-                          strokeWidth={3}
-                          fill="url(#purpleArea)"
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                {/* 2. 24-Hour Peak Hours Demand BarChart (Col 5) */}
-                <div className="lg:col-span-5 glass-card rounded-3xl p-6 border border-[#1E1E2E] space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-bold text-base text-[#F8FAFC]">24-Hour Peak Demand</h3>
-                      <p className="text-xs text-[#94A3B8]">Hourly trip density distribution</p>
+                    <div className="h-64 w-full pt-2">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={sevenDayRevenue}>
+                          <defs>
+                            <linearGradient id="emeraldArea" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#10B981" stopOpacity={0.35} />
+                              <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1F1F26" />
+                          <XAxis dataKey="day" stroke="#71717A" tick={{ fontSize: 11 }} />
+                          <YAxis stroke="#71717A" tick={{ fontSize: 11 }} />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "#121215",
+                              border: "1px solid #27272F",
+                              borderRadius: "12px",
+                              color: "#FAFAFA",
+                              fontSize: "12px",
+                            }}
+                            formatter={(val) => [`₹${Number(val).toLocaleString()}`, "Bookings"]}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="revenue"
+                            stroke="#10B981"
+                            strokeWidth={2.5}
+                            fill="url(#emeraldArea)"
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
                     </div>
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#06B6D4]/10 border border-[#06B6D4]/30 text-[#06B6D4] font-semibold">
-                      Real-Time
-                    </span>
                   </div>
 
-                  <div className="h-64 w-full pt-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={peakHoursData.length > 0 ? peakHoursData : [
-                        { timeLabel: "00:00", count: 12 },
-                        { timeLabel: "04:00", count: 5 },
-                        { timeLabel: "08:00", count: 48 },
-                        { timeLabel: "12:00", count: 32 },
-                        { timeLabel: "16:00", count: 58 },
-                        { timeLabel: "20:00", count: 72 },
-                        { timeLabel: "23:00", count: 26 },
-                      ]}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1E1E2E" />
-                        <XAxis dataKey="timeLabel" stroke="#475569" tick={{ fontSize: 10 }} />
-                        <YAxis stroke="#475569" tick={{ fontSize: 10 }} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "#111118",
-                            border: "1px solid #2D2D3F",
-                            borderRadius: "12px",
-                            color: "#F8FAFC",
-                            fontSize: "12px",
-                          }}
-                        />
-                        <Bar dataKey="count" fill="#06B6D4" radius={[6, 6, 0, 0]} name="Rides" />
-                      </BarChart>
-                    </ResponsiveContainer>
+                  {/* 2. 24-Hour Peak Hours Demand BarChart (Col 5) */}
+                  <div className="lg:col-span-5 bg-[#121215] rounded-2xl p-6 border border-[#1F1F26] space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-base text-[#FAFAFA]">Hourly Ride Requests</h3>
+                        <p className="text-xs text-[#A1A1AA]">24-hour rider booking distribution</p>
+                      </div>
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#10B981]/10 border border-[#10B981]/25 text-[#10B981] font-semibold">
+                        Live
+                      </span>
+                    </div>
+
+                    <div className="h-64 w-full pt-2">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={
+                            peakHoursData.length > 0
+                              ? peakHoursData
+                              : [
+                                  { timeLabel: "00:00", count: 12 },
+                                  { timeLabel: "04:00", count: 5 },
+                                  { timeLabel: "08:00", count: 48 },
+                                  { timeLabel: "12:00", count: 32 },
+                                  { timeLabel: "16:00", count: 58 },
+                                  { timeLabel: "20:00", count: 72 },
+                                  { timeLabel: "23:00", count: 26 },
+                                ]
+                          }
+                        >
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1F1F26" />
+                          <XAxis dataKey="timeLabel" stroke="#71717A" tick={{ fontSize: 10 }} />
+                          <YAxis stroke="#71717A" tick={{ fontSize: 10 }} />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "#121215",
+                              border: "1px solid #27272F",
+                              borderRadius: "12px",
+                              color: "#FAFAFA",
+                              fontSize: "12px",
+                            }}
+                          />
+                          <Bar dataKey="count" fill="#FAFAFA" radius={[5, 5, 0, 0]} name="Trips" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
+                </section>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* LIVE RIDES TABLE */}
+          {(activeTab === "overview" || activeTab === "rides") && (
+            <section className="bg-[#121215] rounded-2xl p-6 border border-[#1F1F26] space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-base text-[#FAFAFA]">Active Trips on the Road</h3>
+                  <p className="text-xs text-[#A1A1AA]">Current pickups and ongoing rides across the city</p>
                 </div>
-              </section>
+                <Link
+                  to="/admin/live-map"
+                  className="text-xs font-semibold text-[#10B981] hover:underline flex items-center gap-1"
+                >
+                  Open Live Map <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
 
-              {/* LIVE RIDES TABLE */}
-              <section className="glass-card rounded-3xl p-6 border border-[#1E1E2E] space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-base text-[#F8FAFC]">Active Fleet Operations</h3>
-                    <p className="text-xs text-[#94A3B8]">Rides currently undergoing state machine transitions</p>
-                  </div>
-                  <Link
-                    to="/admin/live-map"
-                    className="text-xs font-semibold text-[#06B6D4] hover:underline flex items-center gap-1"
-                  >
-                    View on Fullscreen Map <ChevronRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-[#94A3B8]">
-                    <thead className="text-[11px] uppercase font-bold text-[#475569] border-b border-[#1E1E2E] bg-[#0A0A0F]/50">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-[#A1A1AA]">
+                  <thead className="text-[11px] uppercase font-bold text-[#71717A] border-b border-[#1F1F26] bg-[#09090B]/50">
+                    <tr>
+                      <th className="py-3 px-4">Rider</th>
+                      <th className="py-3 px-4">Driver</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4">Fare</th>
+                      <th className="py-3 px-4">Time</th>
+                      <th className="py-3 px-4 text-right">Route</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1F1F26]">
+                    {liveRides.length === 0 ? (
                       <tr>
-                        <th className="py-3 px-4">Rider</th>
-                        <th className="py-3 px-4">Captain</th>
-                        <th className="py-3 px-4">Status</th>
-                        <th className="py-3 px-4">Fare</th>
-                        <th className="py-3 px-4">Time</th>
-                        <th className="py-3 px-4 text-right">Route</th>
+                        <td colSpan="6" className="text-center py-6 text-[#71717A]">
+                          No active trips right now
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#1E1E2E]">
-                      {liveRides.length === 0 ? (
-                        <tr>
-                          <td colSpan="6" className="text-center py-6 text-[#475569]">
-                            No live rides currently in transit
+                    ) : (
+                      liveRides.map((ride) => (
+                        <tr
+                          key={ride._id}
+                          className="hover:bg-[#18181C] transition-colors cursor-pointer group"
+                        >
+                          <td className="py-3.5 px-4 font-semibold text-[#FAFAFA]">
+                            {ride.user?.fullname?.firstname || "Rider"}
+                          </td>
+                          <td className="py-3.5 px-4 text-[#A1A1AA]">
+                            {ride.captain?.fullname?.firstname || "Matching..."}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <RideStatusBadge status={ride.status} />
+                          </td>
+                          <td className="py-3.5 px-4 font-mono font-bold text-[#FAFAFA]">
+                            ₹{Number(ride.fare || 0).toFixed(0)}
+                          </td>
+                          <td className="py-3.5 px-4 font-mono text-[11px]">
+                            {ride.createdAt
+                              ? new Date(ride.createdAt).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : "Now"}
+                          </td>
+                          <td className="py-3.5 px-4 text-right truncate max-w-[160px] text-[#FAFAFA]">
+                            {ride.pickup?.address?.slice(0, 24) || "Pickup"} →{" "}
+                            {ride.destination?.address?.slice(0, 24) || "Dropoff"}
                           </td>
                         </tr>
-                      ) : (
-                        liveRides.map((ride) => (
-                          <tr
-                            key={ride._id}
-                            className="hover:bg-[#7C3AED]/5 transition-colors cursor-pointer group"
-                          >
-                            <td className="py-3.5 px-4 font-semibold text-[#F8FAFC]">
-                              {ride.user?.fullname?.firstname || "Rider"}
-                            </td>
-                            <td className="py-3.5 px-4 text-[#94A3B8]">
-                              {ride.captain?.fullname?.firstname || "Matching..."}
-                            </td>
-                            <td className="py-3.5 px-4">
-                              <RideStatusBadge status={ride.status} />
-                            </td>
-                            <td className="py-3.5 px-4 font-bold text-[#F8FAFC]">
-                              ₹{Number(ride.fare || 0).toFixed(2)}
-                            </td>
-                            <td className="py-3.5 px-4 font-mono text-[11px]">
-                              {ride.createdAt ? new Date(ride.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Now"}
-                            </td>
-                            <td className="py-3.5 px-4 text-right truncate max-w-[160px] text-[#F8FAFC]">
-                              {ride.pickup?.address?.slice(0, 24) || "Pickup"} → {ride.destination?.address?.slice(0, 24) || "Dropoff"}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            </>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
           )}
 
           {/* DRIVERS FLEET MANAGEMENT TABLE */}
           {(activeTab === "overview" || activeTab === "drivers") && (
-            <section className="glass-card rounded-3xl p-6 border border-[#1E1E2E] space-y-5">
+            <section className="bg-[#121215] rounded-2xl p-6 border border-[#1F1F26] space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="font-bold text-base text-[#F8FAFC]">Driver Fleet Management</h3>
-                  <p className="text-xs text-[#94A3B8]">
-                    Verify documents, approve accounts, and toggle suspensions
+                  <h3 className="font-bold text-base text-[#FAFAFA]">Driver Partner Directory</h3>
+                  <p className="text-xs text-[#A1A1AA]">
+                    Review commercial licenses, approve new partners, or pause accounts
                   </p>
                 </div>
 
@@ -473,19 +498,19 @@ const AdminDashboard = () => {
                       placeholder="Search drivers..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-8 pr-3 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#2D2D3F] text-xs text-[#F8FAFC] placeholder:text-[#475569] focus:outline-none focus:border-[#7C3AED]"
+                      className="pl-8 pr-3 py-1.5 rounded-xl bg-[#09090B] border border-[#27272F] text-xs text-[#FAFAFA] placeholder:text-[#71717A] focus:outline-none focus:border-[#10B981]"
                     />
-                    <Search className="w-3.5 h-3.5 text-[#475569] absolute left-2.5 top-2.5" />
+                    <Search className="w-3.5 h-3.5 text-[#71717A] absolute left-2.5 top-2.5" />
                   </div>
 
                   {["all", "pending", "approved", "suspended"].map((f) => (
                     <button
                       key={f}
                       onClick={() => setDriverFilter(f)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition-all ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition-all cursor-pointer ${
                         driverFilter === f
-                          ? "bg-[#7C3AED] text-white shadow-md"
-                          : "bg-[#111118] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#1E1E2E]"
+                          ? "bg-[#FAFAFA] text-[#09090B]"
+                          : "bg-[#09090B] text-[#A1A1AA] hover:text-[#FAFAFA] border border-[#1F1F26]"
                       }`}
                     >
                       {f}
@@ -496,21 +521,21 @@ const AdminDashboard = () => {
 
               {/* Table */}
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-[#94A3B8]">
-                  <thead className="text-[11px] uppercase font-bold text-[#475569] border-b border-[#1E1E2E] bg-[#0A0A0F]/50">
+                <table className="w-full text-left text-xs text-[#A1A1AA]">
+                  <thead className="text-[11px] uppercase font-bold text-[#71717A] border-b border-[#1F1F26] bg-[#09090B]/50">
                     <tr>
                       <th className="py-3 px-4">Driver Name</th>
-                      <th className="py-3 px-4">Vehicle Specs</th>
+                      <th className="py-3 px-4">Vehicle & Plate</th>
                       <th className="py-3 px-4">Rating</th>
-                      <th className="py-3 px-4">Online Status</th>
-                      <th className="py-3 px-4">Approval Status</th>
+                      <th className="py-3 px-4">Duty Status</th>
+                      <th className="py-3 px-4">Account Status</th>
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#1E1E2E]">
+                  <tbody className="divide-y divide-[#1F1F26]">
                     {filteredDrivers.length === 0 ? (
                       <tr>
-                        <td colSpan="6" className="text-center py-6 text-[#475569]">
+                        <td colSpan="6" className="text-center py-6 text-[#71717A]">
                           No drivers match the current filter
                         </td>
                       </tr>
@@ -523,22 +548,22 @@ const AdminDashboard = () => {
                         return (
                           <tr
                             key={d._id}
-                            className="hover:bg-[#7C3AED]/5 transition-colors group"
+                            className="hover:bg-[#18181C] transition-colors group"
                           >
-                            <td className="py-3.5 px-4 font-semibold text-[#F8FAFC]">
+                            <td className="py-3.5 px-4 font-semibold text-[#FAFAFA]">
                               <div>
                                 {d.fullname?.firstname} {d.fullname?.lastname}
                               </div>
-                              <div className="text-[10px] text-[#475569]">{d.email}</div>
+                              <div className="text-[10px] text-[#71717A]">{d.email}</div>
                             </td>
                             <td className="py-3.5 px-4">
-                              <span className="text-[#F8FAFC] font-medium">
+                              <span className="text-[#FAFAFA] font-medium">
                                 {d.vehicle?.vehiclemodel || "Car"}
                               </span>{" "}
                               • <span className="font-mono text-[10px]">{d.vehicle?.plate || "No plate"}</span>
                             </td>
                             <td className="py-3.5 px-4">
-                              <span className="inline-flex items-center gap-1 text-[#F8FAFC] font-bold">
+                              <span className="inline-flex items-center gap-1 text-[#FAFAFA] font-bold">
                                 <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                                 {d.rating ? Number(d.rating).toFixed(1) : "5.0"}
                               </span>
@@ -548,10 +573,14 @@ const AdminDashboard = () => {
                                 className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                                   d.active
                                     ? "bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30"
-                                    : "bg-gray-800 text-gray-400"
+                                    : "bg-[#18181C] text-[#71717A]"
                                 }`}
                               >
-                                <span className={`w-1.5 h-1.5 rounded-full ${d.active ? "bg-[#10B981]" : "bg-gray-500"}`} />
+                                <span
+                                  className={`w-1.5 h-1.5 rounded-full ${
+                                    d.active ? "bg-[#10B981]" : "bg-[#71717A]"
+                                  }`}
+                                />
                                 {d.active ? "Online" : "Offline"}
                               </span>
                             </td>
@@ -572,7 +601,7 @@ const AdminDashboard = () => {
                               {!isApproved && (
                                 <button
                                   onClick={() => handleUpdateDriverStatus(d._id, "approved")}
-                                  className="px-2.5 py-1 rounded-lg bg-[#10B981] hover:bg-[#059669] text-[#0A0A0F] font-bold text-[10px] transition-colors"
+                                  className="px-2.5 py-1 rounded-lg bg-[#10B981] hover:bg-[#059669] text-[#09090B] font-bold text-[10px] transition-colors cursor-pointer"
                                 >
                                   Approve
                                 </button>
@@ -580,7 +609,7 @@ const AdminDashboard = () => {
                               {!isSuspended && (
                                 <button
                                   onClick={() => handleUpdateDriverStatus(d._id, "suspended")}
-                                  className="px-2.5 py-1 rounded-lg bg-[#EF4444]/20 hover:bg-[#EF4444]/30 text-[#EF4444] font-bold text-[10px] border border-[#EF4444]/30 transition-colors"
+                                  className="px-2.5 py-1 rounded-lg bg-[#EF4444]/20 hover:bg-[#EF4444]/30 text-[#EF4444] font-bold text-[10px] border border-[#EF4444]/30 transition-colors cursor-pointer"
                                 >
                                   Suspend
                                 </button>
@@ -588,9 +617,9 @@ const AdminDashboard = () => {
                               {isSuspended && (
                                 <button
                                   onClick={() => handleUpdateDriverStatus(d._id, "approved")}
-                                  className="px-2.5 py-1 rounded-lg bg-[#06B6D4] text-[#0A0A0F] font-bold text-[10px] transition-colors"
+                                  className="px-2.5 py-1 rounded-lg bg-[#FAFAFA] text-[#09090B] font-bold text-[10px] transition-colors cursor-pointer"
                                 >
-                                  Re-Activate
+                                  Reactivate
                                 </button>
                               )}
                             </td>

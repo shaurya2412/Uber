@@ -6,7 +6,16 @@ const jwt = require('jsonwebtoken');
 const config = require('../config');
 const redisClient = require('../db/redis');
 
+const inMemoryBlacklist = new Set();
+
+function blacklistTokenInMemory(token) {
+    if (token) inMemoryBlacklist.add(token);
+}
+
 async function isTokenBlacklisted(token) {
+    if (token && inMemoryBlacklist.has(token)) {
+        return true;
+    }
     try {
         if (redisClient && redisClient.isOpen) {
             const result = await redisClient.get(`blacklist:${token}`);
@@ -120,3 +129,4 @@ module.exports.authAdmin = async (req, res, next) => {
 };
 
 module.exports.isTokenBlacklisted = isTokenBlacklisted;
+module.exports.blacklistTokenInMemory = blacklistTokenInMemory;

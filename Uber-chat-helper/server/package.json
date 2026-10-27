@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
+    "start": "npx tsx index.ts",
     "dev": "npx tsx index.ts",
     "seed": "npx ts-node seed-database.ts"
   },
@@ -12,7 +13,7 @@
   "devDependencies": {
     "@types/node": "^24.8.1",
     "typescript": "^5.9.3",
-     "@types/cors": "^2.8.19",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3"
   },
   "dependencies": {

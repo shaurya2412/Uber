@@ -49,7 +49,9 @@ function initializeSocket(server) {
     // Driver updating their live location every 3-5s
     socket.on("location:update", async (data) => {
       try {
-        const { rideId, captainId, lat, lng, heading } = data;
+        const { rideId, captainId, heading } = data;
+        const lat = data.lat ?? data.latitude;
+        const lng = data.lng ?? data.longitude;
         const driverId = captainId || (socket.user ? socket.user._id : 'unknown');
 
         if (lat && lng && redisClient && redisClient.isOpen) {

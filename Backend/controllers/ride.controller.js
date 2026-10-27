@@ -77,6 +77,8 @@ module.exports.acceptRide = async (req, res, next) => {
             ride.acceptedAt = new Date();
             inMemoryRides.set(rideId, ride);
 
+            cancelRideTimeout(rideId);
+
             emitRideStatus(rideId, "ride:accepted", ride);
             emitRideStatus(rideId, "ride:status_changed", ride);
             emitRideStatus(rideId, "ride:updated", ride);
@@ -222,13 +224,56 @@ module.exports.startRide = async (req, res, next) => {
         const captainId = req.captain._id;
 
         if (rideModel.db.readyState !== 1) {
-            const ride = inMemoryRides.get(rideId) || { _id: rideId, startOtp: otp };
-            if (ride.startOtp && String(ride.startOtp).trim() !== String(otp || '').trim()) {
-                return res.status(400).json({
+            const ride = inMemoryRides.get(rideId);
+            if (!ride || !['accepted', 'driver_en_route', 'arrived'].includes(ride.status)) {
+                return res.status(404).json({
                     success: false,
-                    message: "Invalid OTP. Please check with passenger."
+                    message: "Ride not found or cannot be started"
                 });
             }
+
+            if (ride.otpBlockedUntil && new Date(ride.otpBlockedUntil) > new Date()) {
+                const remainingMins = Math.ceil((new Date(ride.otpBlockedUntil) - new Date()) / 60000);
+                return res.status(429).json({
+                    success: false,
+                    message: `Too many failed attempts. Verification locked for ${remainingMins} more minute(s).`
+                });
+            }
+
+            if (!otp) {
+                return res.status(400).json({
+                    success: false,
+                    message: "OTP is required"
+                });
+            }
+
+            if (ride.startOtp && String(ride.startOtp).trim() !== String(otp || '').trim()) {
+                ride.otpAttempts = (ride.otpAttempts || 0) + 1;
+                if (ride.otpAttempts >= 3) {
+                    ride.otpBlockedUntil = new Date(Date.now() + 10 * 60 * 1000);
+                    inMemoryRides.set(rideId, ride);
+                    return res.status(429).json({
+                        success: false,
+                        message: "Maximum OTP attempts exceeded (3). Locked for 10 minutes.",
+                        blockedUntil: ride.otpBlockedUntil
+                    });
+                }
+                inMemoryRides.set(rideId, ride);
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid OTP. ${3 - ride.otpAttempts} attempt(s) remaining before lockout.`
+                });
+            }
+
+            if (ride.otpExpiresAt && new Date(ride.otpExpiresAt) < new Date()) {
+                return res.status(400).json({
+                    success: false,
+                    message: "OTP has expired. Please request a new ride."
+                });
+            }
+
+            ride.otpAttempts = 0;
+            ride.otpBlockedUntil = null;
             ride.status = 'in_ride';
             ride.startedAt = new Date();
             ride.captain = req.captain;
@@ -693,6 +738,9 @@ module.exports.bookRide = async (req, res, next) => {
                 console.warn("Socket broadcast notice:", sockErr.message);
             }
 
+            // Schedule Auto-Cancel background timer (60 seconds)
+            scheduleRideTimeout(mockRide._id, 60000);
+
             return res.status(201).json({
                 success: true,
                 message: "Ride booked successfully",
@@ -865,9 +913,14 @@ module.exports.getRideReceiptPdf = async (req, res, next) => {
         const PDFDocument = require('pdfkit');
         const rideId = req.params.rideId;
 
-        const ride = await rideModel.findOne({ _id: rideId, user: req.user._id })
-            .populate('captain', 'fullname vehicleNumber rating')
-            .lean();
+        let ride = null;
+        if (rideModel.db.readyState !== 1) {
+            ride = inMemoryRides.get(rideId);
+        } else {
+            ride = await rideModel.findOne({ _id: rideId, user: req.user._id })
+                .populate('captain', 'fullname vehicleNumber rating')
+                .lean();
+        }
 
         if (!ride) {
             return res.status(404).json({ success: false, message: 'Ride not found' });
@@ -928,6 +981,18 @@ module.exports.cancelUserRide = async (req, res, next) => {
 
         if (rideModel.db.readyState !== 1) {
             const ride = inMemoryRides.get(rideId) || { _id: rideId };
+            cancelRideTimeout(rideId);
+            let refundInfo = null;
+            if (ride.paymentStatus === 'paid') {
+                ride.paymentStatus = 'refunded';
+                ride.refundStatus = 'refunded';
+                ride.refundId = `sim_ref_${Date.now()}`;
+                refundInfo = {
+                    success: true,
+                    message: 'Ride payment refunded successfully',
+                    refundId: ride.refundId
+                };
+            }
             ride.status = 'cancelled';
             ride.cancelledAt = new Date();
             inMemoryRides.set(rideId, ride);
@@ -937,8 +1002,9 @@ module.exports.cancelUserRide = async (req, res, next) => {
 
             return res.status(200).json({
                 success: true,
-                message: "Ride cancelled successfully",
-                data: ride
+                message: "Ride cancelled successfully" + (refundInfo?.success ? " and refund processed" : ""),
+                data: ride,
+                refund: refundInfo
             });
         }
 
@@ -995,6 +1061,18 @@ module.exports.cancelcaptainRide = async (req, res, next) => {
 
         if (rideModel.db.readyState !== 1) {
             const ride = inMemoryRides.get(rideId) || { _id: rideId };
+            cancelRideTimeout(rideId);
+            let refundInfo = null;
+            if (ride.paymentStatus === 'paid') {
+                ride.paymentStatus = 'refunded';
+                ride.refundStatus = 'refunded';
+                ride.refundId = `sim_ref_${Date.now()}`;
+                refundInfo = {
+                    success: true,
+                    message: 'Ride payment refunded successfully',
+                    refundId: ride.refundId
+                };
+            }
             ride.status = 'cancelled';
             ride.cancelledAt = new Date();
             inMemoryRides.set(rideId, ride);
@@ -1004,8 +1082,9 @@ module.exports.cancelcaptainRide = async (req, res, next) => {
 
             return res.status(200).json({
                 success: true,
-                message: "Ride cancelled successfully",
-                data: ride
+                message: "Ride cancelled successfully" + (refundInfo?.success ? " and refund processed" : ""),
+                data: ride,
+                refund: refundInfo
             });
         }
 

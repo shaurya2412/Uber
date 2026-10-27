@@ -264,7 +264,7 @@ module.exports.getAllDrivers = async (req, res) => {
 module.exports.updateDriverApprovalStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const status = req.body.status || req.body.approvalStatus;
 
     if (!["pending", "approved", "suspended"].includes(status)) {
       return res.status(400).json({

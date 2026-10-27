@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Compass, Bell, User, LogOut, History, Wallet, Shield } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { User, LogOut, History, Shield, ChevronDown } from "lucide-react";
 import { useRideStore } from "../Zustand/useRideStore";
 import { useUserStore } from "../Zustand/useUserstore";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -9,6 +9,7 @@ import "@solana/wallet-adapter-react-ui/styles.css";
 
 const UserDashboardHeader = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentRide } = useRideStore();
   const { user, logout, isAuthenticated, fetchProfile } = useUserStore();
 
@@ -39,66 +40,83 @@ const UserDashboardHeader = () => {
     user?.fullname?.firstname ||
     user?.name ||
     currentRide?.user?.fullname?.firstname ||
-    "Passenger";
+    "Rider";
 
   return (
-    <header className="w-full flex justify-between items-center px-6 lg:px-10 py-3.5 bg-[#0A0A0F]/90 backdrop-blur-xl border-b border-[#1E1E2E] z-30 sticky top-0">
-      {/* Left: Logo & Nav */}
+    <header className="w-full flex justify-between items-center px-5 lg:px-8 h-16 bg-[#09090B]/95 backdrop-blur-xl border-b border-white/[0.08] z-30 sticky top-0">
+      {/* Left: Brand & Navigation */}
       <div className="flex items-center gap-8">
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#7C3AED] to-[#06B6D4] p-0.5 shadow-[0_0_15px_rgba(124,58,237,0.3)]">
-            <div className="w-full h-full bg-[#0A0A0F] rounded-[10px] flex items-center justify-center">
-              <Compass className="w-4 h-4 text-[#7C3AED] group-hover:rotate-45 transition-transform" />
-            </div>
+          <div className="w-8 h-8 rounded-lg bg-[#FAFAFA] text-[#09090B] flex items-center justify-center font-black text-sm group-hover:bg-[#10B981] transition-colors">
+            N
           </div>
-          <span className="text-xl font-black tracking-tight text-[#F8FAFC]">
-            Nexus<span className="text-[#06B6D4]">.</span>
+          <span className="text-lg font-extrabold tracking-tight text-[#FAFAFA]">
+            Nexus
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-5 text-xs font-semibold text-[#94A3B8]">
-          <Link to="/dashboard" className="text-[#F8FAFC] hover:text-[#7C3AED] transition-colors">
-            Ride Booking
+        <nav className="hidden md:flex items-center gap-6 text-xs font-semibold">
+          <Link
+            to="/dashboard"
+            className={`transition-colors ${
+              location.pathname === "/dashboard"
+                ? "text-[#FAFAFA]"
+                : "text-[#A1A1AA] hover:text-[#FAFAFA]"
+            }`}
+          >
+            Book a Ride
           </Link>
-          <Link to="/rides" className="hover:text-[#F8FAFC] transition-colors">
-            Trip History
+          <Link
+            to="/rides"
+            className={`transition-colors ${
+              location.pathname === "/rides"
+                ? "text-[#FAFAFA]"
+                : "text-[#A1A1AA] hover:text-[#FAFAFA]"
+            }`}
+          >
+            Past Trips & Receipts
           </Link>
-          <Link to="/admin" className="hover:text-[#06B6D4] transition-colors flex items-center gap-1">
-            <Shield className="w-3.5 h-3.5" /> Fleet Admin
+          <Link
+            to="/admin"
+            className="text-[#A1A1AA] hover:text-[#10B981] transition-colors flex items-center gap-1.5"
+          >
+            <Shield className="w-3.5 h-3.5" />
+            <span>Fleet Operations</span>
           </Link>
         </nav>
       </div>
 
-      {/* Right Section: Solana Wallet + Notifications + Profile */}
-      <div className="flex items-center gap-4">
-        {/* Solana Wallet Button */}
+      {/* Right: Wallet & Account Menu */}
+      <div className="flex items-center gap-3.5">
         <div className="hidden sm:flex items-center gap-2">
-          <WalletMultiButton className="!bg-[#1A1A24] hover:!bg-[#2D2D3F] !border !border-[#2D2D3F] !text-[#F8FAFC] !px-3.5 !py-1.5 !rounded-xl !text-xs !font-bold !h-9 transition-colors" />
+          <WalletMultiButton className="!bg-[#121215] hover:!bg-[#18181C] !border !border-white/[0.1] !text-[#FAFAFA] !px-3.5 !py-1.5 !rounded-lg !text-xs !font-semibold !h-9 transition-colors" />
           {publicKey && (
-            <span className="text-[11px] font-mono text-[#06B6D4] bg-[#06B6D4]/10 border border-[#06B6D4]/20 px-2 py-1 rounded-lg">
+            <span className="text-[11px] font-mono text-[#10B981] bg-[#10B981]/10 border border-[#10B981]/25 px-2 py-1 rounded-md">
               {shortenAddress(publicKey.toBase58())}
             </span>
           )}
         </div>
 
-        {/* Profile Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
             type="button"
             onClick={() => setIsDropdownOpen((prev) => !prev)}
-            className="flex items-center gap-2.5 p-1.5 pr-3 rounded-xl bg-[#111118] border border-[#1E1E2E] hover:border-[#2D2D3F] transition-all cursor-pointer"
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[#121215] border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer"
           >
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#7C3AED] to-[#06B6D4] p-0.5 flex items-center justify-center text-white">
-              <User className="w-4 h-4 text-[#F8FAFC]" />
+            <div className="w-6 h-6 rounded-md bg-[#FAFAFA] text-[#09090B] flex items-center justify-center font-bold text-xs">
+              {riderName.slice(0, 1).toUpperCase()}
             </div>
-            <span className="text-xs font-semibold text-[#F8FAFC]">{riderName}</span>
+            <span className="text-xs font-semibold text-[#FAFAFA]">{riderName}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-[#A1A1AA]" />
           </button>
 
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-[#111118] border border-[#2D2D3F] rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.7)] z-50 py-2 overflow-hidden">
-              <div className="px-4 py-2 border-b border-[#1E1E2E]">
-                <p className="text-xs font-bold text-[#F8FAFC] truncate">{riderName}</p>
-                <p className="text-[10px] text-[#94A3B8] truncate">{user?.email || "rider@nexus.app"}</p>
+            <div className="absolute right-0 mt-2 w-48 bg-[#121215] border border-white/[0.12] rounded-xl shadow-[0_15px_40px_rgba(0,0,0,0.8)] z-50 py-1.5 overflow-hidden">
+              <div className="px-3.5 py-2 border-b border-white/[0.07]">
+                <p className="text-xs font-bold text-[#FAFAFA] truncate">{riderName}</p>
+                <p className="text-[10px] font-mono text-[#A1A1AA] truncate">
+                  {user?.email || "Signed in"}
+                </p>
               </div>
 
               <button
@@ -106,10 +124,10 @@ const UserDashboardHeader = () => {
                   navigate("/rides");
                   setIsDropdownOpen(false);
                 }}
-                className="w-full text-left px-4 py-2.5 hover:bg-[#1A1A24] flex items-center gap-2.5 text-xs text-[#94A3B8] hover:text-[#F8FAFC] transition-colors"
+                className="w-full text-left px-3.5 py-2 hover:bg-[#18181C] flex items-center gap-2.5 text-xs text-[#A1A1AA] hover:text-[#FAFAFA] transition-colors cursor-pointer"
               >
-                <History className="w-3.5 h-3.5 text-[#06B6D4]" />
-                <span>My Rides</span>
+                <History className="w-3.5 h-3.5 text-[#10B981]" />
+                <span>Past Trips</span>
               </button>
 
               <button
@@ -117,23 +135,23 @@ const UserDashboardHeader = () => {
                   navigate("/admin");
                   setIsDropdownOpen(false);
                 }}
-                className="w-full text-left px-4 py-2.5 hover:bg-[#1A1A24] flex items-center gap-2.5 text-xs text-[#94A3B8] hover:text-[#F8FAFC] transition-colors"
+                className="w-full text-left px-3.5 py-2 hover:bg-[#18181C] flex items-center gap-2.5 text-xs text-[#A1A1AA] hover:text-[#FAFAFA] transition-colors cursor-pointer"
               >
-                <Shield className="w-3.5 h-3.5 text-[#7C3AED]" />
-                <span>Admin Operations</span>
+                <Shield className="w-3.5 h-3.5 text-[#FAFAFA]" />
+                <span>Fleet Ops</span>
               </button>
 
-              <div className="my-1 border-t border-[#1E1E2E]" />
+              <div className="my-1 border-t border-white/[0.07]" />
 
               <button
                 onClick={() => {
                   logout();
                   navigate("/login");
                 }}
-                className="w-full text-left px-4 py-2 hover:bg-red-500/10 flex items-center gap-2.5 text-xs text-[#EF4444] font-semibold transition-colors"
+                className="w-full text-left px-3.5 py-2 hover:bg-red-500/10 flex items-center gap-2.5 text-xs text-[#EF4444] font-semibold transition-colors cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span>Sign Out</span>
+                <span>Log out</span>
               </button>
             </div>
           )}

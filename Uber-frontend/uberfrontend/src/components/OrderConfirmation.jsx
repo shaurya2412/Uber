@@ -221,10 +221,10 @@ const OrderConfirmation = () => {
             className="space-y-2"
           >
             <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#F8FAFC]">
-              Payment Successful!
+              Trip Paid & Completed
             </h1>
             <p className="text-sm text-[#94A3B8] max-w-md mx-auto">
-              Your ride has been completed and verified on the Nexus network. A digital tax receipt has been generated.
+              Thanks for riding with Nexus. Your GST tax invoice and trip summary are ready below.
             </p>
           </motion.div>
 

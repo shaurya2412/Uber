@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin,
@@ -8,17 +8,11 @@ import {
   Car,
   Zap,
   Users,
-  Clock,
-  DollarSign,
-  AlertCircle,
-  X,
-  Phone,
-  MessageSquare,
-  Star,
   CheckCircle2,
-  Receipt,
   Radio,
-  Share2,
+  ArrowRight,
+  ArrowUpDown,
+  Lock,
 } from "lucide-react";
 import { useRideStore } from "../Zustand/useRideStore";
 import { useUserStore } from "../Zustand/useUserstore";
@@ -33,7 +27,82 @@ import BottomSheet from "./ui/BottomSheet";
 import Toast from "./ui/Toast";
 import ChatWidget from "./ChatWidget";
 
+const QUICK_ROUTES = [
+  {
+    label: "CP → IGI T3",
+    pickup: "Connaught Place, New Delhi",
+    destination: "IGI Airport Terminal 3, New Delhi",
+    pCoords: { lat: 28.6315, lng: 77.2167 },
+    dCoords: { lat: 28.5562, lng: 77.1 },
+  },
+  {
+    label: "Hauz Khas → CyberHub",
+    pickup: "Hauz Khas Village, New Delhi",
+    destination: "DLF CyberHub, Gurugram",
+    pCoords: { lat: 28.5494, lng: 77.2001 },
+    dCoords: { lat: 28.495, lng: 77.0895 },
+  },
+  {
+    label: "Indiranagar → MG Road",
+    pickup: "100 Feet Rd, Indiranagar, Bengaluru",
+    destination: "MG Road Metro, Bengaluru",
+    pCoords: { lat: 12.9784, lng: 77.6408 },
+    dCoords: { lat: 12.9756, lng: 77.6066 },
+  },
+];
+
+const RIDE_STAGE_STEPS = [
+  { key: "requested", label: "Matching" },
+  { key: "accepted", label: "Assigned" },
+  { key: "driver_en_route", label: "En Route" },
+  { key: "arrived", label: "At Pickup" },
+  { key: "in_ride", label: "On Trip" },
+  { key: "completed", label: "Arrived" },
+];
+
+const getStageIndex = (status) => {
+  switch (status) {
+    case "pending":
+    case "requested":
+      return 0;
+    case "accepted":
+      return 1;
+    case "driver_en_route":
+      return 2;
+    case "arrived":
+      return 3;
+    case "in_ride":
+    case "in_progress":
+      return 4;
+    case "completed":
+      return 5;
+    default:
+      return 0;
+  }
+};
+
+const parseLatLngPair = (text) => {
+  if (!text) return null;
+  const cleaned = text.replace(/[()]/g, "").trim();
+  const parts = cleaned.split(",").map((s) => parseFloat(s.trim()));
+  if (
+    parts.length === 2 &&
+    !Number.isNaN(parts[0]) &&
+    !Number.isNaN(parts[1]) &&
+    parts[0] >= -90 &&
+    parts[0] <= 90 &&
+    parts[1] >= -180 &&
+    parts[1] <= 180
+  ) {
+    return { lat: Number(parts[0].toFixed(4)), lng: Number(parts[1].toFixed(4)) };
+  }
+  return null;
+};
+
 const getCoordinates = async (place) => {
+  const directCoord = parseLatLngPair(place);
+  if (directCoord) return directCoord;
+
   try {
     const API_KEY = "pk.d4d3cce23c00c2d9e20ac1070c22cc5d";
     const res = await fetch(
@@ -44,51 +113,58 @@ const getCoordinates = async (place) => {
       return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
     }
     return null;
-  } catch (e) {
-    console.error("Geocoding lookup notice:", e);
+  } catch {
     return null;
   }
 };
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const socket = useSocket();
 
   const {
     currentRide,
-    rideStatus,
-    isLoading,
-    error,
     bookRide,
     fetchCurrentRide,
     cancelRideUser,
     calculatetheprice,
-    finishRideuser,
   } = useRideStore();
 
-  const { isAuthenticated, user } = useUserStore();
+  const { isAuthenticated } = useUserStore();
 
-  // Booking form states
-  const [pickup, setPickup] = useState("");
-  const [destination, setDestination] = useState("");
-  const [pickupCoords, setPickupCoords] = useState(null);
-  const [destinationCoords, setDestinationCoords] = useState(null);
-  const [baseFare, setBaseFare] = useState(0);
+  // Initialize with two coordinates (from router state if navigated from Launchpage, or Delhi NCR default)
+  const initialP = location.state?.pickupCoords || { lat: 28.6315, lng: 77.2167 };
+  const initialD = location.state?.destinationCoords || { lat: 28.5562, lng: 77.1 };
+
+  const [pickup, setPickup] = useState(
+    location.state?.pickup || "Connaught Place, New Delhi"
+  );
+  const [destination, setDestination] = useState(
+    location.state?.destination || "IGI Airport Terminal 3, New Delhi"
+  );
+  const [pickupCoords, setPickupCoords] = useState(initialP);
+  const [destinationCoords, setDestinationCoords] = useState(initialD);
+
+  // Explicit Two-Coordinate inputs (Lat, Lng)
+  const [coord1Input, setCoord1Input] = useState(`${initialP.lat}, ${initialP.lng}`);
+  const [coord2Input, setCoord2Input] = useState(`${initialD.lat}, ${initialD.lng}`);
+  const [routeMetrics, setRouteMetrics] = useState({ distanceKm: 16.4, durationMin: 29 });
+
+  const [baseFare, setBaseFare] = useState(240);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
-  const [selectedTier, setSelectedTier] = useState("economy");
+  const [selectedTier, setSelectedTier] = useState(location.state?.selectedTier || "economy");
   const [toast, setToast] = useState({ isVisible: false, message: "", type: "info" });
   const [driverRating, setDriverRating] = useState(5);
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(true);
 
-  // Sync ride on load
   useEffect(() => {
     if (isAuthenticated) {
       fetchCurrentRide();
     }
   }, [isAuthenticated, fetchCurrentRide]);
 
-  // Socket room joining and updates
   useEffect(() => {
     if (!socket || !currentRide?._id) return;
 
@@ -116,59 +192,146 @@ const Dashboard = () => {
     setToast({ isVisible: true, message, type });
   };
 
-  // Use current GPS location
+  // Update Coordinate 1 from input box
+  const handleCoord1Change = (val) => {
+    setCoord1Input(val);
+    const parsed = parseLatLngPair(val);
+    if (parsed) {
+      setPickupCoords(parsed);
+      setPickup(`Coord 1 (${parsed.lat}, ${parsed.lng})`);
+    }
+  };
+
+  // Update Coordinate 2 from input box
+  const handleCoord2Change = (val) => {
+    setCoord2Input(val);
+    const parsed = parseLatLngPair(val);
+    if (parsed) {
+      setDestinationCoords(parsed);
+      setDestination(`Coord 2 (${parsed.lat}, ${parsed.lng})`);
+    }
+  };
+
+  // Update Coordinate 1 when user clicks or drags on Map
+  const handleMapPickupChange = (latLngArray) => {
+    const next = { lat: latLngArray[0], lng: latLngArray[1] };
+    setPickupCoords(next);
+    setCoord1Input(`${next.lat}, ${next.lng}`);
+    setPickup(`Coord 1 (${next.lat}, ${next.lng})`);
+  };
+
+  // Update Coordinate 2 when user clicks or drags on Map
+  const handleMapDestChange = (latLngArray) => {
+    const next = { lat: latLngArray[0], lng: latLngArray[1] };
+    setDestinationCoords(next);
+    setCoord2Input(`${next.lat}, ${next.lng}`);
+    setDestination(`Coord 2 (${next.lat}, ${next.lng})`);
+  };
+
+  const handleSwapCoordinates = () => {
+    if (!pickupCoords || !destinationCoords) return;
+    const prevP = pickupCoords;
+    const prevD = destinationCoords;
+    const prevPText = pickup;
+    const prevDText = destination;
+
+    setPickupCoords(prevD);
+    setDestinationCoords(prevP);
+    setCoord1Input(`${prevD.lat}, ${prevD.lng}`);
+    setCoord2Input(`${prevP.lat}, ${prevP.lng}`);
+    setPickup(prevDText);
+    setDestination(prevPText);
+  };
+
   const handleUseCurrentLocation = () => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
+          const lat = Number(pos.coords.latitude.toFixed(4));
+          const lng = Number(pos.coords.longitude.toFixed(4));
           setPickupCoords({ lat, lng });
-          setPickup(`Current GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
-          showToast("Location updated to GPS position", "success");
+          setCoord1Input(`${lat}, ${lng}`);
+          setPickup(`Current GPS (${lat}, ${lng})`);
+          showToast("Coordinate 1 pinned to your current GPS spot", "success");
         },
-        (err) => {
-          showToast("Geolocation access denied or unavailable", "error");
+        () => {
+          showToast("Location access is turned off in your browser", "error");
         },
         { enableHighAccuracy: true }
       );
     } else {
-      showToast("Geolocation not supported by browser", "error");
+      showToast("GPS not supported by this browser", "error");
     }
   };
 
-  // Calculate fare
-  const handleCalculateFare = async () => {
-    if (!pickup || !destination) {
-      showToast("Please enter both pickup and destination", "warning");
-      return;
-    }
-
+  const applyQuickRoute = async (preset) => {
+    setPickup(preset.pickup);
+    setDestination(preset.destination);
+    setPickupCoords(preset.pCoords);
+    setDestinationCoords(preset.dCoords);
+    setCoord1Input(`${preset.pCoords.lat}, ${preset.pCoords.lng}`);
+    setCoord2Input(`${preset.dCoords.lat}, ${preset.dCoords.lng}`);
     setIsCalculating(true);
     try {
-      const pCoords = pickupCoords || (await getCoordinates(pickup)) || { lat: 28.6139, lng: 77.209 };
-      const dCoords = destinationCoords || (await getCoordinates(destination)) || { lat: 28.5355, lng: 77.391 };
-
-      setPickupCoords(pCoords);
-      setDestinationCoords(dCoords);
-
-      const result = await calculatetheprice(pCoords, dCoords);
-      const computedFare = result?.fare || result?.estimatedFare || 250;
-      setBaseFare(computedFare);
-      showToast(`Fares updated! Select your ride tier.`, "info");
-    } catch (err) {
-      console.error("Fare error:", err);
-      setBaseFare(280); // Sensible fallback
-      showToast("Estimated standard fare applied", "info");
+      const result = await calculatetheprice(preset.pCoords, preset.dCoords);
+      setBaseFare(result?.fare || 240);
+      showToast("Two-coordinate route plotted & upfront fare locked", "success");
+    } catch {
+      setBaseFare(260);
     } finally {
       setIsCalculating(false);
     }
   };
 
-  // Book ride
+  const handleCalculateFare = async () => {
+    const parsed1 = parseLatLngPair(coord1Input);
+    const parsed2 = parseLatLngPair(coord2Input);
+
+    if (!parsed1 && !pickup) {
+      showToast("Enter Coordinate 1 or a pickup address", "warning");
+      return;
+    }
+    if (!parsed2 && !destination) {
+      showToast("Enter Coordinate 2 or a drop-off address", "warning");
+      return;
+    }
+
+    setIsCalculating(true);
+    try {
+      const pCoords = parsed1 || (await getCoordinates(pickup)) || pickupCoords || { lat: 28.6139, lng: 77.209 };
+      const dCoords = parsed2 || (await getCoordinates(destination)) || destinationCoords || { lat: 28.5355, lng: 77.391 };
+
+      setPickupCoords(pCoords);
+      setDestinationCoords(dCoords);
+      setCoord1Input(`${pCoords.lat}, ${pCoords.lng}`);
+      setCoord2Input(`${dCoords.lat}, ${dCoords.lng}`);
+
+      const result = await calculatetheprice(pCoords, dCoords);
+      const computedFare =
+        result?.fare ||
+        result?.estimatedFare ||
+        Math.max(80, Math.round(50 + (routeMetrics.distanceKm || 10) * 14));
+      setBaseFare(computedFare);
+      showToast("Route mapped between coordinates. Upfront price locked.", "info");
+    } catch {
+      const fallback = Math.max(80, Math.round(50 + (routeMetrics.distanceKm || 10) * 14));
+      setBaseFare(fallback);
+      showToast("Upfront per-km fare calculated from route distance", "info");
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
+  const handleRouteCalculated = (metrics) => {
+    setRouteMetrics(metrics);
+    if (metrics.distanceKm) {
+      setBaseFare(Math.max(75, Math.round(50 + metrics.distanceKm * 14)));
+    }
+  };
+
   const handleConfirmRide = async () => {
     if (!selectedTier || baseFare === 0) {
-      showToast("Please calculate fare and choose a ride tier", "warning");
+      showToast("Check the fare first and pick a car", "warning");
       return;
     }
 
@@ -177,63 +340,65 @@ const Dashboard = () => {
       const pCoords = pickupCoords || { lat: 28.6139, lng: 77.209 };
       const dCoords = destinationCoords || { lat: 28.5355, lng: 77.391 };
 
-      const tierMultiplier = selectedTier === "premium" ? 1.45 : selectedTier === "shared" ? 0.75 : 1.0;
+      const tierMultiplier = selectedTier === "premium" ? 1.45 : selectedTier === "shared" ? 0.78 : 1.0;
       const finalFare = Math.round(baseFare * tierMultiplier);
 
       await bookRide({
-        pickup: { address: pickup, coordinates: pCoords },
-        destination: { address: destination, coordinates: dCoords },
+        pickup: {
+          address: pickup || `${pCoords.lat}, ${pCoords.lng}`,
+          coordinates: pCoords,
+        },
+        destination: {
+          address: destination || `${dCoords.lat}, ${dCoords.lng}`,
+          coordinates: dCoords,
+        },
         fare: finalFare,
         vehicleType: selectedTier === "shared" ? "auto" : "car",
       });
 
-      showToast("Searching for nearby drivers...", "success");
+      showToast("Ride requested! Notifying nearby drivers.", "success");
     } catch (err) {
-      showToast(err.response?.data?.message || "Booking request failed", "error");
+      showToast(err.response?.data?.message || "Could not place booking", "error");
     } finally {
       setIsBooking(false);
     }
   };
 
-  // Normalized ride status for 6 distinct states
   const currentStatus = currentRide?.status?.toLowerCase() || "idle";
+  const activeStageIdx = getStageIndex(currentStatus);
 
-  // Tier cards data
   const tiers = [
     {
       id: "economy",
-      name: "Nexus Economy",
-      tag: "Everyday",
-      desc: "Fast, reliable rides in modern sedans",
+      name: "Comfort Electric",
+      tag: "Most popular",
+      desc: "BYD e6 or Tigor EV • Quiet AC cabin",
       price: Math.round(baseFare * 1.0) || 180,
-      eta: "3 mins",
+      eta: "3 mins away",
       icon: Car,
-      color: "#06B6D4",
     },
     {
       id: "premium",
-      name: "Nexus Black",
-      tag: "VIP Luxury",
-      desc: "Top-rated executive drivers in luxury EVs",
-      price: Math.round(baseFare * 1.45) || 290,
-      eta: "5 mins",
+      name: "Executive Sedan",
+      tag: "Top 5% drivers",
+      desc: "Honda City Hybrid / Ioniq 5 • Extra legroom",
+      price: Math.round(baseFare * 1.45) || 265,
+      eta: "4 mins away",
       icon: Zap,
-      color: "#7C3AED",
     },
     {
       id: "shared",
-      name: "Nexus Pool",
-      tag: "Eco Saver",
-      desc: "Share route with passengers & save 25%",
-      price: Math.round(baseFare * 0.75) || 135,
-      eta: "7 mins",
+      name: "City Hatchback",
+      tag: "Quickest",
+      desc: "Swift / Tiago • Nimble for short hops",
+      price: Math.round(baseFare * 0.78) || 140,
+      eta: "2 mins away",
       icon: Users,
-      color: "#10B981",
     },
   ];
 
   return (
-    <div className="relative min-h-screen bg-[#0A0A0F] text-[#F8FAFC] flex flex-col overflow-hidden">
+    <div className="relative min-h-screen bg-[#09090B] text-[#FAFAFA] flex flex-col overflow-hidden">
       <UserDashboardHeader />
 
       <Toast
@@ -243,408 +408,519 @@ const Dashboard = () => {
         onClose={() => setToast((t) => ({ ...t, isVisible: false }))}
       />
 
-      {/* Main Full-Screen Layout */}
-      <div className="relative flex-1 flex flex-col lg:flex-row h-[calc(100vh-65px)] overflow-hidden">
-        {/* LEFT DESKTOP SIDEBAR / PANEL */}
-        <aside className="hidden lg:flex w-[420px] xl:w-[460px] bg-[#111118]/95 backdrop-blur-2xl border-r border-[#1E1E2E] flex-col z-20 shadow-[10px_0_40px_rgba(0,0,0,0.5)] overflow-y-auto">
-          <div className="p-6 space-y-6 flex-1">
-            {/* Header Status or Title */}
+      <div className="relative flex-1 flex flex-col lg:flex-row h-[calc(100vh-64px)] overflow-hidden">
+        {/* LEFT BOOKING & LIVE STEP-BY-STEP RIDE PANEL */}
+        <aside className="hidden lg:flex w-[440px] xl:w-[470px] bg-[#09090B] border-r border-white/[0.08] flex-col z-20 overflow-y-auto">
+          <div className="p-6 space-y-5 flex-1">
+            {/* Panel Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-xl font-bold tracking-tight text-[#F8FAFC]">
-                  {currentRide ? "Live Trip Telemetry" : "Book Your Transit"}
+                <h1 className="text-xl font-extrabold tracking-tight text-[#FAFAFA]">
+                  {currentRide ? "Your Active Trip" : "Route & Coordinates"}
                 </h1>
-                <p className="text-xs text-[#94A3B8] mt-0.5">
-                  {currentRide ? `Session ID: ${currentRide._id?.slice(-8)}` : "High-speed dispatch network"}
+                <p className="text-xs text-[#A1A1AA] mt-0.5">
+                  {currentRide
+                    ? `Booking #${currentRide._id?.slice(-6).toUpperCase()}`
+                    : "Enter two coordinates, type addresses, or click the map"}
                 </p>
               </div>
-
               {currentRide && <RideStatusBadge status={currentStatus} />}
             </div>
 
-            {/* RENDER CONTENT BASED ON ACTIVE STATE */}
-            {!currentRide ? (
-              /* --- STATE 0: BOOKING FORM & TIER SELECTION --- */
-              <div className="space-y-5">
-                {/* Inputs */}
-                <div className="space-y-3 p-4 rounded-2xl bg-[#0A0A0F]/70 border border-[#1E1E2E]">
-                  {/* Pickup */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-xs text-[#94A3B8]">
-                      <span className="font-semibold flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-[#06B6D4] animate-ping" />
-                        Pickup Point
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleUseCurrentLocation}
-                        className="text-[#06B6D4] hover:underline flex items-center gap-1 text-[11px] font-medium"
-                      >
-                        <Crosshair className="w-3 h-3" /> Use GPS
-                      </button>
-                    </div>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Where should we pick you up?"
-                        value={pickup}
-                        onChange={(e) => setPickup(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#111118] border border-[#2D2D3F] text-sm text-[#F8FAFC] placeholder:text-[#475569] focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all"
-                      />
-                      <MapPin className="w-4 h-4 text-[#06B6D4] absolute left-3 top-3" />
-                    </div>
-                  </div>
-
-                  {/* Destination */}
-                  <div className="space-y-1">
-                    <span className="text-xs font-semibold text-[#94A3B8] flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#7C3AED]" />
-                      Drop-off Destination
-                    </span>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Where are you heading?"
-                        value={destination}
-                        onChange={(e) => setDestination(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#111118] border border-[#2D2D3F] text-sm text-[#F8FAFC] placeholder:text-[#475569] focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all"
-                      />
-                      <Navigation className="w-4 h-4 text-[#7C3AED] absolute left-3 top-3" />
-                    </div>
-                  </div>
-
-                  {/* Calculate Fare Trigger */}
-                  <button
-                    onClick={handleCalculateFare}
-                    disabled={isCalculating || !pickup || !destination}
-                    className="w-full py-2.5 rounded-xl bg-[#1A1A24] hover:bg-[#2D2D3F] text-xs font-bold text-[#F8FAFC] border border-[#2D2D3F] flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-                  >
-                    {isCalculating ? (
-                      <div className="w-3.5 h-3.5 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <DollarSign className="w-3.5 h-3.5 text-[#10B981]" />
-                        <span>Calculate Optimal Route & Fare</span>
-                      </>
-                    )}
-                  </button>
+            {/* Animated Step-by-Step Progress Bar during Active Ride */}
+            {currentRide && (
+              <div className="p-3.5 rounded-xl bg-[#121215] border border-white/[0.08] space-y-2.5">
+                <div className="flex items-center justify-between text-[11px] font-mono text-[#A1A1AA]">
+                  <span>STAGE {activeStageIdx + 1} OF 6</span>
+                  <span className="text-[#10B981] font-semibold">
+                    {RIDE_STAGE_STEPS[activeStageIdx]?.label}
+                  </span>
                 </div>
-
-                {/* 3 Tier Cards (Economy | Premium | Shared) */}
-                <div className="space-y-2.5">
-                  <p className="text-xs font-bold uppercase tracking-wider text-[#94A3B8]">
-                    Available Vehicle Tiers
-                  </p>
-
-                  <div className="space-y-2.5">
-                    {tiers.map((t) => {
-                      const Icon = t.icon;
-                      const isSelected = selectedTier === t.id;
-
-                      return (
-                        <motion.div
-                          key={t.id}
-                          whileHover={{ scale: 1.01 }}
-                          whileTap={{ scale: 0.99 }}
-                          onClick={() => setSelectedTier(t.id)}
-                          className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
-                            isSelected
-                              ? "bg-[#1A1A24] border-[#7C3AED] shadow-[0_0_25px_rgba(124,58,237,0.25)]"
-                              : "bg-[#0A0A0F]/60 border-[#1E1E2E] hover:border-[#2D2D3F]"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div
-                                className="p-2.5 rounded-xl"
-                                style={{ backgroundColor: `${t.color}15` }}
-                              >
-                                <Icon className="w-5 h-5" style={{ color: t.color }} />
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <h4 className="font-bold text-sm text-[#F8FAFC]">{t.name}</h4>
-                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#111118] border border-[#2D2D3F] text-[#94A3B8]">
-                                    {t.tag}
-                                  </span>
-                                </div>
-                                <p className="text-xs text-[#94A3B8]">{t.desc}</p>
-                              </div>
-                            </div>
-
-                            <div className="text-right">
-                              <p className="text-base font-black text-[#F8FAFC]">₹{t.price}</p>
-                              <p className="text-[11px] text-[#06B6D4] font-medium">{t.eta}</p>
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {RIDE_STAGE_STEPS.map((st, idx) => {
+                    const isDone = idx <= activeStageIdx;
+                    return (
+                      <div key={st.key} className="space-y-1">
+                        <div className="h-1.5 rounded-full bg-[#18181C] overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: isDone ? "100%" : "0%" }}
+                            transition={{ duration: 0.4 }}
+                            className={`h-full ${
+                              idx === activeStageIdx ? "bg-[#10B981]" : "bg-[#FAFAFA]"
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-
-                {/* Confirm Ride CTA */}
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleConfirmRide}
-                  disabled={isBooking || baseFare === 0}
-                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#7C3AED] to-[#06B6D4] hover:opacity-95 text-white text-sm font-bold shadow-[0_0_30px_rgba(124,58,237,0.4)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                >
-                  {isBooking ? "Broadcasting Request..." : `Confirm ${tiers.find(t => t.id === selectedTier)?.name}`}
-                </motion.button>
               </div>
-            ) : (
-              /* --- STATE 1 TO 6: ACTIVE RIDE EXPERIENCES --- */
-              <div className="space-y-6">
-                {/* STATE 1: FINDING DRIVER */}
-                {(currentStatus === "requested" || currentStatus === "pending") && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center justify-center p-8 text-center space-y-6 rounded-3xl bg-[#0A0A0F]/80 border border-[#1E1E2E]"
-                  >
-                    {/* Pulsing Radar Animation */}
-                    <div className="relative w-32 h-32 flex items-center justify-center">
-                      <div className="absolute w-24 h-24 rounded-full border border-[#7C3AED]/40 animate-radar-ring" />
-                      <div className="absolute w-24 h-24 rounded-full border border-[#06B6D4]/40 animate-radar-ring [animation-delay:0.8s]" />
-                      <div className="absolute w-24 h-24 rounded-full border border-[#7C3AED]/40 animate-radar-ring [animation-delay:1.6s]" />
-                      <div className="w-16 h-16 rounded-full bg-[#1A1A24] border border-[#7C3AED] flex items-center justify-center shadow-[0_0_30px_rgba(124,58,237,0.4)]">
-                        <Radio className="w-8 h-8 text-[#7C3AED] animate-pulse" />
+            )}
+
+            <AnimatePresence mode="wait">
+              {!currentRide ? (
+                /* --- STEP 0: TWO-COORDINATE & ADDRESS SELECTION --- */
+                <motion.div
+                  key="booking-form"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.25 }}
+                  className="space-y-4"
+                >
+                  {/* 1-Click Sample Corridors */}
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-[#A1A1AA]">
+                      Quick-fill sample coordinates
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {QUICK_ROUTES.map((qr) => (
+                        <button
+                          key={qr.label}
+                          type="button"
+                          onClick={() => applyQuickRoute(qr)}
+                          className="px-2.5 py-1.5 rounded-lg bg-[#121215] hover:bg-[#18181C] border border-white/[0.08] text-[11px] font-medium text-[#FAFAFA] transition-colors cursor-pointer"
+                        >
+                          {qr.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Two Coordinates & Address Box */}
+                  <div className="space-y-3.5 p-4 rounded-2xl bg-[#121215] border border-white/[0.08]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-mono uppercase tracking-wider text-[#10B981]">
+                        Two-Coordinate Route Input
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleUseCurrentLocation}
+                          className="text-[#10B981] hover:underline flex items-center gap-1 text-[11px] font-mono font-semibold cursor-pointer"
+                        >
+                          <Crosshair className="w-3 h-3" /> My GPS
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSwapCoordinates}
+                          className="px-2 py-0.5 rounded bg-[#18181C] hover:bg-[#27272A] text-[10px] font-mono text-[#FAFAFA] border border-white/[0.08] flex items-center gap-1 cursor-pointer"
+                        >
+                          <ArrowUpDown className="w-3 h-3 text-[#10B981]" /> Swap
+                        </button>
                       </div>
                     </div>
 
-                    <div>
-                      <h3 className="text-lg font-bold text-[#F8FAFC]">Connecting with Nearby Drivers</h3>
-                      <p className="text-xs text-[#94A3B8] max-w-xs mt-1">
-                        Searching high-reputation vehicles within 5km radius via geospatial $nearSphere...
-                      </p>
-                    </div>
-
-                    <div className="w-full p-3 rounded-xl bg-[#111118] border border-[#2D2D3F] flex items-center justify-between text-xs">
-                      <span className="text-[#94A3B8]">Est. Pickup Fare:</span>
-                      <span className="font-bold text-[#F8FAFC]">₹{Number(currentRide.fare || 0).toFixed(2)}</span>
-                    </div>
-
-                    <button
-                      onClick={() => cancelRideUser(currentRide._id)}
-                      className="w-full py-2.5 rounded-xl border border-red-500/40 text-red-400 hover:bg-red-500/10 text-xs font-semibold transition-colors"
-                    >
-                      Cancel Booking
-                    </button>
-                  </motion.div>
-                )}
-
-                {/* STATE 2: DRIVER ACCEPTED */}
-                {currentStatus === "accepted" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="space-y-4"
-                  >
-                    {/* Checkmark Burst */}
-                    <div className="p-3 rounded-2xl bg-[#10B981]/15 border border-[#10B981]/30 flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#10B981] text-[#0A0A0F] flex items-center justify-center">
-                        <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-[#10B981]">Driver Assigned</p>
-                        <p className="text-[11px] text-[#F8FAFC]">Your captain accepted your ride request</p>
-                      </div>
-                    </div>
-
-                    <DriverCard
-                      driver={currentRide.captain}
-                      eta="4"
-                      onCall={() => showToast(`Calling driver at ${currentRide.captain?.phone || "driver phone"}`)}
-                      onChat={() => showToast("Opening driver encrypted chat stream")}
-                    />
-
-                    <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1E1E2E] space-y-2 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-[#94A3B8]">Pickup:</span>
-                        <span className="text-[#F8FAFC] font-medium truncate max-w-[200px]">
-                          {currentRide.pickup?.address || "Pickup Point"}
+                    {/* Coordinate 1: Pickup */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-[#FAFAFA] flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full border-2 border-[#FAFAFA]" />
+                          Coordinate 1 (Pickup Lat, Lng)
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#94A3B8]">Start Verification OTP:</span>
-                        <span className="font-mono font-bold text-base text-[#7C3AED] bg-[#7C3AED]/10 px-2 py-0.5 rounded-lg">
+                      <input
+                        type="text"
+                        placeholder="e.g. 28.6315, 77.2167"
+                        value={coord1Input}
+                        onChange={(e) => handleCoord1Change(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-[#09090B] border border-white/[0.1] font-mono text-xs text-[#FAFAFA] placeholder:text-[#52525B] focus:outline-none focus:border-[#FAFAFA] transition-all"
+                      />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Pickup address or landmark"
+                          value={pickup}
+                          onChange={(e) => setPickup(e.target.value)}
+                          className="w-full pl-8 pr-3 py-2 rounded-xl bg-[#09090B]/60 border border-white/[0.07] text-xs text-[#A1A1AA] placeholder:text-[#52525B] focus:outline-none focus:border-white/25 transition-all"
+                        />
+                        <MapPin className="w-3.5 h-3.5 text-[#A1A1AA] absolute left-2.5 top-2.5" />
+                      </div>
+                    </div>
+
+                    {/* Coordinate 2: Destination */}
+                    <div className="space-y-1.5 pt-1 border-t border-white/[0.06]">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-[#FAFAFA] flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-sm bg-[#10B981]" />
+                          Coordinate 2 (Drop-off Lat, Lng)
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="e.g. 28.5562, 77.1000"
+                        value={coord2Input}
+                        onChange={(e) => handleCoord2Change(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-[#09090B] border border-white/[0.1] font-mono text-xs text-[#FAFAFA] placeholder:text-[#52525B] focus:outline-none focus:border-[#10B981] transition-all"
+                      />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Drop-off address or landmark"
+                          value={destination}
+                          onChange={(e) => setDestination(e.target.value)}
+                          className="w-full pl-8 pr-3 py-2 rounded-xl bg-[#09090B]/60 border border-white/[0.07] text-xs text-[#A1A1AA] placeholder:text-[#52525B] focus:outline-none focus:border-white/25 transition-all"
+                        />
+                        <Navigation className="w-3.5 h-3.5 text-[#10B981] absolute left-2.5 top-2.5" />
+                      </div>
+                    </div>
+
+                    {/* Live Route Distance & Duration Summary */}
+                    {routeMetrics.distanceKm && (
+                      <div className="px-3 py-2 rounded-lg bg-[#09090B] border border-white/[0.07] flex items-center justify-between text-xs">
+                        <span className="text-[#A1A1AA]">Calculated Road Route</span>
+                        <span className="font-mono font-bold text-[#10B981]">
+                          {routeMetrics.distanceKm} km • {routeMetrics.durationMin} min
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Check Fare Button */}
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleCalculateFare}
+                      disabled={isCalculating}
+                      className="w-full py-2.5 rounded-xl bg-[#18181C] hover:bg-[#27272A] text-xs font-bold text-[#FAFAFA] border border-white/[0.1] flex items-center justify-center gap-2 transition-all disabled:opacity-40 cursor-pointer"
+                    >
+                      {isCalculating ? (
+                        <div className="w-3.5 h-3.5 border-2 border-[#FAFAFA] border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <Lock className="w-3.5 h-3.5 text-[#10B981]" />
+                          <span>Plot Coordinates & Lock Upfront Fare</span>
+                        </>
+                      )}
+                    </motion.button>
+                  </div>
+
+                  {/* Vehicle Options */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold uppercase tracking-wider text-[#A1A1AA]">
+                        Choose a ride
+                      </p>
+                      {baseFare > 0 && (
+                        <span className="text-[11px] font-mono text-[#10B981]">
+                          Fare locked for 10m
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      {tiers.map((t) => {
+                        const Icon = t.icon;
+                        const isSelected = selectedTier === t.id;
+
+                        return (
+                          <motion.div
+                            key={t.id}
+                            whileHover={{ x: 2 }}
+                            whileTap={{ scale: 0.99 }}
+                            onClick={() => setSelectedTier(t.id)}
+                            className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                              isSelected
+                                ? "bg-[#121215] border-[#FAFAFA]"
+                                : "bg-[#09090B] border-white/[0.07] hover:border-white/20"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`p-2.5 rounded-lg border ${
+                                    isSelected
+                                      ? "bg-[#FAFAFA] text-[#09090B] border-[#FAFAFA]"
+                                      : "bg-[#121215] text-[#A1A1AA] border-white/[0.08]"
+                                  }`}
+                                >
+                                  <Icon className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-bold text-sm text-[#FAFAFA]">{t.name}</h4>
+                                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#18181C] text-[#A1A1AA]">
+                                      {t.tag}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-[#A1A1AA] mt-0.5">{t.desc}</p>
+                                </div>
+                              </div>
+
+                              <div className="text-right">
+                                <p className="text-base font-extrabold font-mono text-[#FAFAFA] tabular-nums">
+                                  ₹{t.price}
+                                </p>
+                                <p className="text-[11px] font-mono text-[#10B981]">{t.eta}</p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Book CTA */}
+                  <motion.button
+                    whileHover={{ y: -1 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleConfirmRide}
+                    disabled={isBooking || baseFare === 0}
+                    className="w-full py-4 rounded-xl bg-[#FAFAFA] hover:bg-white text-[#09090B] text-sm font-extrabold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <span>
+                      {isBooking
+                        ? "Requesting your ride..."
+                        : `Book ${tiers.find((t) => t.id === selectedTier)?.name} • ₹${
+                            tiers.find((t) => t.id === selectedTier)?.price
+                          }`}
+                    </span>
+                    <ArrowRight className="w-4 h-4" />
+                  </motion.button>
+                </motion.div>
+              ) : (
+                /* --- ACTIVE TRIP STAGES (ANIMATED STEP TRANSITIONS) --- */
+                <motion.div
+                  key={currentStatus}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -14 }}
+                  transition={{ duration: 0.28 }}
+                  className="space-y-5"
+                >
+                  {/* STAGE 1: LOOKING FOR A DRIVER */}
+                  {(currentStatus === "requested" || currentStatus === "pending") && (
+                    <div className="flex flex-col items-center justify-center p-7 text-center space-y-6 rounded-2xl bg-[#121215] border border-white/[0.08]">
+                      <div className="relative w-28 h-28 flex items-center justify-center">
+                        <div className="absolute w-20 h-20 rounded-full border border-[#10B981]/40 animate-radar-ring" />
+                        <div className="absolute w-20 h-20 rounded-full border border-[#10B981]/30 animate-radar-ring [animation-delay:0.8s]" />
+                        <div className="w-14 h-14 rounded-full bg-[#18181C] border border-[#10B981] flex items-center justify-center">
+                          <Radio className="w-6 h-6 text-[#10B981] animate-pulse" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <h3 className="text-lg font-bold text-[#FAFAFA]">
+                          Looking for a nearby driver...
+                        </h3>
+                        <p className="text-xs text-[#A1A1AA] max-w-xs">
+                          Drivers within 5 km are seeing your route and locked fare right now.
+                        </p>
+                      </div>
+
+                      <div className="w-full p-3.5 rounded-xl bg-[#09090B] border border-white/[0.08] flex items-center justify-between text-xs">
+                        <span className="text-[#A1A1AA]">Locked Trip Fare</span>
+                        <span className="font-mono font-bold text-sm text-[#FAFAFA]">
+                          ₹{Number(currentRide.fare || 0).toFixed(2)}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => cancelRideUser(currentRide._id)}
+                        className="w-full py-2.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs font-semibold transition-colors cursor-pointer"
+                      >
+                        Cancel Request
+                      </button>
+                    </div>
+                  )}
+
+                  {/* STAGE 2: DRIVER ASSIGNED */}
+                  {currentStatus === "accepted" && (
+                    <div className="space-y-4">
+                      <div className="p-3.5 rounded-xl bg-[#10B981]/10 border border-[#10B981]/30 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-[#10B981] text-[#09090B] flex items-center justify-center shrink-0">
+                          <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-[#10B981]">Driver matched</p>
+                          <p className="text-xs text-[#FAFAFA]">
+                            Your driver has confirmed the route and is getting ready.
+                          </p>
+                        </div>
+                      </div>
+
+                      <DriverCard
+                        driver={currentRide.captain}
+                        eta="4"
+                        onCall={() => showToast("Connecting masked call to driver...")}
+                        onChat={() => showToast("Use the chat button in the corner")}
+                      />
+
+                      <div className="p-4 rounded-xl bg-[#121215] border border-white/[0.08] flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-bold text-[#FAFAFA]">Your 4-Digit Boarding PIN</p>
+                          <p className="text-[11px] text-[#A1A1AA]">Share when you sit inside the car</p>
+                        </div>
+                        <span className="font-mono font-extrabold text-xl tracking-widest text-[#10B981] bg-[#09090B] border border-[#10B981]/40 px-3.5 py-1.5 rounded-lg">
                           {currentRide.otp || localStorage.getItem("rideOtp") || "••••"}
                         </span>
                       </div>
                     </div>
-                  </motion.div>
-                )}
+                  )}
 
-                {/* STATE 3: DRIVER EN ROUTE */}
-                {currentStatus === "driver_en_route" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="space-y-4"
-                  >
-                    {/* Moving Car animation path banner */}
-                    <div className="relative overflow-hidden p-4 rounded-2xl bg-[#1A1A24] border border-[#7C3AED]/40 shadow-[0_0_30px_rgba(124,58,237,0.15)]">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-bold text-[#7C3AED] uppercase tracking-wider">
-                          🚗 Driver En Route
-                        </span>
-                        <span className="text-xs font-mono font-bold text-[#06B6D4]">
-                          Arriving in ~3 mins
-                        </span>
-                      </div>
-
-                      {/* Animated track with moving car */}
-                      <div className="relative h-3 w-full bg-[#0A0A0F] rounded-full overflow-hidden">
-                        <motion.div
-                          animate={{ x: ["0%", "85%"] }}
-                          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                          className="absolute top-0 left-0 w-8 h-full bg-[#06B6D4] rounded-full shadow-[0_0_12px_#06B6D4]"
-                        />
-                      </div>
-                    </div>
-
-                    <DriverCard
-                      driver={currentRide.captain}
-                      eta="2"
-                      onCall={() => showToast("Calling driver")}
-                      onChat={() => showToast("Opening chat")}
-                    />
-
-                    <div className="p-3 rounded-xl bg-[#0A0A0F] border border-[#1E1E2E] flex justify-between items-center text-xs">
-                      <span className="text-[#94A3B8]">Share OTP on boarding:</span>
-                      <span className="font-mono text-sm font-black text-[#7C3AED]">
-                        {currentRide.otp || localStorage.getItem("rideOtp") || "••••"}
-                      </span>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* STATE 4: DRIVER ARRIVED */}
-                {currentStatus === "arrived" && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="space-y-4"
-                  >
-                    <div className="p-4 rounded-2xl bg-[#10B981]/15 border border-[#10B981]/40 flex items-center gap-3 shadow-[0_0_25px_rgba(16,185,129,0.2)]">
-                      <div className="w-10 h-10 rounded-xl bg-[#10B981] text-[#0A0A0F] flex items-center justify-center shrink-0">
-                        <MapPin className="w-6 h-6 animate-bounce" />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-sm text-[#10B981]">Your Driver Has Arrived!</h4>
-                        <p className="text-xs text-[#F8FAFC]">Please board the vehicle at your pickup location.</p>
-                      </div>
-                    </div>
-
-                    <div className="p-5 rounded-2xl bg-[#111118] border border-[#2D2D3F] text-center space-y-2">
-                      <p className="text-xs uppercase font-semibold text-[#94A3B8]">Boarding Verification OTP</p>
-                      <p className="text-3xl font-black font-mono tracking-widest text-[#7C3AED]">
-                        {currentRide.otp || localStorage.getItem("rideOtp") || "••••"}
-                      </p>
-                      <p className="text-[11px] text-[#475569]">Give this 4-digit key to the driver to start trip</p>
-                    </div>
-
-                    <DriverCard driver={currentRide.captain} />
-                  </motion.div>
-                )}
-
-                {/* STATE 5: IN RIDE */}
-                {(currentStatus === "in_ride" || currentStatus === "in_progress") && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="space-y-4"
-                  >
-                    <div className="p-4 rounded-2xl bg-[#111118] border border-[#2D2D3F] space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-[#10B981] flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-[#10B981] animate-ping" />
-                          Trip in Progress
-                        </span>
-                        <span className="text-xs font-mono text-[#94A3B8]">On Schedule</span>
-                      </div>
-
-                      {/* Route progress line */}
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-xs text-[#94A3B8]">
-                          <span className="truncate max-w-[140px]">{currentRide.pickup?.address || "Pickup"}</span>
-                          <span className="truncate max-w-[140px] text-right">{currentRide.destination?.address || "Destination"}</span>
+                  {/* STAGE 3: DRIVER EN ROUTE */}
+                  {currentStatus === "driver_en_route" && (
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-xl bg-[#121215] border border-white/[0.1] space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#FAFAFA]">
+                            Driver is heading to your pickup spot
+                          </span>
+                          <span className="text-xs font-mono font-bold text-[#10B981]">
+                            ~3 mins away
+                          </span>
                         </div>
-                        <div className="h-2 w-full bg-[#0A0A0F] rounded-full overflow-hidden">
+                        <div className="relative h-2 w-full bg-[#09090B] rounded-full overflow-hidden">
                           <motion.div
-                            initial={{ width: "10%" }}
-                            animate={{ width: "65%" }}
-                            transition={{ duration: 10, ease: "linear" }}
-                            className="h-full bg-gradient-to-r from-[#06B6D4] to-[#10B981] rounded-full"
+                            animate={{ x: ["0%", "85%"] }}
+                            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+                            className="absolute top-0 left-0 w-10 h-full bg-[#10B981] rounded-full"
                           />
                         </div>
                       </div>
-                    </div>
 
-                    <DriverCard driver={currentRide.captain} />
-                  </motion.div>
-                )}
+                      <DriverCard
+                        driver={currentRide.captain}
+                        eta="3"
+                        onCall={() => showToast("Calling driver...")}
+                        onChat={() => showToast("Opening chat...")}
+                      />
 
-                {/* STATE 6: COMPLETED */}
-                {currentStatus === "completed" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                    className="p-5 rounded-3xl bg-[#111118] border border-[#2D2D3F] space-y-5 shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
-                  >
-                    <div className="text-center space-y-1">
-                      <div className="w-12 h-12 rounded-2xl bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981] flex items-center justify-center mx-auto">
-                        <CheckCircle2 className="w-6 h-6" />
-                      </div>
-                      <h3 className="text-xl font-black text-[#F8FAFC]">Trip Completed</h3>
-                      <p className="text-xs text-[#94A3B8]">Receipt and fare summary</p>
-                    </div>
-
-                    {/* Itemized Fare Receipt */}
-                    <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1E1E2E] space-y-2.5 text-xs">
-                      <div className="flex justify-between text-[#94A3B8]">
-                        <span>Base Fare:</span>
-                        <span className="text-[#F8FAFC]">₹50.00</span>
-                      </div>
-                      <div className="flex justify-between text-[#94A3B8]">
-                        <span>Distance Charge:</span>
-                        <span className="text-[#F8FAFC]">₹{Number(currentRide.fare * 0.7 || 140).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-[#94A3B8]">
-                        <span>Platform & Surge:</span>
-                        <span className="text-[#F8FAFC]">1.0x</span>
-                      </div>
-                      <div className="pt-2 border-t border-[#1E1E2E] flex justify-between font-bold text-sm text-[#F8FAFC]">
-                        <span>Total Paid:</span>
-                        <span className="text-[#10B981]">₹{Number(currentRide.fare || 210).toFixed(2)}</span>
+                      <div className="p-3.5 rounded-xl bg-[#121215] border border-white/[0.08] flex justify-between items-center text-xs">
+                        <span className="text-[#A1A1AA]">Boarding PIN</span>
+                        <span className="font-mono text-base font-extrabold text-[#10B981]">
+                          {currentRide.otp || localStorage.getItem("rideOtp") || "••••"}
+                        </span>
                       </div>
                     </div>
+                  )}
 
-                    {/* Interactive 5-Star Rating */}
-                    <div className="text-center space-y-2">
-                      <p className="text-xs font-semibold text-[#94A3B8]">Rate your driver</p>
-                      <div className="flex justify-center">
-                        <RatingStars rating={driverRating} onChange={setDriverRating} size={28} />
+                  {/* STAGE 4: DRIVER ARRIVED AT PICKUP */}
+                  {currentStatus === "arrived" && (
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-xl bg-[#10B981]/15 border border-[#10B981]/40 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-[#10B981] text-[#09090B] flex items-center justify-center shrink-0">
+                          <MapPin className="w-5 h-5 animate-bounce" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm text-[#10B981]">
+                            Your driver is at the pickup point
+                          </h4>
+                          <p className="text-xs text-[#FAFAFA]">
+                            Check the license plate and share your PIN once seated.
+                          </p>
+                        </div>
                       </div>
-                    </div>
 
-                    <button
-                      onClick={() => navigate("/order-confirmation", { state: { method: "Razorpay", paymentId: `NEX-${Date.now()}` } })}
-                      className="w-full py-3.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold transition-all shadow-[0_0_20px_rgba(124,58,237,0.3)]"
-                    >
-                      View Receipt & Settlement
-                    </button>
-                  </motion.div>
-                )}
-              </div>
-            )}
+                      <div className="p-5 rounded-xl bg-[#121215] border border-white/[0.1] text-center space-y-2">
+                        <p className="text-[11px] font-mono uppercase tracking-wider text-[#A1A1AA]">
+                          Boarding PIN
+                        </p>
+                        <p className="text-3xl font-extrabold font-mono tracking-widest text-[#10B981]">
+                          {currentRide.otp || localStorage.getItem("rideOtp") || "••••"}
+                        </p>
+                        <p className="text-xs text-[#A1A1AA]">
+                          The trip meter starts only after the driver enters this PIN.
+                        </p>
+                      </div>
+
+                      <DriverCard driver={currentRide.captain} />
+                    </div>
+                  )}
+
+                  {/* STAGE 5: IN RIDE */}
+                  {(currentStatus === "in_ride" || currentStatus === "in_progress") && (
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-xl bg-[#121215] border border-white/[0.1] space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#10B981] flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-[#10B981] animate-ping" />
+                            On the way to destination
+                          </span>
+                          <span className="text-xs font-mono text-[#A1A1AA]">Fare locked</span>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between text-xs text-[#A1A1AA]">
+                            <span className="truncate max-w-[140px]">
+                              {currentRide.pickup?.address || "Pickup"}
+                            </span>
+                            <span className="truncate max-w-[140px] text-right text-[#FAFAFA]">
+                              {currentRide.destination?.address || "Destination"}
+                            </span>
+                          </div>
+                          <div className="h-2 w-full bg-[#09090B] rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: "15%" }}
+                              animate={{ width: "72%" }}
+                              transition={{ duration: 8, ease: "easeOut" }}
+                              className="h-full bg-[#10B981] rounded-full"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <DriverCard driver={currentRide.captain} />
+                    </div>
+                  )}
+
+                  {/* STAGE 6: COMPLETED */}
+                  {currentStatus === "completed" && (
+                    <div className="p-5 rounded-2xl bg-[#121215] border border-white/[0.1] space-y-5">
+                      <div className="text-center space-y-1">
+                        <div className="w-11 h-11 rounded-xl bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981] flex items-center justify-center mx-auto">
+                          <CheckCircle2 className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-lg font-extrabold text-[#FAFAFA]">You’ve arrived</h3>
+                        <p className="text-xs text-[#A1A1AA]">Here is your final fare summary</p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-[#09090B] border border-white/[0.08] space-y-2 text-xs">
+                        <div className="flex justify-between text-[#A1A1AA]">
+                          <span>Base Fare</span>
+                          <span className="font-mono text-[#FAFAFA]">₹50.00</span>
+                        </div>
+                        <div className="flex justify-between text-[#A1A1AA]">
+                          <span>Distance & Time</span>
+                          <span className="font-mono text-[#FAFAFA]">
+                            ₹{Math.max(0, Number(currentRide.fare || 210) - 50).toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="pt-2 border-t border-white/[0.08] flex justify-between font-bold text-sm text-[#FAFAFA]">
+                          <span>Total Paid</span>
+                          <span className="font-mono text-[#10B981]">
+                            ₹{Number(currentRide.fare || 210).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="text-center space-y-2">
+                        <p className="text-xs font-semibold text-[#A1A1AA]">
+                          How was your trip with {currentRide.captain?.fullname?.firstname || "your driver"}?
+                        </p>
+                        <div className="flex justify-center">
+                          <RatingStars rating={driverRating} onChange={setDriverRating} size={26} />
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          navigate("/order-confirmation", {
+                            state: { method: "Razorpay", paymentId: `NEX-${Date.now()}` },
+                          })
+                        }
+                        className="w-full py-3.5 rounded-xl bg-[#FAFAFA] hover:bg-white text-[#09090B] text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer"
+                      >
+                        View Tax Receipt & Invoice
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </aside>
 
-        {/* RIGHT AREA: FULL-SCREEN MAP CONTAINER */}
+        {/* RIGHT AREA: LIVE INTERACTIVE MAP WITH TWO-COORDINATE ROUTING */}
         <main className="flex-1 h-full w-full relative">
           <MapContainer className="h-full w-full">
             <OSMMap
@@ -658,54 +934,54 @@ const Dashboard = () => {
                   : null
               }
               rideStatus={currentStatus}
+              onPickupChange={!currentRide ? handleMapPickupChange : undefined}
+              onDestinationChange={!currentRide ? handleMapDestChange : undefined}
+              onRouteCalculated={handleRouteCalculated}
             />
           </MapContainer>
 
-          {/* MOBILE BOTTOM SHEET TRIGGER FOR SMALL SCREENS */}
+          {/* MOBILE SHEET */}
           <div className="lg:hidden">
             <BottomSheet
               isOpen={isMobileSheetOpen}
               onClose={() => setIsMobileSheetOpen(false)}
-              title={currentRide ? "Active Ride Telemetry" : "Book Nexus Ride"}
+              title={currentRide ? "Your Active Trip" : "Enter Two Coordinates"}
             >
               {!currentRide ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <input
                     type="text"
-                    placeholder="Pickup location"
-                    value={pickup}
-                    onChange={(e) => setPickup(e.target.value)}
-                    className="w-full p-3 rounded-xl bg-[#0A0A0F] border border-[#2D2D3F] text-sm text-[#F8FAFC]"
+                    placeholder="Coord 1 (e.g. 28.6315, 77.2167)"
+                    value={coord1Input}
+                    onChange={(e) => handleCoord1Change(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-[#09090B] border border-white/[0.1] font-mono text-xs text-[#FAFAFA]"
                   />
                   <input
                     type="text"
-                    placeholder="Destination"
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    className="w-full p-3 rounded-xl bg-[#0A0A0F] border border-[#2D2D3F] text-sm text-[#F8FAFC]"
+                    placeholder="Coord 2 (e.g. 28.5562, 77.1000)"
+                    value={coord2Input}
+                    onChange={(e) => handleCoord2Change(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-[#09090B] border border-white/[0.1] font-mono text-xs text-[#FAFAFA]"
                   />
                   <button
                     onClick={handleCalculateFare}
-                    className="w-full py-3 rounded-xl bg-[#1A1A24] text-xs font-bold"
+                    className="w-full py-3 rounded-xl bg-[#18181C] text-xs font-bold text-[#FAFAFA]"
                   >
-                    Calculate Fares
+                    Plot Route & Check Fare
                   </button>
                   <button
                     onClick={handleConfirmRide}
-                    className="w-full py-3.5 rounded-xl bg-[#7C3AED] text-sm font-bold text-white shadow-lg"
+                    className="w-full py-3.5 rounded-xl bg-[#FAFAFA] text-sm font-bold text-[#09090B]"
                   >
-                    Confirm Booking
+                    Book Ride • ₹{tiers.find((t) => t.id === selectedTier)?.price}
                   </button>
                 </div>
               ) : (
-                <div className="space-y-4 text-center">
+                <div className="space-y-3 text-center">
                   <RideStatusBadge status={currentStatus} />
-                  <p className="text-sm font-bold text-[#F8FAFC]">
-                    {currentStatus.replace(/_/g, " ").toUpperCase()}
-                  </p>
                   {currentRide.otp && (
-                    <p className="text-2xl font-mono font-black text-[#7C3AED]">
-                      OTP: {currentRide.otp}
+                    <p className="text-2xl font-mono font-extrabold text-[#10B981]">
+                      PIN: {currentRide.otp}
                     </p>
                   )}
                   {currentRide.captain && <DriverCard driver={currentRide.captain} />}

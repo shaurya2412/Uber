@@ -27,6 +27,30 @@ function scheduleRideTimeout(rideId, timeoutMs = 60000) {
     try {
       activeTimers.delete(rideIdStr);
 
+      if (rideModel.db.readyState !== 1) {
+        const { inMemoryRides } = require('../controllers/ride.controller');
+        const memRide = inMemoryRides ? inMemoryRides.get(rideIdStr) : null;
+        if (memRide && (memRide.status === 'pending' || memRide.status === 'requested')) {
+          console.log(`⏱️ Auto-cancelling unaccepted in-memory ride ${rideIdStr} after timeout.`);
+          memRide.status = 'cancelled';
+          memRide.cancelledAt = new Date();
+          memRide.cancelReason = 'auto_timeout';
+          inMemoryRides.set(rideIdStr, memRide);
+          try {
+            const io = getIo();
+            if (io) {
+              io.to(rideIdStr).emit('ride:cancelled', memRide);
+              io.to(rideIdStr).emit('ride:auto_cancelled', {
+                rideId: rideIdStr,
+                reason: 'auto_timeout',
+                message: 'No driver accepted your ride within 60 seconds. Please try again.'
+              });
+            }
+          } catch (e) {}
+        }
+        return;
+      }
+
       const ride = await rideModel.findById(rideIdStr);
       if (ride && (ride.status === 'pending' || ride.status === 'requested')) {
         console.log(`⏱️ Auto-cancelling unaccepted ride ${rideIdStr} after 60 seconds.`);

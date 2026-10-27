@@ -1,6 +1,7 @@
 const captainModel = require("../models/captain.model");
 const captainService = require("../services/captain.service");
 const BlacklistToken = require('../models/blacklistToken.model');
+const { blacklistTokenInMemory, isTokenBlacklisted } = require('../middlewares/auth.middleware');
 const redisClient = require('../db/redis');
 const jwt = require('jsonwebtoken');
 const config = require('../config');
@@ -183,6 +184,7 @@ module.exports.logoutCaptain = async (req, res) => {
             const decoded = jwt.decode(token);
             const expiresIn = decoded?.exp ? decoded.exp - Math.floor(Date.now() / 1000) : 86400;
             const ttl = expiresIn > 0 ? expiresIn : 3600;
+            blacklistTokenInMemory(token);
 
             if (redisClient && redisClient.isOpen) {
                 await redisClient.setEx(`blacklist:${token}`, ttl, 'revoked');
@@ -213,11 +215,8 @@ module.exports.refreshCaptainToken = async (req, res) => {
             return res.status(400).json({ message: 'Refresh token is required' });
         }
 
-        if (redisClient && redisClient.isOpen) {
-            const isBlacklisted = await redisClient.get(`blacklist:${refreshToken}`);
-            if (isBlacklisted) {
-                return res.status(403).json({ message: 'Refresh token has been revoked' });
-            }
+        if (await isTokenBlacklisted(refreshToken)) {
+            return res.status(403).json({ message: 'Refresh token has been revoked' });
         }
 
         const secret = process.env.JWT_REFRESH_SECRET || (config.JWT_SECRET + '_refresh');
@@ -255,4 +254,3 @@ module.exports.refreshCaptainToken = async (req, res) => {
         return res.status(403).json({ message: 'Invalid or expired refresh token' });
     }
 };
-

@@ -105,6 +105,14 @@ async function runAllApiTests() {
     return `Status ${res.status}: Token invalidated`;
   });
 
+  await test('GET /users/profile (Revoked Token) - Verify Blacklist Enforcement', 'User', async () => {
+    const res = await fetch(`${BASE_URL}/users/profile`, {
+      headers: { Authorization: `Bearer ${userToken}` },
+    });
+    if (res.status !== 401) throw new Error(`Expected 401 for blacklisted token, got ${res.status}`);
+    return `Status ${res.status}: Blacklisted token properly rejected`;
+  });
+
   // Log back in to retain valid userToken for subsequent ride tests
   const loginRes = await fetch(`${BASE_URL}/users/login`, {
     method: 'POST',
@@ -252,6 +260,8 @@ async function runAllApiTests() {
   // ---------------------------------------------------------
   console.log('\n--- 5. Core Ride Lifecycle APIs ---');
 
+  let testRideOtp = null;
+
   await test('POST /rides/book - Book New Ride', 'Ride', async () => {
     const res = await fetch(`${BASE_URL}/rides/book`, {
       method: 'POST',
@@ -274,7 +284,139 @@ async function runAllApiTests() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || JSON.stringify(data.error));
     testRideId = data.data?._id || data.ride?._id || data._id;
-    return `Status ${res.status}: Ride created with ID ${testRideId || 'generated'}`;
+    testRideOtp = data.otp || data.data?.startOtp;
+    return `Status ${res.status}: Ride created with ID ${testRideId || 'generated'} (OTP: ${testRideOtp})`;
+  });
+
+  await test('GET /rides/available - Captain Query Nearby Rides', 'Ride', async () => {
+    const res = await fetch(`${BASE_URL}/rides/available`, {
+      headers: { Authorization: `Bearer ${captainToken}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to fetch available rides');
+    return `Status ${res.status}: Returned ${data.data?.length ?? 0} available ride(s) in area`;
+  });
+
+  await test('POST /rides/:rideId/accept - Captain Accepts Ride (requested -> accepted)', 'Ride', async () => {
+    const res = await fetch(`${BASE_URL}/rides/${testRideId}/accept`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${captainToken}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to accept ride');
+    return `Status ${res.status}: Ride status -> ${data.data?.status}`;
+  });
+
+  await test('POST /rides/:rideId/en-route - Captain En Route (accepted -> driver_en_route)', 'Ride', async () => {
+    const res = await fetch(`${BASE_URL}/rides/${testRideId}/en-route`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${captainToken}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to set en-route');
+    return `Status ${res.status}: Ride status -> ${data.data?.status}`;
+  });
+
+  await test('POST /rides/:rideId/arrived - Captain Arrived at Pickup (driver_en_route -> arrived)', 'Ride', async () => {
+    const res = await fetch(`${BASE_URL}/rides/${testRideId}/arrived`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${captainToken}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to set arrived');
+    return `Status ${res.status}: Ride status -> ${data.data?.status}`;
+  });
+
+  await test('POST /rides/:rideId/start - Start Ride with Valid OTP (arrived -> in_ride)', 'Ride', async () => {
+    const res = await fetch(`${BASE_URL}/rides/${testRideId}/start`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${captainToken}`,
+      },
+      body: JSON.stringify({ otp: testRideOtp }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to start ride');
+    return `Status ${res.status}: Ride status -> ${data.data?.status}`;
+  });
+
+  await test('PUT /rides/:rideId/location - Update Live Driver GPS Location', 'Ride', async () => {
+    const res = await fetch(`${BASE_URL}/rides/${testRideId}/location`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${captainToken}`,
+      },
+      body: JSON.stringify({ lat: 28.5921, lng: 77.1542 }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to update location');
+    return `Status ${res.status}: ${data.message}`;
+  });
+
+  await test('POST /rides/:rideId/complete - Complete Ride (in_ride -> completed)', 'Ride', async () => {
+    const res = await fetch(`${BASE_URL}/rides/${testRideId}/complete`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${captainToken}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to complete ride');
+    return `Status ${res.status}: Ride status -> ${data.data?.status}`;
+  });
+
+  await test('GET /rides/:rideId/receipt - Generate PDF Trip Receipt', 'Ride', async () => {
+    const res = await fetch(`${BASE_URL}/rides/${testRideId}/receipt`, {
+      headers: { Authorization: `Bearer ${userToken}` },
+    });
+    if (!res.ok) throw new Error(`Status ${res.status}: Failed to generate PDF receipt`);
+    const contentType = res.headers.get('content-type') || '';
+    return `Status ${res.status}: PDF stream verified (${contentType})`;
+  });
+
+  await test('POST /rides/:rideId/start (3 Wrong OTPs) - Verify 10-Min Brute-Force Lockout', 'Ride', async () => {
+    // Book & accept a ride specifically to test 3 wrong OTP attempts
+    const bookRes = await fetch(`${BASE_URL}/rides/book`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${userToken}` },
+      body: JSON.stringify({
+        pickup: { address: 'Hauz Khas, Delhi', coordinates: { lat: 28.5494, lng: 77.2001 } },
+        destination: { address: 'Cyber Hub, Gurgaon', coordinates: { lat: 28.4950, lng: 77.0895 } },
+        fare: 290,
+      }),
+    });
+    const bookData = await bookRes.json();
+    const lockRideId = bookData.data?._id;
+    await fetch(`${BASE_URL}/rides/${lockRideId}/accept`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${captainToken}` },
+    });
+
+    // Attempt 1 & 2 (wrong OTP) -> 400
+    await fetch(`${BASE_URL}/rides/${lockRideId}/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${captainToken}` },
+      body: JSON.stringify({ otp: '0000' }),
+    });
+    await fetch(`${BASE_URL}/rides/${lockRideId}/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${captainToken}` },
+      body: JSON.stringify({ otp: '0000' }),
+    });
+    // Attempt 3 (wrong OTP) -> 429 Lockout
+    const thirdRes = await fetch(`${BASE_URL}/rides/${lockRideId}/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${captainToken}` },
+      body: JSON.stringify({ otp: '0000' }),
+    });
+    if (thirdRes.status !== 429) throw new Error(`Expected HTTP 429 lockout on 3rd failed OTP, got ${thirdRes.status}`);
+
+    // Clean up by cancelling this test ride
+    await fetch(`${BASE_URL}/rides/${lockRideId}/cancel`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${userToken}` },
+    });
+    return `Status ${thirdRes.status}: 3rd wrong OTP triggered 10-minute lockout & ride cancelled`;
   });
 
   await test('GET /rides/user-history - Rider Trip History', 'Ride', async () => {
@@ -284,15 +426,6 @@ async function runAllApiTests() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to fetch history');
     return `Status ${res.status}: Fetched ${data.data?.length || 0} user rides`;
-  });
-
-  await test('GET /rides/available - Captain Query Nearby Rides', 'Ride', async () => {
-    const res = await fetch(`${BASE_URL}/rides/available`, {
-      headers: { Authorization: `Bearer ${captainToken}` },
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to fetch available rides');
-    return `Status ${res.status}: Returned available rides in area`;
   });
 
   await test('GET /rides/dashboard-stats - Rider Dashboard Stats', 'Ride', async () => {
@@ -382,6 +515,19 @@ async function runAllApiTests() {
     return `Status ${res.status}: Escrow released to captain wallet`;
   });
 
+  await test('POST /solana/escrow/refund - Solana Micro-Escrow Refund', 'Solana', async () => {
+    const res = await fetch(`${BASE_URL}/solana/escrow/refund`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rideId: testRideId || 'escrow_test_sample',
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || 'Escrow refund failed');
+    return `Status ${res.status}: Escrow refunded (${data.txSignature?.slice(0, 12)}...)`;
+  });
+
   // ---------------------------------------------------------
   // 7. EXECUTIVE ADMIN OPERATIONS & ANALYTICS APIS
   // ---------------------------------------------------------
@@ -420,6 +566,17 @@ async function runAllApiTests() {
     return `Status ${res.status}: ${data.data?.length ?? 0} drivers registered in fleet`;
   });
 
+  await test('PUT /api/admin/captains/:id/status - Approve/Suspend Driver Account', 'Admin', async () => {
+    const res = await fetch(`${BASE_URL}/api/admin/captains/cap_2/status`, {
+      method: 'PUT',
+      headers: { ...adminHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ approvalStatus: 'approved' }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || 'Driver approval update failed');
+    return `Status ${res.status}: ${data.message}`;
+  });
+
   // ---------------------------------------------------------
   // 8. AI CHAT HELPER ASSISTANT API (PORT 5500)
   // ---------------------------------------------------------
@@ -430,6 +587,29 @@ async function runAllApiTests() {
     const text = await res.text();
     if (!res.ok) throw new Error(`Status ${res.status}: ${text}`);
     return `Status ${res.status}: ${text}`;
+  });
+
+  await test('POST http://localhost:5500/chat - AI Fare Assistant Conversation', 'AIChat', async () => {
+    const res = await fetch(`${CHAT_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Estimate fare from Connaught Place to IGI Airport' }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.response) throw new Error('Chat assistant failed to respond');
+    return `Status ${res.status}: Thread ${data.threadId} replied`;
+  });
+
+  // ---------------------------------------------------------
+  // 9. FRONTEND APPLICATION SERVER (PORT 5173)
+  // ---------------------------------------------------------
+  console.log('\n--- 9. Frontend Application Server (Port 5173) ---');
+
+  await test('GET http://localhost:5173/ - React/Vite Frontend Serving', 'Frontend', async () => {
+    const res = await fetch('http://localhost:5173/');
+    const html = await res.text();
+    if (!res.ok || !html.includes('<div id="root">')) throw new Error('Frontend not serving root HTML');
+    return `Status ${res.status}: Vite React SPA index.html served`;
   });
 
   // ---------------------------------------------------------

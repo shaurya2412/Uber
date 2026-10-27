@@ -1,21 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Phone,
-  MessageSquare,
   MapPin,
   Navigation,
   DollarSign,
   Clock,
   Star,
-  User,
   Power,
-  CheckCircle2,
   AlertTriangle,
-  ArrowRight,
-  ShieldCheck,
   Radio,
   Car,
+  Check,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -33,32 +28,19 @@ import RideStatusBadge from "./ui/RideStatusBadge";
 import Toast from "./ui/Toast";
 import { useSocket } from "../context/SocketContext";
 
-// Confetti Particle Explosion
-const ConfettiBurst = () => {
-  const particles = Array.from({ length: 24 });
-  return (
-    <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-50">
-      {particles.map((_, i) => {
-        const angle = (i / particles.length) * 360;
-        const radius = Math.random() * 120 + 80;
-        const x = Math.cos((angle * Math.PI) / 180) * radius;
-        const y = Math.sin((angle * Math.PI) / 180) * radius;
-        const colors = ["#7C3AED", "#06B6D4", "#10B981", "#F59E0B", "#EC4899"];
-        const color = colors[i % colors.length];
+const DRIVER_STAGES = [
+  { key: "accepted", label: "1. Accepted" },
+  { key: "driver_en_route", label: "2. Heading to Pickup" },
+  { key: "arrived", label: "3. At Pickup (Verify PIN)" },
+  { key: "in_ride", label: "4. On Trip" },
+];
 
-        return (
-          <motion.div
-            key={i}
-            initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
-            animate={{ scale: [0, 1.2, 0.8], x, y, opacity: [1, 1, 0] }}
-            transition={{ duration: 0.9, ease: "easeOut" }}
-            style={{ backgroundColor: color }}
-            className="w-2.5 h-2.5 rounded-full absolute shadow-[0_0_10px_currentColor]"
-          />
-        );
-      })}
-    </div>
-  );
+const getDriverStageIdx = (status) => {
+  if (status === "accepted") return 0;
+  if (status === "driver_en_route") return 1;
+  if (status === "arrived") return 2;
+  if (status === "in_ride" || status === "in_progress") return 3;
+  return 0;
 };
 
 const CaptainDashboard = () => {
@@ -84,20 +66,17 @@ const CaptainDashboard = () => {
     StartRide,
     setDriverEnRoute,
     setDriverArrived,
-    isLoading: rideLoading,
   } = useRideStore();
 
   const [otp, setOtp] = useState("");
   const [incomingRide, setIncomingRide] = useState(null);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [pendingActionModal, setPendingActionModal] = useState(null); // { type: 'arrived'|'start'|'finish'|'cancel', title, desc }
+  const [pendingActionModal, setPendingActionModal] = useState(null);
   const [toast, setToast] = useState({ isVisible: false, message: "", type: "info" });
 
   const showToast = (message, type = "info") => {
     setToast({ isVisible: true, message, type });
   };
 
-  // Initial Data Load
   useEffect(() => {
     fetchCaptainProfile();
     fetchAvailableRides();
@@ -105,14 +84,12 @@ const CaptainDashboard = () => {
     fetchRideHistory();
   }, [fetchCaptainProfile, fetchAvailableRides, fetchCurrentRide, fetchRideHistory]);
 
-  // Socket listener for incoming available rides
   useEffect(() => {
     if (!active || !socket) return;
 
     socket.emit("join_captains");
 
     const handleRideCreated = (rideData) => {
-      console.log("Incoming ride dispatched via socket:", rideData);
       setIncomingRide(rideData);
       fetchAvailableRides();
     };
@@ -141,7 +118,6 @@ const CaptainDashboard = () => {
     };
   }, [active, socket, fetchAvailableRides, fetchCurrentRide]);
 
-  // Periodic polling for available rides while driver is active/online
   useEffect(() => {
     if (!active) return;
     fetchAvailableRides();
@@ -151,14 +127,13 @@ const CaptainDashboard = () => {
     return () => clearInterval(interval);
   }, [active, fetchAvailableRides]);
 
-  // Join current ride room
   useEffect(() => {
     if (socket && currentRide?._id) {
       socket.emit("join_ride", currentRide._id);
     }
   }, [socket, currentRide?._id]);
 
-  // Sub-4-second GPS Tracking Telemetry Pulse
+  // Sub-4-second GPS location stream
   useEffect(() => {
     if (!active || !socket) return;
 
@@ -167,6 +142,8 @@ const CaptainDashboard = () => {
       socket.emit("location:update", {
         latitude,
         longitude,
+        lat: latitude,
+        lng: longitude,
         heading,
         speed,
         rideId: currentRide?._id || null,
@@ -214,24 +191,18 @@ const CaptainDashboard = () => {
     };
   }, [active, socket, currentRide?._id, captain?._id]);
 
-  // Handle Accept Incoming Ride
   const handleAcceptIncoming = async (rideToAccept) => {
     try {
-      setShowConfetti(true);
       await acceptRide(rideToAccept._id);
-      showToast("Ride accepted! En route to pickup.", "success");
-      setTimeout(() => {
-        setIncomingRide(null);
-        setShowConfetti(false);
-      }, 1000);
+      showToast("Trip accepted! Head toward the pickup spot.", "success");
+      setIncomingRide(null);
       await Promise.all([fetchCurrentRide(), fetchAvailableRides()]);
     } catch (err) {
-      showToast(err.response?.data?.message || "Could not accept ride", "error");
+      showToast(err.response?.data?.message || "Could not accept trip", "error");
       setIncomingRide(null);
     }
   };
 
-  // State machine button actions with confirmation modal
   const executeConfirmedAction = async () => {
     if (!pendingActionModal || !currentRide) return;
     const { type } = pendingActionModal;
@@ -240,24 +211,24 @@ const CaptainDashboard = () => {
     try {
       if (type === "en_route") {
         await setDriverEnRoute(currentRide._id);
-        showToast("Marked En Route to Pickup", "info");
+        showToast("Status updated: Heading to pickup", "info");
       } else if (type === "arrived") {
         await setDriverArrived(currentRide._id);
-        showToast("Arrival confirmed. Request OTP from passenger.", "success");
+        showToast("Marked arrived. Ask the rider for their 4-digit PIN.", "success");
       } else if (type === "start") {
         if (!otp || otp.length < 4) {
-          showToast("Please enter a valid 4-digit OTP", "warning");
+          showToast("Enter the rider's 4-digit PIN first", "warning");
           return;
         }
         await StartRide(currentRide._id, otp);
         setOtp("");
-        showToast("Trip started! Drive safely.", "success");
+        showToast("PIN verified! Trip started.", "success");
       } else if (type === "finish") {
         await finishRide(currentRide._id);
-        showToast("Trip completed! Earnings credited.", "success");
+        showToast("Trip completed! Fare added to your earnings.", "success");
       } else if (type === "cancel") {
         await cancelRidecaptain(currentRide._id);
-        showToast("Ride cancelled", "info");
+        showToast("Trip cancelled", "info");
       }
       await Promise.all([fetchCurrentRide(), fetchRideHistory(), fetchAvailableRides()]);
     } catch (err) {
@@ -265,15 +236,14 @@ const CaptainDashboard = () => {
     }
   };
 
-  // Sparkline data from rideHistory
   const sparklineData = [
-    { day: "Mon", amount: 420 },
-    { day: "Tue", amount: 680 },
-    { day: "Wed", amount: 590 },
-    { day: "Thu", amount: 890 },
-    { day: "Fri", amount: 1240 },
-    { day: "Sat", amount: 1650 },
-    { day: "Sun", amount: 1400 },
+    { day: "Mon", amount: 1420 },
+    { day: "Tue", amount: 1680 },
+    { day: "Wed", amount: 1590 },
+    { day: "Thu", amount: 1890 },
+    { day: "Fri", amount: 2440 },
+    { day: "Sat", amount: 2850 },
+    { day: "Sun", amount: 2400 },
   ];
 
   const totalEarnings = (rideHistory || []).reduce(
@@ -281,8 +251,10 @@ const CaptainDashboard = () => {
     0
   );
 
+  const stageIdx = currentRide ? getDriverStageIdx(currentRide.status) : 0;
+
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-[#F8FAFC]">
+    <div className="min-h-screen bg-[#09090B] text-[#FAFAFA]">
       <CaptainDashboardHeader />
 
       <Toast
@@ -292,331 +264,348 @@ const CaptainDashboard = () => {
         onClose={() => setToast((t) => ({ ...t, isVisible: false }))}
       />
 
-      <main className="max-w-7xl mx-auto p-6 lg:p-8 space-y-8">
-        {/* TOP SECTION: ONLINE/OFFLINE TOGGLE + EARNINGS + SPARKLINE */}
-        <section className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
-          {/* 1. Large Online/Offline Pill Button (Col 4) */}
-          <div className="md:col-span-4 glass-card-elevated rounded-3xl p-6 border border-[#2D2D3F] flex flex-col justify-between shadow-[0_15px_40px_rgba(0,0,0,0.5)]">
+      <main className="max-w-7xl mx-auto p-5 lg:p-8 space-y-8">
+        {/* TOP ROW: DUTY SWITCH + EARNINGS + WEEKLY CHART */}
+        <section className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
+          {/* 1. Online/Offline Switch */}
+          <div className="md:col-span-4 rounded-2xl bg-[#121215] p-6 border border-white/[0.08] flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#94A3B8]">
-                Driver Availability
+              <span className="text-xs font-mono uppercase tracking-wider text-[#A1A1AA]">
+                Duty Status
               </span>
               <span
-                className={`w-3 h-3 rounded-full ${
-                  active ? "bg-[#10B981] animate-ping" : "bg-gray-600"
+                className={`w-2.5 h-2.5 rounded-full ${
+                  active ? "bg-[#10B981] animate-ping" : "bg-[#52525B]"
                 }`}
               />
             </div>
 
-            <div className="py-6 text-center space-y-2">
-              <p
-                className={`text-2xl font-black tracking-tight ${
-                  active ? "text-[#10B981]" : "text-[#94A3B8]"
-                }`}
-              >
-                {active ? "You are online" : "You are offline"}
+            <div className="py-5 space-y-1">
+              <p className="text-2xl font-extrabold tracking-tight text-[#FAFAFA]">
+                {active ? "Online — Accepting Trips" : "Currently Offline"}
               </p>
-              <p className="text-xs text-[#94A3B8]">
+              <p className="text-xs text-[#A1A1AA]">
                 {active
-                  ? "Telemetry streaming. Ready to receive dispatch offers."
-                  : "Go online to receive nearby ride requests."}
+                  ? "Showing you nearby requests with upfront drop-off & fare."
+                  : "Switch online whenever you’re ready to take bookings."}
               </p>
             </div>
 
-            {/* Toggle Button */}
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
+              whileTap={{ scale: 0.98 }}
               onClick={toggleActive}
-              className={`w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2.5 transition-all shadow-lg ${
+              className={`w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 active
-                  ? "bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/40 success-glow"
-                  : "bg-[#1A1A24] text-[#F8FAFC] border border-[#2D2D3F] hover:border-[#7C3AED]"
+                  ? "bg-[#10B981] text-[#09090B]"
+                  : "bg-[#FAFAFA] text-[#09090B] hover:bg-white"
               }`}
             >
               <Power className="w-4 h-4" />
-              <span>{active ? "Go Offline" : "Go Online Now"}</span>
+              <span>{active ? "Go Offline" : "Go Online"}</span>
             </motion.button>
           </div>
 
-          {/* 2. Today's Earnings Glass Card (Col 4) */}
-          <div className="md:col-span-4 glass-card rounded-3xl p-6 border border-[#1E1E2E] flex flex-col justify-between">
-            <div className="flex items-center justify-between text-[#94A3B8]">
-              <span className="text-xs font-bold uppercase tracking-wider">Today's Revenue</span>
-              <DollarSign className="w-5 h-5 text-[#7C3AED]" />
+          {/* 2. Earnings Summary */}
+          <div className="md:col-span-4 rounded-2xl bg-[#121215] p-6 border border-white/[0.08] flex flex-col justify-between">
+            <div className="flex items-center justify-between text-[#A1A1AA]">
+              <span className="text-xs font-mono uppercase tracking-wider">Completed Earnings</span>
+              <DollarSign className="w-4 h-4 text-[#10B981]" />
             </div>
 
             <div className="py-4">
-              <span className="text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] tracking-tight">
+              <span className="text-4xl font-extrabold font-mono text-[#FAFAFA] tabular-nums">
                 ₹{totalEarnings.toFixed(2)}
               </span>
-              <p className="text-xs text-[#94A3B8] mt-1.5 flex items-center gap-1.5">
+              <p className="text-xs text-[#A1A1AA] mt-1.5 flex items-center gap-2">
                 <span className="text-[#10B981] font-semibold">
                   {(rideHistory || []).length} trips completed
                 </span>
-                <span>• 4.9 ★ Rating</span>
+                <span>•</span>
+                <span>4.92 ★ Partner Rating</span>
               </p>
             </div>
 
-            <div className="p-3 rounded-xl bg-[#0A0A0F]/60 border border-[#1E1E2E] flex justify-between text-xs">
-              <span className="text-[#94A3B8]">Estimated Payout:</span>
-              <span className="font-bold text-[#10B981]">Instant Bank Transfer</span>
+            <div className="p-3 rounded-xl bg-[#09090B] border border-white/[0.07] flex justify-between text-xs">
+              <span className="text-[#A1A1AA]">Settlement</span>
+              <span className="font-mono font-semibold text-[#10B981]">Direct UPI / Bank</span>
             </div>
           </div>
 
-          {/* 3. Weekly Earnings Sparkline (Col 4) */}
-          <div className="md:col-span-4 glass-card rounded-3xl p-6 border border-[#1E1E2E] flex flex-col justify-between">
-            <div className="flex items-center justify-between text-[#94A3B8] mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider">Weekly Trends</span>
-              <Clock className="w-4 h-4 text-[#06B6D4]" />
+          {/* 3. Weekly Chart */}
+          <div className="md:col-span-4 rounded-2xl bg-[#121215] p-6 border border-white/[0.08] flex flex-col justify-between">
+            <div className="flex items-center justify-between text-[#A1A1AA] mb-2">
+              <span className="text-xs font-mono uppercase tracking-wider">7-Day Earnings</span>
+              <Clock className="w-4 h-4 text-[#FAFAFA]" />
             </div>
 
             <div className="h-28 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={sparklineData}>
                   <defs>
-                    <linearGradient id="purpleGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#7C3AED" stopOpacity={0.0} />
+                    <linearGradient id="emeraldGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#111118",
-                      border: "1px solid #2D2D3F",
-                      borderRadius: "10px",
+                      backgroundColor: "#09090B",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      borderRadius: "8px",
                       fontSize: "11px",
                     }}
                   />
-                  <XAxis dataKey="day" stroke="#475569" tick={{ fontSize: 10 }} />
+                  <XAxis dataKey="day" stroke="#52525B" tick={{ fontSize: 10 }} />
                   <Area
                     type="monotone"
                     dataKey="amount"
-                    stroke="#7C3AED"
-                    strokeWidth={2.5}
+                    stroke="#10B981"
+                    strokeWidth={2}
                     fillOpacity={1}
-                    fill="url(#purpleGradient)"
+                    fill="url(#emeraldGrad)"
                   />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
 
-            <p className="text-[11px] text-[#94A3B8] text-center pt-2">
-              Peak volumes on Friday & Saturday nights
+            <p className="text-[11px] text-[#A1A1AA] pt-2">
+              Zero platform commission cuts on airport drops
             </p>
           </div>
         </section>
 
-        {/* ACTIVE RIDE OR AVAILABLE DISPATCH OFFERS */}
+        {/* ACTIVE TRIP OR NEARBY REQUESTS */}
         <section className="space-y-6">
           {currentRide ? (
-            /* ACTIVE RIDE PANEL */
-            <div className="glass-card-elevated rounded-3xl p-6 lg:p-8 border border-[#2D2D3F] shadow-[0_20px_60px_rgba(0,0,0,0.6)] space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#1E1E2E]">
+            <motion.div
+              key={currentRide.status}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl bg-[#121215] p-6 lg:p-8 border border-white/[0.1] space-y-6"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-2xl bg-[#7C3AED]/20 text-[#7C3AED]">
-                    <Car className="w-6 h-6" />
+                  <div className="p-2.5 rounded-xl bg-[#10B981]/15 text-[#10B981]">
+                    <Car className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-[#F8FAFC]">Active Assignment</h2>
-                    <p className="text-xs text-[#94A3B8]">
-                      Trip ID: <span className="font-mono text-[#F8FAFC]">{currentRide._id?.slice(-8)}</span>
+                    <h2 className="text-lg font-extrabold text-[#FAFAFA]">Current Trip</h2>
+                    <p className="text-xs font-mono text-[#A1A1AA]">
+                      Booking #{currentRide._id?.slice(-6).toUpperCase()}
                     </p>
                   </div>
                 </div>
                 <RideStatusBadge status={currentRide.status} />
               </div>
 
-              {/* Passenger Info & Route */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Passenger Card */}
-                <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1E1E2E] flex items-center gap-4">
-                  <img
-                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
-                    alt="Passenger"
-                    className="w-14 h-14 rounded-full object-cover border-2 border-[#06B6D4]"
-                  />
+              {/* Animated 4-Stage Driver Stepper */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {DRIVER_STAGES.map((st, idx) => {
+                  const isDone = idx <= stageIdx;
+                  const isCurrent = idx === stageIdx;
+                  return (
+                    <div
+                      key={st.key}
+                      className={`p-3 rounded-xl border text-xs font-semibold transition-all ${
+                        isCurrent
+                          ? "bg-[#09090B] border-[#10B981] text-[#FAFAFA]"
+                          : isDone
+                          ? "bg-[#09090B]/60 border-white/[0.1] text-[#10B981]"
+                          : "bg-[#09090B]/30 border-white/[0.05] text-[#52525B]"
+                      }`}
+                    >
+                      <span>{st.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Rider & Route Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="p-4 rounded-xl bg-[#09090B] border border-white/[0.08] flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#18181C] border border-white/[0.1] flex items-center justify-center font-extrabold text-base text-[#FAFAFA]">
+                    {(currentRide.user?.fullname?.firstname || "R").slice(0, 1)}
+                  </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-base text-[#F8FAFC]">
-                      {currentRide.user?.fullname?.firstname || "Passenger"}
+                    <h3 className="font-bold text-base text-[#FAFAFA]">
+                      {currentRide.user?.fullname?.firstname || "Rider"}{" "}
+                      {currentRide.user?.fullname?.lastname || ""}
                     </h3>
-                    <div className="flex items-center gap-1.5 text-xs text-[#94A3B8] mt-0.5">
+                    <div className="flex items-center gap-1.5 text-xs text-[#A1A1AA] mt-0.5">
                       <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span className="font-bold text-[#F8FAFC]">5.0 ★</span>
-                      <span>• Verified Rider</span>
+                      <span className="font-bold text-[#FAFAFA]">4.9 ★</span>
+                      <span>• Verified Account</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Route specs */}
-                <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1E1E2E] space-y-2 text-xs">
+                <div className="p-4 rounded-xl bg-[#09090B] border border-white/[0.08] space-y-2 text-xs">
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-[#06B6D4] shrink-0" />
-                    <span className="text-[#94A3B8]">Pickup:</span>
-                    <span className="font-medium text-[#F8FAFC] truncate">
+                    <MapPin className="w-4 h-4 text-[#FAFAFA] shrink-0" />
+                    <span className="text-[#A1A1AA]">Pickup:</span>
+                    <span className="font-semibold text-[#FAFAFA] truncate">
                       {currentRide.pickup?.address || "Pickup Point"}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Navigation className="w-4 h-4 text-[#7C3AED] shrink-0" />
-                    <span className="text-[#94A3B8]">Dropoff:</span>
-                    <span className="font-medium text-[#F8FAFC] truncate">
+                    <Navigation className="w-4 h-4 text-[#10B981] shrink-0" />
+                    <span className="text-[#A1A1AA]">Drop-off:</span>
+                    <span className="font-semibold text-[#FAFAFA] truncate">
                       {currentRide.destination?.address || "Destination"}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center pt-2 border-t border-[#1E1E2E]">
-                    <span className="text-[#94A3B8]">Estimated Payout:</span>
-                    <span className="font-bold text-sm text-[#10B981]">
+                  <div className="flex justify-between items-center pt-2 border-t border-white/[0.07]">
+                    <span className="text-[#A1A1AA]">Trip Payout</span>
+                    <span className="font-mono font-bold text-sm text-[#10B981]">
                       ₹{Number(currentRide.fare || 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* STATE MACHINE ACTION BUTTONS WITH CONFIRM MODAL TRIGGER */}
+              {/* Action Controls */}
               <div className="pt-2 flex flex-wrap items-center gap-3">
-                {/* Step 1: Accepted -> En Route */}
                 {currentRide.status === "accepted" && (
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() =>
                       setPendingActionModal({
                         type: "en_route",
-                        title: "Confirm En Route",
-                        desc: "Notify passenger that you are driving toward the pickup point.",
+                        title: "Head to Pickup",
+                        desc: "Let the rider know you are on the way to their pickup point.",
                       })
                     }
-                    className="px-6 py-3.5 rounded-xl bg-[#06B6D4] hover:bg-[#0891B2] text-[#0A0A0F] font-bold text-sm transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]"
+                    className="px-6 py-3.5 rounded-xl bg-[#FAFAFA] hover:bg-white text-[#09090B] font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer"
                   >
-                    🚗 En Route to Pickup
+                    1. Mark Heading to Pickup
                   </motion.button>
                 )}
 
-                {/* Step 2: En Route -> I've Arrived */}
                 {currentRide.status === "driver_en_route" && (
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() =>
                       setPendingActionModal({
                         type: "arrived",
-                        title: "Confirm Arrival",
-                        desc: "Have you arrived at the pickup location? Passenger will be notified.",
+                        title: "Confirm Arrival at Pickup",
+                        desc: "Notify the rider that your car is waiting at the pickup spot.",
                       })
                     }
-                    className="px-6 py-3.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-bold text-sm transition-all shadow-[0_0_25px_rgba(124,58,237,0.4)]"
+                    className="px-6 py-3.5 rounded-xl bg-[#FAFAFA] hover:bg-white text-[#09090B] font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer"
                   >
-                    📍 I've Arrived
+                    2. I’ve Arrived at Pickup
                   </motion.button>
                 )}
 
-                {/* Step 3: Arrived -> Start Ride with OTP */}
                 {(currentRide.status === "arrived" || currentRide.status === "accepted") && (
                   <div className="flex items-center gap-2.5">
                     <input
                       type="text"
                       maxLength={4}
-                      placeholder="Enter 4-digit OTP"
+                      placeholder="4-digit PIN"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                      className="w-40 p-3 rounded-xl bg-[#0A0A0F] border border-[#2D2D3F] text-center font-mono text-sm font-bold text-[#F8FAFC] focus:outline-none focus:border-[#10B981] transition-all"
+                      className="w-36 p-3 rounded-xl bg-[#09090B] border border-white/[0.15] text-center font-mono text-sm font-bold text-[#FAFAFA] focus:outline-none focus:border-[#10B981]"
                     />
                     <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.97 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() =>
                         setPendingActionModal({
                           type: "start",
-                          title: "Start Trip",
-                          desc: `Verify passenger OTP (${otp || "none entered"}) and commence journey.`,
+                          title: "Verify PIN & Start Trip",
+                          desc: `Verify rider PIN (${otp || "not entered"}) and begin the trip.`,
                         })
                       }
-                      className="px-6 py-3.5 rounded-xl bg-[#10B981] hover:bg-[#059669] text-[#0A0A0F] font-bold text-sm transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                      className="px-6 py-3.5 rounded-xl bg-[#10B981] hover:bg-[#059669] text-[#09090B] font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer"
                     >
-                      ▶ Start Ride
+                      Verify PIN & Start
                     </motion.button>
                   </div>
                 )}
 
-                {/* Step 4: In Ride -> Complete Ride */}
                 {(currentRide.status === "in_ride" || currentRide.status === "in_progress") && (
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() =>
                       setPendingActionModal({
                         type: "finish",
                         title: "Complete Trip",
-                        desc: "Confirm destination arrival and process fare settlement.",
+                        desc: "Confirm drop-off arrival and settle the trip fare.",
                       })
                     }
-                    className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#10B981] to-[#06B6D4] text-[#0A0A0F] font-black text-sm transition-all shadow-[0_0_25px_rgba(16,185,129,0.4)]"
+                    className="px-8 py-3.5 rounded-xl bg-[#10B981] hover:bg-[#059669] text-[#09090B] font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer"
                   >
-                    🏁 Complete Ride
+                    Complete Trip
                   </motion.button>
                 )}
 
-                {/* Cancel Ride */}
                 {currentRide.status !== "completed" && (
                   <button
                     onClick={() =>
                       setPendingActionModal({
                         type: "cancel",
-                        title: "Cancel Assignment",
-                        desc: "Are you sure you want to cancel this ride? Frequent cancellations impact rating.",
+                        title: "Cancel Trip",
+                        desc: "Are you sure you want to cancel this assigned trip?",
                       })
                     }
-                    className="px-4 py-3 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs font-semibold transition-colors"
+                    className="px-4 py-3 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs font-semibold transition-colors cursor-pointer"
                   >
-                    Cancel Ride
+                    Cancel
                   </button>
                 )}
               </div>
-            </div>
+            </motion.div>
           ) : (
-            /* AVAILABLE RIDES LIST */
-            <div className="glass-card rounded-3xl p-6 border border-[#1E1E2E] space-y-4">
+            <div className="rounded-2xl bg-[#121215] p-6 border border-white/[0.08] space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg text-[#F8FAFC]">Available Ride Dispatches</h3>
-                <span className="text-xs text-[#94A3B8]">
-                  {(availableRides || []).length} nearby
+                <h3 className="font-bold text-base text-[#FAFAFA]">Nearby Ride Requests</h3>
+                <span className="text-xs font-mono text-[#A1A1AA]">
+                  {(availableRides || []).length} open requests
                 </span>
               </div>
 
-              {(!availableRides || availableRides.length === 0) ? (
-                <div className="p-8 text-center text-sm text-[#94A3B8] border border-dashed border-[#1E1E2E] rounded-2xl">
-                  <Radio className="w-6 h-6 mx-auto mb-2 text-[#7C3AED] animate-pulse" />
-                  <p>Radar scanning for nearby rider requests within 5km...</p>
+              {!availableRides || availableRides.length === 0 ? (
+                <div className="p-10 text-center text-sm text-[#A1A1AA] border border-dashed border-white/[0.08] rounded-xl">
+                  <Radio className="w-6 h-6 mx-auto mb-2 text-[#10B981] animate-pulse" />
+                  <p className="font-medium text-[#FAFAFA]">Waiting for new ride requests nearby</p>
+                  <p className="text-xs text-[#A1A1AA] mt-1">
+                    Requests within 5 km will pop up automatically with upfront payout.
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {availableRides.map((ride) => (
-                    <div
+                    <motion.div
                       key={ride._id}
-                      className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1E1E2E] hover:border-[#2D2D3F] transition-all space-y-3"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 rounded-xl bg-[#09090B] border border-white/[0.08] hover:border-white/20 transition-all space-y-3"
                     >
                       <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-bold text-sm text-[#F8FAFC]">
+                        <div className="space-y-1 min-w-0 pr-3">
+                          <p className="font-bold text-sm text-[#FAFAFA]">
                             {ride.user?.fullname?.firstname || "Rider"}
                           </p>
-                          <p className="text-xs text-[#94A3B8]">{ride.pickup?.address || "Pickup"}</p>
+                          <p className="text-xs text-[#A1A1AA] truncate">
+                            From: {ride.pickup?.address || "Pickup"}
+                          </p>
+                          <p className="text-xs text-[#FAFAFA] truncate">
+                            To: {ride.destination?.address || "Destination"}
+                          </p>
                         </div>
-                        <span className="text-base font-black text-[#10B981]">
-                          ₹{Number(ride.fare || 0).toFixed(2)}
+                        <span className="text-lg font-extrabold font-mono text-[#10B981] shrink-0">
+                          ₹{Number(ride.fare || 0).toFixed(0)}
                         </span>
                       </div>
 
                       <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.97 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => handleAcceptIncoming(ride)}
-                        className="w-full py-2.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-bold text-xs shadow-md transition-all"
+                        className="w-full py-2.5 rounded-lg bg-[#FAFAFA] hover:bg-white text-[#09090B] font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer"
                       >
-                        Accept Dispatch
+                        Accept Trip
                       </motion.button>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               )}
@@ -625,113 +614,100 @@ const CaptainDashboard = () => {
         </section>
       </main>
 
-      {/* FULL-SCREEN INCOMING RIDE MODAL WITH 10S COUNTDOWN RING + CONFETTI */}
+      {/* INCOMING RIDE REQUEST MODAL */}
       <AnimatePresence>
         {incomingRide && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl">
-            {showConfetti && <ConfettiBurst />}
-
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.94, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-lg glass-card-elevated rounded-3xl p-8 border border-[#7C3AED]/40 shadow-[0_0_60px_rgba(124,58,237,0.3)] text-center space-y-6"
+              exit={{ scale: 0.94, opacity: 0 }}
+              className="relative w-full max-w-md rounded-2xl bg-[#121215] p-7 border border-white/[0.15] text-center space-y-5 shadow-2xl"
             >
-              {/* Animated Countdown Ring */}
               <div className="flex justify-center">
                 <CountdownRing
                   duration={10}
-                  size={110}
-                  strokeWidth={6}
-                  color="#7C3AED"
-                  onTimeout={() => {
-                    showToast("Ride offer expired", "info");
-                    setIncomingRide(null);
-                  }}
+                  size={96}
+                  strokeWidth={5}
+                  color="#10B981"
+                  onTimeout={() => setIncomingRide(null)}
                 />
               </div>
 
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-[#06B6D4]">
-                  Incoming Ride Offer
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#10B981]">
+                  New Trip Request
                 </span>
-                <h2 className="text-3xl font-black text-[#F8FAFC] mt-1">
-                  ₹{Number(incomingRide.fare || 240).toFixed(2)}
+                <h2 className="text-3xl font-extrabold font-mono text-[#FAFAFA] mt-1">
+                  ₹{Number(incomingRide.fare || 240).toFixed(0)}
                 </h2>
-                <p className="text-xs text-[#94A3B8]">Est. Payout</p>
+                <p className="text-xs text-[#A1A1AA]">Upfront Locked Payout</p>
               </div>
 
-              {/* Pickup location & distance */}
-              <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1E1E2E] space-y-2 text-left text-xs">
+              <div className="p-4 rounded-xl bg-[#09090B] border border-white/[0.08] space-y-2 text-left text-xs">
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-[#06B6D4] shrink-0" />
-                  <span className="text-[#94A3B8]">Pickup:</span>
-                  <span className="font-semibold text-[#F8FAFC] truncate">
-                    {incomingRide.pickup?.address || "Pickup Point"}
+                  <MapPin className="w-4 h-4 text-[#FAFAFA] shrink-0" />
+                  <span className="text-[#A1A1AA]">Pickup:</span>
+                  <span className="font-semibold text-[#FAFAFA] truncate">
+                    {incomingRide.pickup?.address || "Pickup"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Navigation className="w-4 h-4 text-[#7C3AED] shrink-0" />
-                  <span className="text-[#94A3B8]">Dropoff:</span>
-                  <span className="font-semibold text-[#F8FAFC] truncate">
+                  <Navigation className="w-4 h-4 text-[#10B981] shrink-0" />
+                  <span className="text-[#A1A1AA]">Drop-off:</span>
+                  <span className="font-semibold text-[#FAFAFA] truncate">
                     {incomingRide.destination?.address || "Destination"}
                   </span>
                 </div>
               </div>
 
-              {/* Accept & Decline Buttons */}
-              <div className="grid grid-cols-2 gap-3.5 pt-2">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <button
                   onClick={() => setIncomingRide(null)}
-                  className="py-3.5 rounded-xl bg-transparent hover:bg-[#1A1A24] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#2D2D3F] font-semibold text-xs transition-colors"
+                  className="py-3 rounded-xl bg-[#09090B] hover:bg-[#18181C] text-[#A1A1AA] hover:text-[#FAFAFA] border border-white/[0.1] font-semibold text-xs transition-colors cursor-pointer"
                 >
-                  Decline
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
+                  Pass
+                </button>
+                <button
                   onClick={() => handleAcceptIncoming(incomingRide)}
-                  className="py-3.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-bold text-xs shadow-[0_0_25px_rgba(124,58,237,0.4)] transition-all"
+                  className="py-3 rounded-xl bg-[#10B981] hover:bg-[#059669] text-[#09090B] font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer"
                 >
-                  Accept Dispatch
-                </motion.button>
+                  Accept Trip
+                </button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* ACTION CONFIRMATION MODAL */}
+      {/* CONFIRMATION MODAL */}
       <AnimatePresence>
         {pendingActionModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-sm glass-card-elevated rounded-3xl p-6 border border-[#2D2D3F] text-center space-y-4"
+              className="w-full max-w-sm rounded-2xl bg-[#121215] p-6 border border-white/[0.12] text-center space-y-4"
             >
-              <div className="w-12 h-12 rounded-2xl bg-[#7C3AED]/20 text-[#7C3AED] flex items-center justify-center mx-auto">
-                <AlertTriangle className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-xl bg-[#10B981]/15 text-[#10B981] flex items-center justify-center mx-auto">
+                <Check className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-[#F8FAFC]">{pendingActionModal.title}</h3>
-              <p className="text-xs text-[#94A3B8]">{pendingActionModal.desc}</p>
+              <h3 className="text-base font-bold text-[#FAFAFA]">{pendingActionModal.title}</h3>
+              <p className="text-xs text-[#A1A1AA]">{pendingActionModal.desc}</p>
 
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <button
                   onClick={() => setPendingActionModal(null)}
-                  className="py-2.5 rounded-xl bg-[#1A1A24] text-xs font-semibold text-[#94A3B8] hover:text-[#F8FAFC]"
+                  className="py-2.5 rounded-xl bg-[#09090B] border border-white/[0.08] text-xs font-semibold text-[#A1A1AA] hover:text-[#FAFAFA] cursor-pointer"
                 >
-                  Cancel
+                  Back
                 </button>
                 <button
                   onClick={executeConfirmedAction}
-                  className="py-2.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-xs font-bold text-white shadow-md"
+                  className="py-2.5 rounded-xl bg-[#FAFAFA] hover:bg-white text-xs font-extrabold text-[#09090B] cursor-pointer"
                 >
-                  Confirm Action
+                  Confirm
                 </button>
               </div>
             </motion.div>
